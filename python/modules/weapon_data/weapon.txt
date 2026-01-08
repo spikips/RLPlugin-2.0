@@ -1,0 +1,913 @@
+Weapontype: Two-handed sword,
+
+3rd age longsword
+Adamant 2h sword
+Ancient godsword
+Ancient godsword (beta)
+Ancient godsword (Last Man Standing)
+Armadyl godsword
+Armadyl godsword (deadman)
+Armadyl godsword (Last Man Standing)
+Armadyl godsword (or)
+Bandos godsword
+Bandos godsword (or)
+Black 2h sword
+Bronze 2h sword
+Colossal blade
+Corrupted armadyl godsword
+Dragon 2h sword
+Dragon 2h sword (cr)
+Giant bronze dagger
+Gilded 2h sword
+Iron 2h sword
+Mithril 2h sword
+Rune 2h sword
+Saradomin godsword
+Saradomin godsword (or)
+Saradomin sword
+Saradomin's blessed sword
+Saradomin's blessed sword
+Shadow sword
+Spatula
+Steel 2h sword
+
+
+---
+
+
+
+Weapontype: Axe,
+
+3rd age axe
+3rd age felling axe
+Adamant axe
+Adamant battleaxe
+Adamant felling axe
+Anger battleaxe
+Black axe
+Black battleaxe
+Black felling axe
+Blessed axe
+Bronze axe
+Bronze battleaxe
+Bronze felling axe
+Corrupted axe
+Crystal axe
+Crystal axe
+Crystal axe (The Gauntlet)
+Crystal felling axe
+Crystal felling axe
+Dharok's greataxe
+Dharok's greataxe
+Dharok's greataxe
+Dharok's greataxe
+Dharok's greataxe
+Dharok's greataxe
+Dharok's greataxe (Last Man Standing)
+Dragon axe
+Dragon axe (or)
+Dragon axe (or)
+Dragon battleaxe
+Dragon battleaxe (cr)
+Dragon felling axe
+Echo axe
+Gilded axe
+Infernal axe
+Infernal axe
+Infernal axe (or)
+Infernal axe (or)
+Infernal axe (or) (Trailblazer Reloaded)
+Infernal axe (or) (Trailblazer Reloaded)
+Iron axe
+Iron battleaxe
+Iron felling axe
+Leaf-bladed battleaxe
+Mithril axe
+Mithril battleaxe
+Mithril felling axe
+Rune axe
+Rune battleaxe
+Rune felling axe
+Soulreaper axe
+Soulreaper axe (beta)
+Steel axe
+Steel battleaxe
+Steel felling axe
+Trailblazer axe
+Trailblazer axe (Trailblazer League 2020)
+White battleaxe
+Zombie axe
+
+
+---
+
+
+Weapontype: Blunt,
+
+'24-carat' sword
+10th birthday balloons
+Adamant staff of collection
+Adamant warhammer
+Assorted flowers
+Barronite mace
+Barronite mace
+Birthday balloons
+Birthday cake
+Black flowers
+Black staff of collection
+Black warhammer
+Blue flowers
+Bone club
+Bronze staff of collection
+Bronze warhammer
+Candy cane
+Carrot sword
+Clueless scroll
+Corrupted sceptre
+Crier bell
+Crystal sceptre
+Cursed banana
+Cursed goblin hammer
+Dragon candle dagger
+Dragon staff of collection
+Dragon warhammer
+Dragon warhammer (cr)
+Dragon warhammer (or)
+Dramen staff
+Easter basket
+Eek
+Elder maul
+Elder maul (beta)
+Elder maul (Last Man Standing)
+Elder maul (or)
+Fine mesh net
+Frying pan
+Gadderhammer
+Giant boulder
+Giant easter egg
+Giant present
+Gilded spade
+Gilded staff of collection
+Golden tench
+Granite hammer
+Granite maul
+Granite maul
+Granite maul (Last Man Standing)
+Granite maul (ornate handle)
+Granite maul (ornate handle)
+Hallowed hammer
+Ham joint
+Hand fan
+Haunted wine bottle
+Heavy casket
+Hill giant club
+Humphrey Dumphrey
+Hunting knife
+Imcando hammer
+Iron staff of collection
+Iron warhammer
+Large spade
+Love crossbow
+Maple blackjack
+Maple blackjack(d)
+Maple blackjack(o)
+Meat tenderiser
+Mithril staff of collection
+Mithril warhammer
+Mixed flowers
+Mouse toy
+Mystic cards
+Nunchaku
+Nutcracker staff
+Nutcracker staff
+Oak blackjack
+Oak blackjack(d)
+Oak blackjack(o)
+Orange flowers
+Prop sword
+Prop sword (Death on the Isle)
+Purple flowers
+Raging echoes adamant trophy
+Raging echoes dragon trophy
+Raging echoes rune trophy
+Rat pole
+Rat pole
+Rat pole
+Rat pole
+Rat pole
+Rat pole
+Rat pole
+Red flowers
+Redwood hiking staff
+Rolling pin
+Rubber chicken
+Rune staff of collection
+Rune warhammer
+Severed leg
+Shattered relics adamant trophy
+Shattered relics bronze trophy
+Shattered relics dragon trophy
+Shattered relics iron trophy
+Shattered relics mithril trophy
+Shattered relics rune trophy
+Shattered relics steel trophy
+Skeleton lantern
+Stale baguette
+Statius's warhammer (bh)
+Statius's warhammer (Deadman Mode)
+Statius's warhammer (Last Man Standing)
+Steel staff of collection
+Steel warhammer
+Torag's hammers
+Torag's hammers
+Torag's hammers
+Torag's hammers
+Torag's hammers
+Torag's hammers
+Trailblazer adamant trophy
+Trailblazer bronze trophy
+Trailblazer dragon trophy
+Trailblazer iron trophy
+Trailblazer mithril trophy
+Trailblazer reloaded adamant trophy
+Trailblazer reloaded dragon trophy
+Trailblazer reloaded rune trophy
+Trailblazer rune trophy
+Trailblazer steel trophy
+Trollweiss
+Twisted adamant trophy
+Twisted bronze trophy
+Twisted dragon trophy
+Twisted iron trophy
+Twisted mithril trophy
+Twisted rune trophy
+Twisted steel trophy
+Tzhaar-ket-em
+Tzhaar-ket-om
+Tzhaar-ket-om (t)
+Undead chicken (item)
+White flowers
+White warhammer
+Willow blackjack
+Willow blackjack(d)
+Willow blackjack(o)
+Yellow flowers
+Zombie head (Treasure Trails)
+
+
+---
+
+
+Weapontype: Slash sword,
+
+Adamant longsword
+Adamant scimitar
+Amy's saw
+Arclight
+Arclight
+Arkan blade
+Black longsword
+Black scimitar
+Blade of saeldor
+Blade of saeldor
+Blade of saeldor (c)
+Blade of saeldor (c) (Amlodd)
+Blade of saeldor (c) (Cadarn)
+Blade of saeldor (c) (Crwys)
+Blade of saeldor (c) (Iorwerth)
+Blade of saeldor (c) (Ithell)
+Blade of saeldor (c) (Meilyr)
+Blade of saeldor (c) (Trahaearn)
+Blisterwood sickle
+Blurite sword
+Brine sabre
+Bronze longsword
+Bronze scimitar
+Cleaver
+Corrupted voidwaker
+Darklight
+Decorative sword (gold)
+Decorative sword (gold)
+Decorative sword (gold)
+Decorative sword (red)
+Decorative sword (white)
+Dragon longsword
+Dragon longsword (bh)
+Dragon longsword (cr)
+Dragon scimitar
+Dragon scimitar (cr)
+Dragon scimitar (Last Man Standing)
+Dragon scimitar (or)
+Emberlight
+Emerald sickle (b)
+Enchanted emerald sickle (b)
+Enchanted ruby sickle (b)
+Excalibur
+Fremennik blade
+Gilded scimitar
+Granite longsword
+Harry's cutlass
+Iron longsword
+Iron scimitar
+Iron sickle
+Jade machete
+Katana
+Lucky cutlass
+Machete
+Mithril longsword
+Mithril scimitar
+Opal machete
+Red topaz machete
+Ruby sickle (b)
+Rune longsword
+Rune scimitar
+Rune scimitar (guthix)
+Rune scimitar (saradomin)
+Rune scimitar (zamorak)
+Silver sickle
+Silver sickle (b)
+Silverlight
+Silverlight
+Skewer
+Starter sword
+Steel longsword
+Steel scimitar
+Sulphur blades
+Thunder khopesh
+Toktz-xil-ek
+Vesta's blighted longsword
+Vesta's blighted longsword
+Vesta's longsword (bh)
+Vesta's longsword (Deadman Mode)
+Vesta's longsword (Last Man Standing)
+Voidwaker
+Voidwaker (beta)
+Voidwaker (deadman)
+Voidwaker (Last Man Standing)
+White longsword
+White scimitar
+Wooden spoon
+
+
+---
+
+
+Weapontype: Spear,
+
+Adamant hasta(p)(p+)(p++)(kp)
+Adamant spear(p)(p+)(p++)(kp)
+Anger spear
+Black spear(p)(p+)(p++)(kp)
+Bone spear
+Bronze hasta(p)(p+)(p++)(kp)
+Bronze spear(p)(p+)(p++)(kp)
+Butterfly net
+Dragon hasta(p)(p+)(p++)(kp)
+Dragon hunter lance
+Dragon spear(p)(p+)(p++)(kp)
+Dragon spear (cr)(p)(p+)(p++)
+Gilded hasta
+Gilded spear
+Guthan's warspear
+Iron hasta(p)(p+)(p++)(kp)
+Iron spear(p)(p+)(p++)(kp)
+Leaf-bladed spear
+Magic butterfly net
+Merfolk trident
+Mithril hasta(p)(p+)(p++)(kp)
+Mithril spear(p)(p+)(p++)(kp)
+Noose wand
+Rune hasta(p)(p+)(p++)(kp)
+Rune spear(p)(p+)(p++)(kp)
+Steel hasta(p)(p+)(p++)(kp)
+Steel spear(p)(p+)(p++)(kp)
+Vesta's spear (bh)
+Vesta's spear (Deadman Mode)
+Zamorakian hasta
+Zamorakian spear
+
+
+---
+
+
+Weapontype: Spiked,
+
+Adamant cane
+Adamant mace
+Ancient mace
+Anger mace
+Barrelchest anchor
+Barrelchest anchor
+Barrelchest anchor (bh)
+Black cane
+Black mace
+Bone mace
+Bronze mace
+Dragon mace
+Dragon mace (bh)
+Dragon mace (cr)
+Dual macuahuitl
+Dual macuahuitl (Last Man Standing)
+Glacial temotli
+Inquisitor's mace
+Inquisitor's mace (beta)
+Inquisitor's mace (Last Man Standing)
+Iron mace
+Mithril mace
+Raging echoes cane
+Rune cane
+Rune mace
+Sarachnis cudgel
+Shattered cane
+Soulflame horn
+Steel mace
+Trailblazer cane
+Trailblazer reloaded torch
+Twisted cane
+Ursine chainmace
+Ursine chainmace
+Ursine chainmace (beta)
+Ursine chainmace (beta)
+Verac's flail
+Verac's flail
+Verac's flail
+Verac's flail
+Verac's flail
+Verac's flail
+Verac's flail (Last Man Standing)
+Viggora's chainmace
+Viggora's chainmace
+White mace
+
+
+---
+
+
+Weapontype: Stab sword,
+
+Abyssal dagger(p)(p+)(p++)
+Abyssal dagger (bh)(p)(p+)(p++)
+Adamant dagger(p)(p+)(p++)
+Adamant sword
+Anger sword
+Barb-tail harpoon
+Black dagger(p)(p+)(p++)
+Black sword
+Bone dagger(p)(p+)(p++)
+Bronze dagger(p)(p+)(p++)
+Bronze sword
+Cattleprod
+Corrupted harpoon
+Crystal dagger (perfected)
+Crystal harpoon
+Crystal harpoon (The Gauntlet)
+Dark dagger
+Dragon dagger(p)(p+)(p++)
+Dragon dagger (cr)(p)(p+)(p++)
+Dragon dagger (Last Man Standing)
+Dragon harpoon
+Dragon harpoon (or)
+Dragon sword
+Dragon sword (cr)
+Dual sai
+Earthbound tecpatl
+Echo harpoon
+Egg whisk
+Ghrazi rapier
+Ghrazi rapier (beta)
+Ghrazi rapier (Last Man Standing)
+Gleaming rapier
+Glowing dagger
+Holy ghrazi rapier
+Infernal harpoon
+Infernal harpoon (or)
+Infernal harpoon (or) (Trailblazer Reloaded)
+Iron dagger(p)(p+)(p++)
+Iron sword
+Keris(p)(p+)(p++)
+Killer's knife
+Kitchen knife
+Leaf-bladed sword
+Magic secateurs
+Magic secateurs (nz)
+Mithril dagger(p)(p+)(p++)
+Mithril sword
+Osmumten's fang
+Osmumten's fang (or)
+Rapier
+Rune dagger(p)(p+)(p++)
+Rune sword
+Spork
+Steel dagger(p)(p+)(p++)
+Steel sword
+Sunlight spear
+Swift blade
+Toktz-xil-ak
+Trailblazer harpoon
+Trailblazer harpoon (Trailblazer League 2020)
+Training sword
+White dagger(p)(p+)(p++)
+Wilderness sword 1
+Wilderness sword 2
+Wilderness sword 3
+Wilderness sword 4
+Wolfbane
+Wooden sword
+
+
+---
+
+
+Weapontype: Whip,
+
+Abyssal tentacle
+Abyssal tentacle (or)
+Abyssal whip
+Abyssal whip (Last Man Standing)
+Abyssal whip (or)
+Frozen abyssal whip
+Volcanic abyssal whip
+
+Bow:
+3rd age bow
+Bone shortbow
+Bow of faerdhinen
+Bow of faerdhinen
+Bow of faerdhinen (c)
+Bow of faerdhinen (c) (Amlodd)
+Bow of faerdhinen (c) (Cadarn)
+Bow of faerdhinen (c) (Crwys)
+Bow of faerdhinen (c) (Iorwerth)
+Bow of faerdhinen (c) (Ithell)
+Bow of faerdhinen (c) (Meilyr)
+Bow of faerdhinen (c) (Trahaearn)
+Comp ogre bow
+Corrupted bow (attuned)
+Corrupted bow (basic)
+Corrupted bow (perfected)
+Corrupted dark bow
+Corrupted twisted bow
+Craw's bow
+Craw's bow
+Crystal bow
+Crystal bow (attuned)
+Crystal bow (basic)
+Crystal bow (historical)
+Crystal bow (historical)
+Crystal bow (historical)
+Crystal bow (historical)
+Crystal bow (historical)
+Crystal bow (historical)
+Crystal bow (historical)
+Crystal bow (historical)
+Crystal bow (historical)
+Crystal bow (historical)
+Crystal bow (historical)
+Crystal bow (i)
+Crystal bow (i)
+Crystal bow (i)
+Crystal bow (i)
+Crystal bow (i)
+Crystal bow (i)
+Crystal bow (i)
+Crystal bow (i)
+Crystal bow (i)
+Crystal bow (i)
+Crystal bow (i)
+Crystal bow (perfected)
+Cursed goblin bow
+Dark bow
+Dark bow
+Dark bow
+Dark bow
+Dark bow
+Dark bow (bh)
+Dark bow (deadman)
+Dark bow (Last Man Standing)
+Echo venator bow
+Echo venator bow
+Eclipse atlatl
+Eclipse atlatl (Last Man Standing)
+Longbow
+Magic comp bow
+Magic longbow
+Magic shortbow
+Magic shortbow (i)
+Maple longbow
+Maple shortbow
+Oak longbow
+Oak shortbow
+Ogre bow
+Rain bow
+Scorching bow
+Seercull
+Shortbow
+Signed oak bow
+Starter bow
+Training bow
+Twisted bow
+Venator bow
+Venator bow
+Webweaver bow
+Webweaver bow
+Webweaver bow (beta)
+Webweaver bow (beta)
+Willow comp bow
+Willow longbow
+Willow shortbow
+Yew comp bow
+Yew longbow
+Yew shortbow
+Zaryte bow
+Zaryte bow
+
+
+---
+
+
+Weapontype: Chinchompa,
+
+Black chinchompa
+Chinchompa
+Red chinchompa
+
+
+---
+
+
+Weapontype: Crossbow,
+
+Adamant crossbow
+Armadyl crossbow
+Armadyl crossbow (Last Man Standing)
+Blurite crossbow
+Bronze crossbow
+Crossbow
+Dorgeshuun crossbow
+Dragon crossbow
+Dragon crossbow (cr)
+Dragon hunter crossbow
+Dragon hunter crossbow (b)
+Dragon hunter crossbow (t)
+Heavy ballista
+Heavy ballista (Last Man Standing)
+Heavy ballista (or)
+Hunters' crossbow
+Hunters' sunlight crossbow
+Iron crossbow
+Karil's crossbow
+Karil's crossbow
+Karil's crossbow
+Karil's crossbow
+Karil's crossbow
+Karil's crossbow
+Light ballista
+Light ballista (Last Man Standing)
+Mithril crossbow
+Phoenix crossbow
+Rune crossbow
+Rune crossbow (Last Man Standing)
+Rune crossbow (or)
+Steel crossbow
+Zaryte crossbow
+Zaryte crossbow (Last Man Standing)
+
+
+--
+
+
+Weapontype: Thrown,
+
+Adamant dart(p)(p+)(p++)
+Adamant knife(p)(p+)(p++)
+Adamant thrownaxe
+Amethyst dart(p)(p+)(p++)
+Black dart(p)(p+)(p++)
+Black knife(p)(p+)(p++)
+Blazing blowpipe
+Bronze dart(p)(p+)(p++)
+Bronze knife(p)(p+)(p++)
+Bronze thrownaxe
+Camphor blowpipe
+Cedar blowpipe
+Dragon dart(p)(p+)(p++)
+Dragon knife(p)(p+)(p++)
+Dragon knife (Last Man Standing)
+Dragon thrownaxe
+Drygore blowpipe
+Holy water
+Hunter's spear
+Iron dart(p)(p+)(p++)
+Iron knife(p)(p+)(p++)
+Iron thrownaxe
+Ironwood blowpipe
+Larch blowpipe
+Mithril dart(p)(p+)(p++)
+Mithril knife(p)(p+)(p++)
+Mithril thrownaxe
+Morrigan's javelin (bh)
+Morrigan's javelin (Deadman Mode)
+Morrigan's javelin (Last Man Standing)
+Morrigan's throwing axe (bh)
+Morrigan's throwing axe (Deadman Mode)
+Mud pie
+Rosewood blowpipe
+Rune dart(p)(p+)(p++)
+Rune knife(p)(p+)(p++)
+Rune thrownaxe
+Sage's axe
+Steel dart(p)(p+)(p++)
+Steel knife(p)(p+)(p++)
+Steel thrownaxe
+Toktz-xil-ul
+Tonalztics of ralos
+Toxic blowpipe
+Toxic blowpipe (beta)
+
+
+
+--
+
+
+Weapontype: Powered Staff,
+
+Accursed sceptre
+Accursed sceptre
+Accursed sceptre (beta)
+Accursed sceptre (beta)
+Bone staff
+Corrupted staff (attuned)
+Corrupted staff (basic)
+Corrupted staff (perfected)
+Corrupted tumeken's shadow
+Corrupted tumeken's shadow
+Crystal staff (attuned)
+Crystal staff (basic)
+Crystal staff (perfected)
+Dawnbringer
+Eye of ayak
+Eye of ayak
+Holy sanguinesti staff
+Holy sanguinesti staff
+Sanguinesti staff
+Sanguinesti staff
+Sanguinesti staff (beta)
+Starter staff
+Thammaron's sceptre
+Thammaron's sceptre
+Trident of the seas
+Trident of the seas
+Trident of the seas
+Trident of the seas (e)
+Trident of the seas (e)
+Trident of the swamp
+Trident of the swamp
+Trident of the swamp (e)
+Trident of the swamp (e)
+Tumeken's shadow
+Tumeken's shadow
+Warped sceptre
+Warped sceptre
+
+
+---
+
+
+Weapontype: Staff,
+
+3rd age druidic staff
+3rd age wand
+Accursed sceptre (a)
+Accursed sceptre (a)
+Ahrim's staff
+Ahrim's staff
+Ahrim's staff
+Ahrim's staff
+Ahrim's staff
+Ahrim's staff
+Ahrim's staff (Last Man Standing)
+Air battlestaff
+Ancient crozier
+Ancient sceptre
+Ancient sceptre
+Ancient staff
+Ancient staff (Last Man Standing)
+Apprentice wand
+Armadyl crozier
+Bandos crozier
+Battlestaff
+Beginner wand
+Blisterwood flail
+Blood ancient sceptre
+Blood ancient sceptre
+Blood ancient sceptre
+Blood ancient sceptre (beta)
+Bryophyta's staff
+Bryophyta's staff
+Corrupted volatile nightmare staff
+Cursed goblin staff
+Dragon hunter wand
+Dust battlestaff
+Earth battlestaff
+Echo ahrim's staff
+Echo ahrim's staff
+Echo ahrim's staff
+Echo ahrim's staff
+Echo ahrim's staff
+Echo ahrim's staff
+Elder wand
+Eldritch nightmare staff
+Eldritch nightmare staff (beta)
+Fire battlestaff
+Guthix crozier
+Guthix staff
+Harmonised nightmare staff
+Harmonised nightmare staff (beta)
+Iban's staff
+Iban's staff
+Iban's staff (u)
+Ice ancient sceptre
+Ice ancient sceptre
+Ice ancient sceptre
+Ice ancient sceptre (beta)
+Ivandis flail
+Kodai wand
+Kodai wand (Last Man Standing)
+Lava battlestaff
+Lava battlestaff (or)
+Lunar staff
+Lunar staff - pt1
+Lunar staff - pt2
+Lunar staff - pt3
+Magic staff
+Master wand
+Mist battlestaff
+Mud battlestaff
+Mystic air staff
+Mystic dust staff
+Mystic earth staff
+Mystic fire staff
+Mystic lava staff
+Mystic lava staff (or)
+Mystic mist staff
+Mystic mud staff
+Mystic smoke staff
+Mystic steam staff
+Mystic steam staff (or)
+Mystic water staff
+Nightmare staff
+Nightmare staff (beta)
+Purging staff
+Rod of ivandis
+Rod of ivandis
+Rod of ivandis
+Rod of ivandis
+Rod of ivandis
+Rod of ivandis
+Rod of ivandis
+Rod of ivandis
+Rod of ivandis
+Rod of ivandis
+Saradomin crozier
+Saradomin staff
+Shadow ancient sceptre
+Shadow ancient sceptre
+Shadow ancient sceptre
+Shadow ancient sceptre (beta)
+Skull sceptre
+Skull sceptre (i)
+Slayer's staff
+Slayer's staff (e)
+Smoke ancient sceptre
+Smoke ancient sceptre
+Smoke ancient sceptre
+Smoke ancient sceptre (beta)
+Smoke battlestaff
+Staff
+Staff of air
+Staff of bob the cat
+Staff of earth
+Staff of fire
+Staff of water
+Steam battlestaff
+Steam battlestaff (or)
+Teacher wand
+Thammaron's sceptre (a)
+Thammaron's sceptre (a)
+Toktz-mej-tal
+Twinflame staff
+Void knight mace
+Void knight mace
+Void knight mace
+Volatile nightmare staff
+Volatile nightmare staff (beta)
+Volatile nightmare staff (deadman)
+Volatile nightmare staff (Last Man Standing)
+Water battlestaff
+White magic staff
+Zamorak crozier
+Zamorak staff
+Zuriel's staff (bh)
+Zuriel's staff (Deadman Mode)
+Zuriel's staff (Last Man Standing)
+

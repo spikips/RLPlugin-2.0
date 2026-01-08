@@ -1,0 +1,6 @@
+- main screen bounds -
+client_min_x = rl_x + 4
+client_min_y = rl_y + 4
+client_max_x = rl_x + 4 + 512
+client_max_y = rl_y + 4 + 334
+-

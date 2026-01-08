@@ -1,0 +1,36 @@
+- TABS -
+inventory id:
+35913802
+spriteid 1030 enabled else -1
+
+combat id:
+Id	35913791
+spriteid 1026 enabled else -1
+
+quest id:
+Id	35913793
+SpriteId 1030 enabled else -1
+
+equipment id:
+Id	35913795 
+spriteid 1030 enabled else -1
+
+prayer id:
+Id	35913796
+spriteid 1030 enabled else -1
+
+spellbook id:
+Id	35913797
+SpriteId 1027 enabled else -1
+
+logout id:
+Id	35913778
+SpriteId 1030 enabled else -1
+
+settings id:
+Id	35913779
+SpriteId 1030 enabled else -1
+
+---
+BANK TAB:
+Id	786435

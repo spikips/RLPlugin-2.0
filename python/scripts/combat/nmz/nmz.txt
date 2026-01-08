@@ -1,0 +1,50 @@
+requirements:
+43 prayer 
+rock cake
+
+to start:
+have quick prayer setupped
+full prayer points
+define configs
+start around nmz or inside nmz bank
+check auto retaliate
+
+//// low level magic gear
+"dust battlestaff",
+"Seers ring",
+"combat bracelet(6)",
+"bandos mitre",
+"ancient cloak",
+"monk's robe top",
+"amulet of glory(6)",
+"Tome of earth",
+"wizard boots",
+"Honourable blessing",
+"monk's robe"
+
+/// mid level magic gear
+"dust battlestaff",
+"Seers ring (i)",
+"combat bracelet(6)",
+"Bloodbark helm",
+"ancient cloak",
+"Bloodbark body",
+"Occult necklace",
+"Tome of earth",
+"Bloodbark boots",
+"Honourable blessing",
+"Bloodbark legs"
+
+//// high level magic gear
+"Staff of the dead",
+"Seers ring (i)",
+"tormented bracelet",
+"Bloodbark helm",
+"imbued zamorak cape",
+"Bloodbark body",
+"Occult necklace",
+"Tome of earth",
+"Bloodbark boots",
+"Honourable blessing",
+"Bloodbark legs"
+

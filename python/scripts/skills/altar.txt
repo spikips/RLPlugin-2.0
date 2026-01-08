@@ -1,0 +1,4 @@
+world id: 4522003 child 2 + 6 + 6 + 6
+
+textcolor 14737632 = f2p? 
+textcolor 15790080 = p2p? 

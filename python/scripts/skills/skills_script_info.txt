@@ -1,0 +1,15 @@
+firemaking.py:
+make sure you're in varrock west bank and you have logs and law runes, fire runes and staff of air at the bank
+1-15fm = 61 logs
+15-30fm = 183 oak logs
+30-45fm = 535 willow logs
+45-50fm = 295 maple logs 
+
+woodcutting.py
+make sure you have all axes in your inventory and start in rimmington, equip rune axe
+
+crafting.py
+have sapphires, chisel in your bank and stand next to the right banker on ge 
+
+chaos_altar.py
+bones, ring of dueling(8), burning amulet(5) in bank, lumbridge respawn and quickhop as pageup, turn auto retaliate off, make sure no equipment on

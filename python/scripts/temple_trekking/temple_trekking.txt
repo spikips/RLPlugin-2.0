@@ -1,0 +1,19 @@
+before starting check if hp > 10 and prayer < 0 and if prayer < random.randint(10, 30) then drink prayer potion
+also check if hammer, knife, iron axe, prayer potion, salve graveyard teleport, blood rune, earth rune in inventory, else teleport to castle wars and bank
+also check if inventory space > 0
+
+
+first check if riyl shadow, if riyl shadow, melee pray up and -> Evade-event Path
+
+nail beast = run no pray
+swamp snake = run no pray
+giant snail = run no pray
+vampyre juvinate = run no pray
+ghast = run no pray
+
+if zombie check if dead tree, if not then run 1 tile south of the broken bridge
+
+
+
+check if inv open
+check camera 491, 0, 192

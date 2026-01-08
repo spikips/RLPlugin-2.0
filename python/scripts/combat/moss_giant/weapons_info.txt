@@ -1,0 +1,330 @@
+Powered Staff:
+top left (ACCURATE)
+Id	38862854
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+top right (ACCURATE)
+Id	38862858
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom left (LONG RANGE)
+Id	38862866
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+
+Thrown:
+top left (ACCURATE)
+Id	38862854
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+top right (RAPID)
+Id	38862858
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom left (LONG RANGE)
+Id	38862866
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+
+Crossbow:
+top left (ACCURATE)
+Id	38862854
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+top right (RAPID)
+Id	38862858
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom left (LONG RANGE)
+Id	38862866
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+
+Bow:
+top left (ACCURATE)
+Id	38862854
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+top right (RAPID)
+Id	38862858
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom left (LONG RANGE)
+Id	38862866
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+
+Whip:
+top left (ATTACK)
+Id	38862854
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+top right (SHARED)
+Id	38862858
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom left (DEFENCE)
+Id	38862866
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+
+Spiked:
+top left (ATTACK)
+Id	38862854
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+top right (STRENGTH)
+Id	38862858
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom left (SHARED)
+Id	38862862
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom right (DEFENCE)
+Id	38862866
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+
+Spear:
+top left (SHARED)
+Id	38862854
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+top right (SHARED)
+Id	38862858
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom left (SHARED)
+Id	38862862
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom right (DEFENCE)
+Id	38862866
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+
+Blunt:
+top left (ATTACK)
+Id	38862854
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+top right (STRENGTH)
+Id	38862858
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom left (DEFENCE)
+Id	38862866
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+
+Two-handed sword:
+top left (ATTACK)
+Id	38862854
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+top right (STRENGTH)
+Id	38862858
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom left (Strength Crush)
+Id	38862862
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom right (DEFENCE)
+Id	38862866
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+
+Axe:
+top left (ATTACK)
+Id	38862854
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+top right (STRENGTH)
+Id	38862858
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom left (Strength Crush)
+Id	38862862
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom right (DEFENCE)
+Id	38862866
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+
+slash sword: 
+top left (ATTACK)
+Id	38862854
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+top right (STRENGTH)
+Id	38862858
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom left (SHARED)
+Id	38862861
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom right (DEFENCE)
+Id	38862866
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+
+blunt weapon:
+top left (ATTACK)
+Id	38862854
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+top right (STRENGTH)
+Id	38862858
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom left (DEFENCE)
+Id	38862866
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+
+stab sword:
+top left (ATTACK)
+Id	38862854
+SpriteId	1154 when enabled
+SpriteId	1141 when disabled
+
+top right (STRENGTH)
+Id	38862858
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom left (STRENGTH)
+Id	38862862
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+bottom right (DEFENCE)
+Id	38862865
+SpriteId	1154 when enabled
+SpriteId	1145 when disabled
+
+
+Weapontypes:
+melee:
+9 = brine sabre (Slash Sword)
+2 = granite hammer (Blunt weapon)
+17 = dragon sword (Stab Sword)
+
+range:
+3 = shortbow (Bow)
+
+magic:
+4 = staff (Staff)
+
+
+
+retaliate:
+Id	38862881
+SpriteId	1150 when enabled
+SpriteId	1141 when disabled
+
+
+combat options tab:
+Id	35913791
+SpriteId	-1 when closed
+SpriteId	1026 when open
+
+
+
+2h sword weapontype 10
+index 0 attack
+index 1 strength
+index 2 strength crush
+index 3 defence
+-
+axe weapontype 1
+index 0 attack
+index 1 strength
+index 2 strength crush
+index 3 defence
+-
+blunt weapontype 2
+index 0 attack
+index 1 strength
+index 3 defence
+-
+spear weapontype 15
+index 0 shared
+index 1 shared
+index 2 shared
+index 3 defence
+-
+spiked weapontype 16
+index 0 attack
+index 1 strength
+index 2 shared
+index 3 defence
+-
+thrown weapontype 19
+index 0 accurate
+index 1 rapid
+index 3 defence
+-
+powered staff weapontype 24
+index 0 accurate
+index 1 accurate
+index 3 defence
+-
+crossbow weapontype 5
+index 0 accurate
+index 1 rapid
+index 3 long range
+-
+whip weapontype 20
+index 0 attack
+index 1 shared
+index 3 defence
+
+
+
+

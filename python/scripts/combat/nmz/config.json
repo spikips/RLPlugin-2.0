@@ -1,0 +1,138 @@
+{
+  "style": "magic",
+  "combat_style": null,
+  "special_attack_threshold": null,
+  "bosses": [
+    "Count draynor",
+    "khazard warlord",
+    "bouncer",
+    "black demon",
+    "witch's experiment"
+  ],
+  "gear": {
+    "range": {
+      "40-49": [
+        "Dorgeshuun crossbow",
+        "Holy sandals",
+        "Green d'hide chaps",
+        "Bone bolts",
+        "Green d'hide shield",
+        "Green d'hide vambraces",
+        "Ancient cloak",
+        "Warrior ring",
+        "Green d'hide body",
+        "Amulet of fury",
+        "Saradomin mitre"
+      ],
+      "50-59": [
+        "Dorgeshuun crossbow",
+        "snakeskin boots",
+        "blue d'hide chaps",
+        "Bone bolts",
+        "blue d'hide shield",
+        "blue d'hide vambraces",
+        "Ancient cloak",
+        "Warrior ring",
+        "blue d'hide body",
+        "Amulet of fury",
+        "archer helm"
+      ],
+      "60-69": [
+        "Dorgeshuun crossbow",
+        "snakeskin boots",
+        "red d'hide chaps",
+        "Bone bolts",
+        "red d'hide shield",
+        "red d'hide vambraces",
+        "mixed hide cape",
+        "Warrior ring",
+        "red d'hide body",
+        "Amulet of fury",
+        "archer helm"
+      ],
+      "70-99": [
+        "magic shortbow (i)",
+        "snakeskin boots",
+        "black d'hide chaps",
+        "Amethyst arrow",
+        "black d'hide vambraces",
+        "ava's accumulator",
+        "Lightbearer",
+        "black d'hide body",
+        "Amulet of fury",
+        "armadyl coif"
+      ]
+    },
+    "magic": {
+      "40-80": [
+        "dust battlestaff",
+        "Seers ring (i)",
+        "combat bracelet(6)",
+        "bandos mitre",
+        "ancient cloak",
+        "monk's robe top",
+        "amulet of glory(6)",
+        "Tome of earth",
+        "wizard boots",
+        "Honourable blessing",
+        "monk's robe"
+      ],
+      "80-99": [
+        "dust battlestaff",
+        "Seers ring (i)",
+        "combat bracelet(6)",
+        "Bloodbark helm",
+        "ancient cloak",
+        "Bloodbark body",
+        "Occult necklace",
+        "Tome of earth",
+        "Bloodbark boots",
+        "Honourable blessing",
+        "Bloodbark legs"
+      ]
+    }
+  },
+  "withdraw_all_items": {
+    "range": [
+      "Bone bolts",
+      "Broad bolts",
+      "Diamond bolts (e)",
+      "Amethyst arrow"
+    ],
+    "magic": []
+  },
+  "inventory_items": {
+    "range": [
+      {
+        "name": "Dwarven rock cake",
+        "quantity": "1"
+      },
+      {
+        "name": "Absorption (4)",
+        "quantity": "all"
+      }
+    ],
+    "magic": [
+      {
+        "name": "Dwarven rock cake",
+        "quantity": "1"
+      },
+      {
+        "name": "wrath rune",
+        "quantity": "all"
+      },
+      {
+        "name": "Air rune",
+        "quantity": "all"
+      },
+      {
+        "name": "Absorption (4)",
+        "quantity": "7"
+      },
+      {
+        "name": "Overload (4)",
+        "quantity": "18"
+      }
+    ]
+  }
+}
