@@ -19,31 +19,38 @@ from modules.core.mouse_control import move
 from modules.widgets.widget_data import get_all_widget_data
 from modules.core.window_utils import runelite_window, focus_runelite_window
 from modules.player_data.prayer.toggle_prayer import toggle_prayer
+from modules.core.plugin_client import slayer_task_remaining
 
-vine_ids = ['13847', '13848', '13849']  # List of all possible vine IDs to try
+# remaining = slayer_task_remaining()
+# print(f"Slayer task NPCs left: {remaining}")
 
-while get_inventory_count('short vine') < 3:
-    increased = False
-    for vine_id in vine_ids:
-        old_count = get_inventory_count('short vine')
-        click_vine = click_gameobject(vine_id, 'Cut-vine')
-        if not click_vine:
-            continue  # Try next vine ID if click failed
-        
-        # Wait to see if count changed (with timeout to avoid infinite loop)
-        for _ in range(20):  # Adjust attempts as needed (e.g., 20 * 0.1s = 2s timeout)
-            time.sleep(0.1)
-            if get_inventory_count('short vine') > old_count:
-                increased = True
-                break
-        if increased:
-            break  # Successfully cut a vine, proceed to next one needed
-        # If not increased after timeout, try next ID
+# if remaining == 0:
+#     print("Task complete - bank or get new task")
     
-    if not increased:
-        # No vine was cut after trying all, perhaps none available
-        print("No vines could be cut; stopping.")
-        break
+# vine_ids = ['13847', '13848', '13849']  # List of all possible vine IDs to try
+
+# while get_inventory_count('short vine') < 3:
+#     increased = False
+#     for vine_id in vine_ids:
+#         old_count = get_inventory_count('short vine')
+#         click_vine = click_gameobject(vine_id, 'Cut-vine')
+#         if not click_vine:
+#             continue  # Try next vine ID if click failed
+        
+#         # Wait to see if count changed (with timeout to avoid infinite loop)
+#         for _ in range(20):  # Adjust attempts as needed (e.g., 20 * 0.1s = 2s timeout)
+#             time.sleep(0.1)
+#             if get_inventory_count('short vine') > old_count:
+#                 increased = True
+#                 break
+#         if increased:
+#             break  # Successfully cut a vine, proceed to next one needed
+#         # If not increased after timeout, try next ID
+    
+#     if not increased:
+#         # No vine was cut after trying all, perhaps none available
+#         print("No vines could be cut; stopping.")
+#         break
 
 # print(get_closest_game_object('13847', None, 10))
 

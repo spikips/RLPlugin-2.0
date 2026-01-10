@@ -47,13 +47,15 @@ def click_cannon(action: str = 'Fire'):  # 'Fire' to reload, 'Pick-up' to pick u
         return False
 
 # Example: Reload cannon
-click_cannon('Fire')
+# click_cannon('Fire')
 
 # Test cannon data
 # print("Current cannon data:")
-# print(cannon_data())
+# reset_cannon()
+
+# while True:
+#    print(cannon_data())
 
 # Optional reset
-# reset_cannon()
 # print("Cannon data after reset:")
 # print(cannon_data())

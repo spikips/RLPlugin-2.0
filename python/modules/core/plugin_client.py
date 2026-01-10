@@ -622,9 +622,14 @@ class PluginClient:
         """Manually reset cannon tracking (useful for debugging or after pickup)."""
         return self.send_request('reset_cannon', {})
 
+
     
 _default_client = PluginClient(auth_token='jQ8IHav3zA3HuH5')
 
+def slayer_task_remaining() -> int:
+    """Get the number of NPCs left to kill in your current Slayer task."""
+    response = _default_client.send_request('slayer_task_remaining', {})
+    return response.get('data', 0) if response else 0
 
 def varbit_changes() -> Optional[List[Dict[str, Any]]]:
     """Get list of varbit changes since last call (for debugging)."""

@@ -3,122 +3,129 @@ import pygetwindow as gw
 import win32gui
 import pyautogui
 from ctypes import windll, Structure, c_long, byref
+from typing import Tuple, Optional
 
 class POINT(Structure):
     _fields_ = [("x", c_long), ("y", c_long)]
 
 def find_canvas_hwnd(parent_hwnd):
-    """
-    Callback function to find the SunAwtCanvas child window.
-    """
-    canvas_hwnd = [None]  # Use list to mutate inside callback
+    canvas_hwnd = [None]
 
     def enum_callback(hwnd, lparam):
         class_name = win32gui.GetClassName(hwnd)
         if class_name == "SunAwtCanvas":
             canvas_hwnd[0] = hwnd
-            return False  # Stop enumeration
+            return False
         return True
 
     win32gui.EnumChildWindows(parent_hwnd, enum_callback, 0)
     return canvas_hwnd[0]
 
-def get_runelite_window_coords():
-    """
-    Retrieve the accurate screen coordinates and size of the RuneLite game canvas.
-    
-    Returns:
-        tuple: (screen_x, screen_y, width, height) of the canvas area, or None if not found.
-    """
-    # Use cached coordinates when available to avoid repeated expensive
-    # window enumeration and ClientToScreen calls. This function will compute
-    # the coords once per process run and return the cached value afterwards.
-    global _cached_runelite_coords
-    try:
-        if _cached_runelite_coords is not None:
-            return _cached_runelite_coords
-    except NameError:
-        _cached_runelite_coords = None
+# Lazy cache for canvas coordinates
+_cached_runelite_coords: Optional[Tuple[int, int, int, int]] = None
 
+def get_runelite_window_coords() -> Optional[Tuple[int, int, int, int]]:
+    """Lazy compute canvas coordinates - only runs when first called."""
+    global _cached_runelite_coords
+    if _cached_runelite_coords is not None:
+        return _cached_runelite_coords
+
+    print("Detecting RuneLite canvas...")
+
+    # Get all RuneLite windows
     runelite_windows = [w for w in gw.getWindowsWithTitle('RuneLite') if w.title == 'RuneLite']
     if not runelite_windows:
         print("RuneLite window not found.")
         return None
 
-    runelite_window = runelite_windows[0]
-    parent_hwnd = runelite_window._hWnd  # Parent window handle
+    # Use the active or first visible one
+    active_window = gw.getActiveWindow()
+    if active_window and active_window.title == 'RuneLite':
+        runelite_window = active_window
+    else:
+        runelite_window = runelite_windows[0]
 
-    # Find the child canvas hwnd
-    canvas_hwnd = find_canvas_hwnd(parent_hwnd)
+    # Ensure window is visible and not minimized
+    if runelite_window.isMinimized:
+        print("RuneLite window is minimized - restoring...")
+        runelite_window.restore()
+        time.sleep(0.5)
+
+    hwnd = runelite_window._hWnd
+    canvas_hwnd = find_canvas_hwnd(hwnd)
     if not canvas_hwnd:
-        print("RuneLite game canvas not found.")
+        print("RuneLite canvas not found.")
         return None
 
-    # Get canvas client area dimensions
-    rect = win32gui.GetClientRect(canvas_hwnd)
-    width = rect[2] - rect[0]
-    height = rect[3] - rect[1]
+    # Get canvas rect relative to parent
+    rect = win32gui.GetWindowRect(canvas_hwnd)
+    parent_rect = win32gui.GetWindowRect(hwnd)
+    canvas_x = rect[0] - parent_rect[0]
+    canvas_y = rect[1] - parent_rect[1]
+    canvas_width = rect[2] - rect[0]
+    canvas_height = rect[3] - rect[1]
 
-    # Convert canvas (0,0) to screen coordinates
-    pt = POINT(0, 0)
-    windll.user32.ClientToScreen(canvas_hwnd, byref(pt))
-    screen_x, screen_y = pt.x, pt.y
+    # Absolute screen position of canvas
+    screen_x = rect[0]
+    screen_y = rect[1]
 
-    _cached_runelite_coords = (screen_x, screen_y, width, height)
-    print(f"RuneLite game canvas screen coordinates: (x: {screen_x}, y: {screen_y}, width: {width}, height: {height})")
+    _cached_runelite_coords = (screen_x, screen_y, canvas_width, canvas_height)
+    print(f"RuneLite canvas detected: x={screen_x}, y={screen_y}, w={canvas_width}, h={canvas_height}")
     return _cached_runelite_coords
 
-def runelite_window(x: int, y: int) -> tuple[int, int]:
-    """
-    Convert canvas coordinates to screen coordinates relative to the RuneLite game canvas.
-
-    Args:
-        x (int): X-coordinate in canvas space.
-        y (int): Y-coordinate in canvas space.
-
-    Returns:
-        tuple[int, int]: Screen coordinates (x, y).
-    """
+def runelite_window(rel_x: int, rel_y: int) -> Tuple[int, int]:
     coords = get_runelite_window_coords()
-    if coords:
-        screen_x, screen_y, _, _ = coords
-        return x + screen_x, y + screen_y
-    return x, y
+    if coords is None:
+        print("Unable to get RuneLite coordinates - returning (0,0)")
+        return (0, 0)
+    screen_x, screen_y, _, _ = coords
+    return (screen_x + rel_x, screen_y + rel_y)
 
-def focus_runelite_window():
-    """
-    Bring the RuneLite window to the foreground to ensure keyboard inputs register, only if not already focused.
-    """
-    # Only perform focus the first time this is called. Subsequent calls
-    # will be fast no-ops unless `reset_window_cache()` is called.
+# Focus state
+_focused_runelite_once = False
+
+def focus_runelite_window() -> bool:
     global _focused_runelite_once
-    try:
-        if _focused_runelite_once:
-            return True
-    except NameError:
-        _focused_runelite_once = False
+    if _focused_runelite_once:
+        return True
+
+    print("Attempting to focus RuneLite window...")
 
     runelite_windows = [w for w in gw.getWindowsWithTitle('RuneLite') if w.title == 'RuneLite']
     if not runelite_windows:
         print("RuneLite window not found.")
         return False
+
     runelite_window = runelite_windows[0]
+
+    # Restore if minimized
+    if runelite_window.isMinimized:
+        print("RuneLite window minimized - restoring...")
+        runelite_window.restore()
+        time.sleep(0.5)
+
     hwnd = runelite_window._hWnd
-    # Workaround for SetForegroundWindow error: Press Alt first
+
+    # Check if already foreground
+    if win32gui.GetForegroundWindow() == hwnd:
+        print("RuneLite already in foreground.")
+        _focused_runelite_once = True
+        return True
+
     pyautogui.press('alt')
-    win32gui.SetForegroundWindow(hwnd)
-    time.sleep(0.05)  # Small delay for focus to take effect
-    _focused_runelite_once = True
-    print("Debug: Focused RuneLite window.")
-    return True
+    try:
+        win32gui.SetForegroundWindow(hwnd)
+        time.sleep(0.2)
+        print("Focused RuneLite window successfully.")
+        _focused_runelite_once = True
+        return True
+    except Exception as e:
+        print(f"Failed to focus RuneLite: {e}")
+        return False
 
 def reset_window_cache():
-    """Reset cached RuneLite window coordinates and focus state.
-
-    Call this if the window has been moved/resized or if you want to force
-    re-acquisition of coordinates/focus.
-    """
     global _cached_runelite_coords, _focused_runelite_once
     _cached_runelite_coords = None
     _focused_runelite_once = False
+    print("Window cache reset.")
     return True

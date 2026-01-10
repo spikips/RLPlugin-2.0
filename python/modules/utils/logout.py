@@ -96,3 +96,4 @@ def logout_and_break(break_minutes):
 
 
 # logout_and_break(69)
+check_login_state_and_login()
