@@ -52,6 +52,8 @@ class PluginClient:
         print(f"Failed to connect to server after {retries} attempts.")
         return None
 
+
+
     def _receive_response(self, sock: socket.socket) -> Optional[Dict[str, Any]]:
         """
         Receive and parse the response from the server.
@@ -732,7 +734,7 @@ def pick(x: int, y: int, size: int = 0, item: str = "") -> Optional[Dict[str, An
     """Retrieve ground item data for picking up."""
     return _default_client.pick(x, y, size, item)
 
-def minimap_tiles(tilex: Optional[int] = None, tiley: Optional[int] = None) -> Optional[Dict[str, Any]]:
+def  minimap_tiles(tilex: Optional[int] = None, tiley: Optional[int] = None) -> Optional[Dict[str, Any]]:
     """Retrieve minimap tile data."""
     return _default_client.minimap_tiles(tilex, tiley)
 

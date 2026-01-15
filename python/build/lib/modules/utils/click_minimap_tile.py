@@ -5,9 +5,11 @@ from modules.core.mouse_control import move, scroll
 from modules.core.plugin_client import minimap_tile_point, player
 from modules.core.window_utils import runelite_window
 
-rl_x, rl_y = runelite_window(0, 0)
+# zoom = 2.0 is minimum, 4.0 is normal, 10.0 is maximum
 
 def click_minimap_tile(target_x, target_y, rand_x=0, rand_y=0, right_click=False, target_zoom: float = None):
+    
+    rl_x, rl_y = runelite_window(0, 0)
     """Click a random minimap tile around the target coordinates, optionally setting zoom first."""
     if target_zoom is not None:
         # Get player position to find minimap center

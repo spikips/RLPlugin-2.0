@@ -9,9 +9,13 @@ setup(
 # pip install -e .
 
 
-# how can i add all of my files to an existing github project using cmd? i have java files and python files in both it follow structure like this:
-# C:\Users\asd\Desktop\project
-# C:\Users\asd\Desktop\project\python
-# C:\Users\asd\Desktop\project\java
-#  
-# <https://github.com/spikips/RLPlugin-2.0.git>
+
+# cd C:\Users\asd\Desktop\project
+
+# git add .
+
+# git commit -m "Update: 10.1"
+
+# git push origin main
+
+# git status

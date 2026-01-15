@@ -1,34 +1,34 @@
 - TABS -
 inventory id:
-35913802
+35913795
 spriteid 1030 enabled else -1
 
 combat id:
-Id	35913791
+Id	35913792
 spriteid 1026 enabled else -1
 
 quest id:
-Id	35913793
+Id	35913794
 SpriteId 1030 enabled else -1
 
 equipment id:
-Id	35913795 
-spriteid 1030 enabled else -1
-
-prayer id:
 Id	35913796
 spriteid 1030 enabled else -1
 
-spellbook id:
+prayer id:
 Id	35913797
+spriteid 1030 enabled else -1
+
+spellbook id:
+Id	35913798
 SpriteId 1027 enabled else -1
 
 logout id:
-Id	35913778
+Id	35913779
 SpriteId 1030 enabled else -1
 
 settings id:
-Id	35913779
+Id	35913781
 SpriteId 1030 enabled else -1
 
 ---

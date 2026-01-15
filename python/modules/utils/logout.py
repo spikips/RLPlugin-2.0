@@ -94,6 +94,35 @@ def logout_and_break(break_minutes):
     print("Login timed out after 15 seconds")
     exit("Failed to log back in")
 
+def logout():
+    """Logs out the player."""
+    print("Initiating logout")
+    logged_out = False
+
+    # clicks logout widget
+    click_widget(35913786, rand_x=10, rand_y=10)
+
+    time.sleep(random.uniform(0.22, 0.25))
+    tries = 0
+    while not logged_out:
+        # Logout clicks
+        logout_1 = click_widget(11927564)
+        if not logout_1:
+            click_widget(4522009)
+        
+        # Poll for up to 2 seconds
+        start_poll = time.time()
+        while time.time() - start_poll < 2:
+            if game_state().get('data') == "LOGIN_SCREEN":
+                print("Logged out successfully")
+                logged_out = True
+                break
+            time.sleep(0.1)
+        
+        if not logged_out:
+            tries += 1
+            print(f"Logout not detected, retrying...", {tries})
 
 # logout_and_break(69)
-check_login_state_and_login()
+# check_login_state_and_login()
+# logout()

@@ -3,7 +3,7 @@
 import json
 from typing import List, Tuple, Optional, Dict
 
-BANK_CACHE_PATH = r"C:\Users\Asd\source\repos\runelite_plugin\modules\fetch_data\bank\bank_items.json"
+BANK_CACHE_PATH = r"C:\Users\asd\Desktop\project\python\modules\fetch_data\bank\bank_items.json"
 
 def load_bank_items() -> Optional[List[Dict[str, any]]]:
     """
