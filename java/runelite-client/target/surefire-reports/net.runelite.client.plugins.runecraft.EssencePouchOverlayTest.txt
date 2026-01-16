@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: net.runelite.client.plugins.runecraft.EssencePouchOverlayTest
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 0 s - in net.runelite.client.plugins.runecraft.EssencePouchOverlayTest

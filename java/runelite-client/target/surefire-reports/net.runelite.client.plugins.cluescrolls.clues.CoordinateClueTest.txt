@@ -1,0 +1,8 @@
+-------------------------------------------------------------------------------
+Test set: net.runelite.client.plugins.cluescrolls.clues.CoordinateClueTest
+-------------------------------------------------------------------------------
+Tests run: 6, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.012 s <<< FAILURE! - in net.runelite.client.plugins.cluescrolls.clues.CoordinateClueTest
+testResourceAreaCosts(net.runelite.client.plugins.cluescrolls.clues.CoordinateClueTest)  Time elapsed: 0.001 s  <<< FAILURE!
+java.lang.AssertionError
+	at net.runelite.client.plugins.cluescrolls.clues.CoordinateClueTest.testResourceAreaCosts(CoordinateClueTest.java:110)
+

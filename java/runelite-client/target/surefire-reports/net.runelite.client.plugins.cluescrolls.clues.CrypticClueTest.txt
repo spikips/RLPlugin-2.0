@@ -1,0 +1,8 @@
+-------------------------------------------------------------------------------
+Test set: net.runelite.client.plugins.cluescrolls.clues.CrypticClueTest
+-------------------------------------------------------------------------------
+Tests run: 5, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.006 s <<< FAILURE! - in net.runelite.client.plugins.cluescrolls.clues.CrypticClueTest
+forResourceAreaCosts(net.runelite.client.plugins.cluescrolls.clues.CrypticClueTest)  Time elapsed: 0.003 s  <<< FAILURE!
+java.lang.AssertionError
+	at net.runelite.client.plugins.cluescrolls.clues.CrypticClueTest.forResourceAreaCosts(CrypticClueTest.java:107)
+
