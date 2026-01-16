@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: net.runelite.client.plugins.woodcutting.WoodcuttingPluginTest
--------------------------------------------------------------------------------
-Tests run: 17, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.07 s - in net.runelite.client.plugins.woodcutting.WoodcuttingPluginTest

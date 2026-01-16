@@ -1,8 +1,0 @@
--------------------------------------------------------------------------------
-Test set: net.runelite.client.plugins.chatcommands.ChatCommandsPluginTest
--------------------------------------------------------------------------------
-Tests run: 64, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.695 s <<< FAILURE! - in net.runelite.client.plugins.chatcommands.ChatCommandsPluginTest
-testSecondsToTimeString(net.runelite.client.plugins.chatcommands.ChatCommandsPluginTest)  Time elapsed: 0.009 s  <<< FAILURE!
-org.junit.ComparisonFailure: expected:<0:03[.]60> but was:<0:03[,]60>
-	at net.runelite.client.plugins.chatcommands.ChatCommandsPluginTest.testSecondsToTimeString(ChatCommandsPluginTest.java:1074)
-

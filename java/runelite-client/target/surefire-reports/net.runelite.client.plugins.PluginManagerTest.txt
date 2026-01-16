@@ -1,8 +1,0 @@
--------------------------------------------------------------------------------
-Test set: net.runelite.client.plugins.PluginManagerTest
--------------------------------------------------------------------------------
-Tests run: 4, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 5.118 s <<< FAILURE! - in net.runelite.client.plugins.PluginManagerTest
-testLoadPlugins(net.runelite.client.plugins.PluginManagerTest)  Time elapsed: 2.417 s  <<< FAILURE!
-java.lang.AssertionError: expected:<132> but was:<131>
-	at net.runelite.client.plugins.PluginManagerTest.testLoadPlugins(PluginManagerTest.java:155)
-

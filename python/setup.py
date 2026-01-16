@@ -10,18 +10,20 @@ setup(
 
 
 
-# cd C:\Users\asd\Desktop\project
+cd C:\Users\asd\Desktop\project
 
-# git add .
+git add .
 
-# git commit -m "Update: 10.1"
+git commit -m "Update: 10.1"
 
-# git push origin main
+git push origin main
 
-# git status
+
 git rm --cached java -r
 
-git add java/
+git add -f java/.
+cd java/runelite-client/src/main/java/net/runelite/client/plugins/asd/
+# git add -f java/runelite-client/src/main/java/net/runelite/client/plugins/asd/.
 
 git commit -m "Update: 16.1"
 
