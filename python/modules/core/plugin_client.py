@@ -634,7 +634,15 @@ def slayer_task_remaining() -> int:
     return response.get('data', 0) if response else 0
 
 def varbit_changes() -> Optional[List[Dict[str, Any]]]:
-    """Get list of varbit changes since last call (for debugging)."""
+    """
+    Get list of variable changes since last call (for debugging).
+    Each change dict now includes:
+    - 'type': str ('varbit', 'varp', 'varcint', 'varcstr')
+    - 'id': int
+    - 'old': int/str (depending on type; -1 or '' if unknown)
+    - 'new': int/str
+    - 'tick': int
+    """
     return _default_client.send_request('varbit_changes', {})
 
 def cannon_data(): return _default_client.cannon_data()
