@@ -21,18 +21,6 @@ click_down('left')  # Press down left mouse button
 # Valid buttons: 'left', 'middle', 'right'
 click_up('left')  # Release left mouse button
 
-# Example for left_click()
-# Performs a full left mouse click (down + up with a short delay)
-left_click()
-
-# Example for right_click()
-# Performs a full right mouse click (down + up with a short delay)
-right_click()
-
-# Example for middle_click()
-# Performs a full middle mouse click (down + up with a short delay)
-middle_click()
-
 # Example for scroll(direction, sleep=0.1)
 # Scrolls the mouse wheel up (positive direction) or down (negative)
 # direction: int (positive for up, negative for down)
@@ -594,18 +582,19 @@ print(f"Sequence success: {success}")
 
 #---#  
 # utils/varbit_change.py
-# from modules.utils.varbit_change import varbit_change
+from modules.utils.varbit_change import varbit_change
 # Note: This is a script that polls for varbit changes in Old School RuneScape via a RuneLite plugin.
 # It relies on modules.core.plugin_client (varbit_changes), time.
 # No functions defined; runs a loop printing changes every tick (0.6s).
 
-# Example usage: Run the script to monitor varbit changes.
-# while True:
-#     changes = varbit_changes()
-#     if changes and 'data' in changes:
-#         for change in changes['data']:
-#             print(f"Varbit {change['varbit']} changed: {change['old']} -> {change['new']} (tick {change['tick']})")
-#     time.sleep(0.6)
+while True:
+    varbit_change()
+# returns:
+# Varbit 12391 changed: 923 -> 525 (tick 1)
+# Varbit 12392 changed: 16 -> 17 (tick 1)
+# Varp (Varplayer) 3079 changed: 288966 -> 288967 (tick 1)
+# VarClientInt 1112 changed: 3593 -> 3631 (tick 1)
+# VarClientInt 57 changed: 3592 -> 3631 (tick 1)
 
 #---#  
 # utils/wait_for_tick.py
@@ -891,11 +880,12 @@ print(f"Name: {name}")
 
 # Example for click_widget(id_str, sprite_id=None, action=None, right_click=False, sleep_interval=(0,0), clicks=1, rand_x=0, rand_y=0)
 # Clicks widget, optionally with action or right-click.
-clicked = click_widget('35913778')
+# if spriteid is provided, only clicks if doesn't match.
+clicked = click_widget('35913796', sprite_id=1030, hidden=False, right_click=False, action=None, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0))
 print(f"Clicked: {clicked}")
 
 # With action
-click_widget('10485782', action='Some Action')
+click_widget('10485782', action='Walk here')
 
 # Multiple clicks
 click_widget('8454150', clicks=3, sleep_interval=(0.1, 0.2))
@@ -964,87 +954,31 @@ from modules.core.plugin_client import slayer_task_remaining, varbit_changes, ca
 from scripts.combat.slayer.slayer_master_edgeville import full_navigation
 full_navigation()
 
-from modules.utils.monitor_clicks import monitor_clicks returns: 
+from modules.utils.monitor_clicks import get_recent_clicks
+while True:
+    get_recent_clicks(limit=50, max_changes=55)
+    wait_for_next_tick()
+# returns: 
 # Click #1:
-#   Tick: 27
+#   Tick: 4
 #   Type: menu_option
-#   Option: Open
-#   Target: Gate
-#   Canvas Position: (255, 114)
-#   Entity Type: object-
-#     Object Name: Gate
-#     Object ID: 1728
-#     Object Tile: (3132, 9864, plane: 0)
-
-# Click #2:
-#   Tick: 31
-#   Type: menu_option
-#   Option: Don't go
+#   Option: Play
 #   Target: 
-#   Canvas Position: (343, 257)
-
-# Click #3:
-#   Tick: 36
-#   Type: menu_option
-#   Option: Set-up
-#   Target: Cannon base
-#   Canvas Position: (588, 232)
-
-# Click #4:
-#   Tick: 49
-#   Type: menu_option
-#   Option: Worn Equipment
-#   Target: 
-#   Canvas Position: (679, 191)
-#   Widget Changes:
-#     Widget ID: 35913795, Path: _1_9_1_3, Old Sprite: 1030, New Sprite: -1
-
-# Click #5:
-#   Tick: 51
-#   Type: menu_option
-#   Option: View equipment stats
-#   Target: 
-#   Canvas Position: (584, 427)
-
-# Click #6:
-#   Tick: 57
-#   Type: menu_option
-#   Option: Close
-#   Target: 
-#   Canvas Position: (492, 24)
-
-# Click #7:
-#   Tick: 65
-#   Type: menu_option
-#   Option: Cancel
-#   Target: 
-#   Canvas Position: (641, 110)
-#   Minimap Click: True
-#   Minimap Tile: (3131, 9911, plane: 0)
-
-# Click #8:
-#   Tick: 71
-#   Type: menu_option
-#   Option: Walk here
-#   Target: 
-#   Canvas Position: (307, 178)
-#   Clicked Tile: (3383, 9864, plane: 0)
-
-# Click #9:
-#   Tick: 83
-#   Type: menu_option
-#   Option: Remove
-#   Target: Brine sabre
-#   Canvas Position: (590, 306)
-#   Widget Changes:
-#     Widget ID: 10485798, Path: _1_2_7_0_5_3, Old Sprite: 1607, New Sprite: 1064
-
-# Click #10:
-#   Tick: 93
-#   Type: menu_option
-#   Option: Activate
-#   Target: Quick-prayers
-#   Canvas Position: (545, 91)
-#   Widget Changes:
-#     Widget ID: 10485782, Path: _1_2_7_0_3_3, Old Sprite: 1063, New Sprite: 1066
-#     Widget ID: 10485785, Path: _1_2_7_0_3_5, Old Sprite: 1068, New Sprite: 1058
+#   Canvas Position: (419, 320)
+#   Entity Type: widget
+#     Widget ID: 24772680
+#     Widget Type: 0
+#     Widget Bounds: x=268, y=292, width=229, height=90
+#   Text Widget Changes:
+#     Type: new, Widget ID: 10616888, Path: _1_4_0_1_4_0_0
+#       Old Text: N/A
+#       New Text: upseeripasi: <col=0000ff></col><col=0000ff>*</col>
+#   Sprite Widget Changes:
+#     Type: new, Widget ID: 10485766, Path: _1_2_7_0_1
+#       Old Sprite: -1, New Sprite: 1197
+#     Type: new, Widget ID: 10485815, Path: _1_2_7_0_8_1
+#       Old Sprite: -1, New Sprite: 1439
+#     Type: new, Widget ID: 10485810, Path: _1_2_7_0_9_0
+#       Old Sprite: -1, New Sprite: 2420
+#     Type: new, Widget ID: 35913795, Path: _1_9_1_3
+#       Old Sprite: -1, New Sprite: 1030

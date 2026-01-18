@@ -20,6 +20,29 @@ from modules.widgets.widget_data import get_all_widget_data
 from modules.core.window_utils import runelite_window, focus_runelite_window
 from modules.player_data.prayer.toggle_prayer import toggle_prayer
 from modules.core.plugin_client import slayer_task_remaining
+from modules.utils.check_if_in_tile import is_player_idle, check_if_in_tile
+from modules.widgets.widget import get_widget, check_widget, check_widget_text, check_widget_name, click_widget, click_widget_child, click_widget_by_name
+from modules.npc_data.click_npc import get_player_position, click_npc, click_closest_npc
+
+
+
+# click_inventory('cannon base', action='Set-up', hover_only=False)
+
+# click_object("29321", 'bank', tile=(1641, 3944), radius=20)
+
+# click_object("55423", 'Big-search', tile=(1636, 3942), radius=20)
+
+# click_closest_npc('captain kalt', option='check scores', max_attempts=5)
+
+# on_tile = check_if_in_tile(x=1625, y=3938, plane=0, click=True, right_click=False)
+
+
+# click_widget('35913796', sprite_id=1030, hidden=False, right_click=False, action=None, rand_x=1, rand_y=1, clicks=1, sleep_interval=(0, 0))
+# click_widget('35913794', sprite_id=1030, hidden=False, right_click=False, action=None, rand_x=1, rand_y=1, clicks=1, sleep_interval=(0, 0))
+# click_widget('35913793', sprite_id=1030, hidden=False, right_click=False, action=None, rand_x=1, rand_y=1, clicks=1, sleep_interval=(0, 0))
+# click_widget('35913796', sprite_id=1030, hidden=False, right_click=False, action=None, rand_x=1, rand_y=1, clicks=1, sleep_interval=(0, 0))
+# click_widget('35913795', sprite_id=1030, hidden=False, right_click=False, action=None, rand_x=1, rand_y=1, clicks=1, sleep_interval=(0, 0))
+
 
 # remaining = slayer_task_remaining()
 # print(f"Slayer task NPCs left: {remaining}")

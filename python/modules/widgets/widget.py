@@ -118,7 +118,7 @@ def click_widget(id_str, sprite_id=None, hidden=False, right_click=False, action
     for widget in widgets:
         if widget.get("id") != widget_id:
             continue
-        if sprite_id is not None and widget.get("spriteId") != sprite_id:
+        if sprite_id is not None and widget.get("spriteId") == sprite_id:
             continue
         if hidden is not None and widget.get("hidden", False) != hidden:
             continue

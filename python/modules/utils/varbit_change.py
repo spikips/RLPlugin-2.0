@@ -3,7 +3,7 @@
 from modules.core.plugin_client import varbit_changes
 import time
 
-while True:
+def varbit_change():
     response = varbit_changes()
     # print(response)
     if response and 'data' in response:

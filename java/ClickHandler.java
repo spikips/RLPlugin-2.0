@@ -67,6 +67,9 @@ public class ClickHandler implements RequestHandler, MouseListener {
         }
     }
 
+    private int snapshotTick = -1;
+    private static final int MAX_WAIT_TICKS = 3;  // Checks for up to 3 ticks after snapshot (adjust to 2 if preferred)
+
     private boolean isChatboxRelated(Widget widget) {
         Widget parent = widget;
         while (parent != null) {
@@ -97,11 +100,56 @@ public class ClickHandler implements RequestHandler, MouseListener {
         } else if ("recent_clicks".equals(function)) {
             int limit = params.containsKey("limit") ? ((Number) params.get("limit")).intValue() : 5;
             return recentClicks.stream().skip(Math.max(0, recentClicks.size() - limit)).collect(Collectors.toList());
+        } else if ("clear_clicks".equals(function)) {
+            int clearedCount;  // Declare here
+
+            synchronized (recentClicks) {
+                clearedCount = recentClicks.size();
+                recentClicks.clear();
+            }
+
+            previousWidgetStates.clear();
+            snapshotTaken = false;
+            snapshotTick = -1;
+
+            log.info("Cleared {} recent click(s) via socket request", clearedCount);
+
+            return Map.of("status", "cleared", "cleared_count", clearedCount);
         }
         return new ResponseData().setError("Unknown click function: " + function);
     }
 
-    // Updated onMenuOptionClicked with fallback widget detection and dialogue option handling
+    private List<Map<String, Object>> computeWidgetChanges(Map<String, WidgetState> oldStates) {
+        List<Map<String, Object>> changes = new ArrayList<>();
+
+        for (Widget root : client.getWidgetRoots()) {
+            if (root == null || root.isHidden()) continue;
+
+            checkWidgetRecursive(root, "", changes, oldStates);
+        }
+
+        if (changes.isEmpty()) {
+            log.info("No widget changes detected on this tick");
+        } else {
+            log.info("{} widget changes detected on this tick", changes.size());
+        }
+
+        return changes;
+    }
+
+    private Map<String, Integer> getGroundClickTile(int localX, int localY) {
+        LocalPoint localPoint = new LocalPoint(localX, localY);
+
+        // Handles instanced regions correctly (recommended over plain fromLocal)
+        WorldPoint worldPoint = WorldPoint.fromLocalInstance(client, localPoint);
+
+        Map<String, Integer> tile = new HashMap<>();
+        tile.put("x", worldPoint.getX());
+        tile.put("y", worldPoint.getY());
+        tile.put("plane", worldPoint.getPlane());
+        return tile;
+    }
+
     @Subscribe
     public void onMenuOptionClicked(MenuOptionClicked event) {
         if (!config.enableClickLogging()) return;
@@ -162,28 +210,91 @@ public class ClickHandler implements RequestHandler, MouseListener {
         // Take snapshot on any menu click that could change widgets
         if (action != MenuAction.WALK) {  // Exclude pure walk to reduce noise
             log.info("Taking widget snapshot after menu click: {} {}", event.getMenuOption(), event.getMenuTarget());
+
+            // NEW: Handle rapid clicks — if there's a pending snapshot, detect changes NOW (using the old pre-state)
+            if (snapshotTaken) {
+                List<Map<String, Object>> changes = detectWidgetChanges();  // Uses previousWidgetStates
+
+                if (!changes.isEmpty() && !recentClicks.isEmpty()) {
+                    // Associate with the PREVIOUS click (the one that just finished processing)
+                    Map<String, Object> previousClick = recentClicks.peekLast();
+                    previousClick.put("widget_changes", changes);
+                    log.info("Rapid click detected: associated {} widget change(s) to previous click (immediate)", changes.size());
+                }
+
+                // Reset pending state — we're done with the old snapshot
+                snapshotTaken = false;
+                snapshotTick = -1;
+                previousWidgetStates.clear();  // Will be repopulated below for the new click
+            }
+
+            // Now take a fresh PRE-state snapshot for the CURRENT click
             snapshotWidgets();
         }
 
         if (action == MenuAction.WALK) {
-            Map<String, Integer> tile = unpackTile(event.getParam0(), event.getParam1());
-            clickData.put("clicked_tile", tile);
+            Map<String, Integer> tile = getClickedTile();
+            if (tile != null) {
+                clickData.put("clicked_tile", tile);
+            }
         } else if (action.toString().startsWith("NPC_")) {
             clickData.put("entity_type", "npc");
             clickData.put("npc_name", Text.removeTags(event.getMenuTarget()));
             int npcIndex = event.getParam1();
             clickData.put("npc_index", npcIndex);
-            net.runelite.api.NPC npc = findNpcByIndex(npcIndex);
-            if (npc != null) {
-                clickData.put("npc_id", npc.getId());
+
+            // Primary: Try name-based lookup (reliable for static/minigame NPCs)
+            net.runelite.api.NPC foundNpc = null;
+            String targetName = clickData.get("npc_name").toString().toLowerCase();
+            for (net.runelite.api.NPC npc : client.getNpcs()) {
+                if (npc != null && npc.getName() != null && npc.getName().toLowerCase().equals(targetName)) {
+                    foundNpc = npc;
+                    break;  // First match (unique name)
+                }
+            }
+
+            if (foundNpc != null) {
+                clickData.put("npc_id", foundNpc.getId());  // Will be 7377 (or 18475 if variant)
+                WorldPoint wp = foundNpc.getWorldLocation();
+                clickData.put("npc_tile", Map.of("x", wp.getX(), "y", wp.getY(), "plane", wp.getPlane()));
+                log.info("Found NPC by name: ID={}, Index={}", foundNpc.getId(), foundNpc.getIndex());
             } else {
-                clickData.put("npc_id", event.getId());
+                // Fallback to index (rare)
+                net.runelite.api.NPC npcByIndex = findNpcByIndex(npcIndex);
+                if (npcByIndex != null) {
+                    clickData.put("npc_id", npcByIndex.getId());
+                    WorldPoint wp = npcByIndex.getWorldLocation();
+                    clickData.put("npc_tile", Map.of("x", wp.getX(), "y", wp.getY(), "plane", wp.getPlane()));
+                } else {
+                    // Ultimate fallback to menu ID
+                    clickData.put("npc_id", event.getId());
+                    log.warn("NPC lookup failed for '{}' (index {}), using menu ID {}", targetName, npcIndex, event.getId());
+                }
             }
         } else if (action.toString().startsWith("GAME_OBJECT_")) {
             clickData.put("entity_type", "object");
             clickData.put("object_id", event.getId());
             clickData.put("object_name", Text.removeTags(event.getMenuTarget()));
-            clickData.put("object_tile", unpackTile(event.getParam0(), event.getParam1()));
+
+            // Prefer object's own tile if available
+            Tile selectedTile = client.getSelectedSceneTile();
+            if (selectedTile != null) {
+                WorldPoint objTile = selectedTile.getWorldLocation();
+                clickData.put("object_tile", Map.of(
+                        "x", objTile.getX(),
+                        "y", objTile.getY(),
+                        "plane", objTile.getPlane()
+                ));
+            }
+        } else {
+            // Fallback if no selected tile
+            LocalPoint local = LocalPoint.fromScene(event.getParam0(), event.getParam1());
+            WorldPoint world = WorldPoint.fromLocalInstance(client, local);
+            clickData.put("object_tile", Map.of(
+                    "x", world.getX(),
+                    "y", world.getY(),
+                    "plane", world.getPlane()
+            ));
         }
 
         addToRecentClicks(clickData);
@@ -242,21 +353,34 @@ public class ClickHandler implements RequestHandler, MouseListener {
         return null;
     }
 
-    // onGameTick – unchanged from previous fix (just call the new detector)
     @Subscribe
     public void onGameTick(GameTick event) {
-        if (snapshotTaken) {
-            log.info("Checking for widget changes on tick {}", client.getTickCount());
-            lastWidgetChanges = detectWidgetChanges();
+        if (!snapshotTaken) {
+            return;
+        }
 
-            if (!lastWidgetChanges.isEmpty() && !recentClicks.isEmpty()) {
-                Map<String, Object> lastClick = recentClicks.peekLast();
-                lastClick.put("widget_changes", lastWidgetChanges);
-                log.info("{} widget change(s) associated with last click", lastWidgetChanges.size());
-            } else if (lastWidgetChanges.isEmpty()) {
-                log.info("No widget changes detected on this tick");
-            }
+        int currentTick = client.getTickCount();
+        int waitedTicks = currentTick - snapshotTick;
+
+        if (waitedTicks > MAX_WAIT_TICKS) {
+            log.info("Widget change detection timed out after {} ticks without changes", waitedTicks);
             snapshotTaken = false;
+            snapshotTick = -1;
+            previousWidgetStates.clear();
+            return;
+        }
+
+        List<Map<String, Object>> changes = detectWidgetChanges();
+
+        if (!changes.isEmpty() && !recentClicks.isEmpty()) {
+            Map<String, Object> lastClick = recentClicks.peekLast();
+            lastClick.put("widget_changes", changes);
+            log.info("{} widget change(s) associated with last click after {} tick(s) delay",
+                    changes.size(), waitedTicks);
+
+            snapshotTaken = false;
+            snapshotTick = -1;
+            previousWidgetStates.clear();
         }
     }
 
@@ -314,8 +438,9 @@ public class ClickHandler implements RequestHandler, MouseListener {
             snapshotWidgetRecursive(root, "");
         }
 
-        log.info("Widget snapshot taken: {} widgets stored", previousWidgetStates.size());
+        log.info("Widget snapshot taken: {} widgets stored at tick {}", previousWidgetStates.size(), client.getTickCount());
         snapshotTaken = true;
+        snapshotTick = client.getTickCount();
     }
 
     private int snapshotWidgetRecursive(Widget widget, String path) {
@@ -365,36 +490,24 @@ public class ClickHandler implements RequestHandler, MouseListener {
     }
 
     private List<Map<String, Object>> detectWidgetChanges() {
-        List<Map<String, Object>> changes = new ArrayList<>();
-
-        for (Widget root : client.getWidgetRoots()) {
-            if (root == null || root.isHidden()) continue;
-
-            checkWidgetRecursive(root, "", changes);
-        }
-
-        if (changes.isEmpty()) {
-            log.info("No widget changes detected on this tick");
-        } else {
-            log.info("{} widget changes detected on this tick", changes.size());
-        }
-
-        return changes;
+        return computeWidgetChanges(previousWidgetStates);
     }
 
-    private void checkWidgetRecursive(Widget widget, String path, List<Map<String, Object>> changes) {
-        if (widget == null || widget.isHidden()) return;
+    private void checkWidgetRecursive(Widget widget, String path, List<Map<String, Object>> changes, Map<String, WidgetState> oldStates) {
+        if (widget == null || widget.isHidden()) {
+            return;
+        }
 
         String key = widget.getId() + path;
-
-        WidgetState previous = previousWidgetStates.get(key);
+        WidgetState previous = oldStates.get(key);
 
         int currentSpriteId = widget.getSpriteId();
+
         String currentText = null;
         if (widget.getType() == WidgetType.TEXT) {
             String t = widget.getText();
-            if (t != null && !t.isEmpty()) {
-                currentText = t;
+            if (t != null && !t.trim().isEmpty()) {  // Trim to ignore whitespace-only
+                currentText = t.trim();
             }
         }
 
@@ -404,7 +517,7 @@ public class ClickHandler implements RequestHandler, MouseListener {
         boolean textChanged = previous != null && !Objects.equals(currentText, previous.text);
 
         boolean isNew = previous == null;
-        boolean hasNewSprite = isNew && currentSpriteId > -1;
+        boolean hasNewSprite = isNew && currentSpriteId != -1;
         boolean hasNewText = isNew && currentText != null && isChat;
 
         boolean hasSpriteChange = spriteChanged || hasNewSprite;
@@ -426,8 +539,8 @@ public class ClickHandler implements RequestHandler, MouseListener {
             }
 
             if (hasTextChange) {
-                change.put("old_text", previous != null ? previous.text : null);
-                change.put("new_text", currentText);
+                change.put("old_text", previous != null ? (previous.text != null ? previous.text : "N/A") : "N/A");
+                change.put("new_text", currentText != null ? currentText : "N/A");
             }
 
             changes.add(change);
@@ -440,33 +553,37 @@ public class ClickHandler implements RequestHandler, MouseListener {
                     change.getOrDefault("new_text", "N/A"));
         }
 
+        // Recurse into all children (no early skip for chat — allows detecting new text inside chat if desired)
         Widget[] children = widget.getDynamicChildren();
         if (children != null) {
             for (int i = 0; i < children.length; i++) {
-                checkWidgetRecursive(children[i], path + "_" + i, changes);
+                checkWidgetRecursive(children[i], path + "_" + i, changes, oldStates);
             }
         }
 
         children = widget.getStaticChildren();
         if (children != null) {
             for (int i = 0; i < children.length; i++) {
-                checkWidgetRecursive(children[i], path + "_" + i, changes);
+                checkWidgetRecursive(children[i], path + "_" + i, changes, oldStates);
             }
         }
 
         children = widget.getNestedChildren();
         if (children != null) {
             for (int i = 0; i < children.length; i++) {
-                checkWidgetRecursive(children[i], path + "_" + i, changes);
+                checkWidgetRecursive(children[i], path + "_" + i, changes, oldStates);
             }
         }
     }
 
-    private Map<String, Integer> unpackTile(int param0, int param1) {
-        int sceneX = param0 & 0x3FFF;
-        int sceneY = param0 >> 14 & 0x3FFF;
-        LocalPoint local = LocalPoint.fromScene(sceneX, sceneY);
-        WorldPoint world = WorldPoint.fromLocal(client, local);
+    private Map<String, Integer> getClickedTile() {
+        Tile selectedTile = client.getSelectedSceneTile();
+        if (selectedTile == null) {
+            return null;  // No tile selected (rare for WALK)
+        }
+
+        WorldPoint world = selectedTile.getWorldLocation();  // Accurate, instance-aware
+
         Map<String, Integer> tile = new HashMap<>();
         tile.put("x", world.getX());
         tile.put("y", world.getY());
@@ -626,3 +743,4 @@ public class ClickHandler implements RequestHandler, MouseListener {
         return null;
     }
 }
+
