@@ -4,25 +4,10 @@
 
 from typing import Optional, Dict, List, Any
 
-from modules.core.plugin_client import _default_client  # Adjusted import path based on your setup
-
-def clear_clicks() -> bool:
-    """
-    Clear all stored recent clicks on the server side.
-    
-    Returns:
-        bool: True if cleared successfully, False otherwise.
-    """
-    params = {"function": "clear_clicks"}
-    response = _default_client.send_request('click', params)
-    if response and 'data' in response:
-        data = response['data']
-        if data.get("status") == "cleared":
-            cleared = data.get("cleared_count", "unknown")
-            print(f"Recent clicks cleared successfully ({cleared} removed).")
-            return True
-    print("Failed to clear clicks (no response or error).")
-    return False
+from modules.core.plugin_client import player
+from modules.utils.wait_for_tick import wait_for_next_tick
+from modules.core.plugin_client import player, gametick
+from modules.core.plugin_client import _default_client
 
 def _print_click_data(click_data: Dict[str, Any], print_text: bool = True, max_changes: Optional[int] = None):
     """
@@ -74,6 +59,20 @@ def _print_click_data(click_data: Dict[str, Any], print_text: bool = True, max_c
                 if 'bounds' in widget:
                     bounds = widget['bounds']
                     print(f"    Widget Bounds: x={bounds.get('x', 'N/A')}, y={bounds.get('y', 'N/A')}, width={bounds.get('width', 'N/A')}, height={bounds.get('height', 'N/A')}")
+                if 'parent_id' in widget:
+                    print(f"    Parent ID: {widget.get('parent_id', 'N/A')}")
+                if 'child_index' in widget:
+                    print(f"    Child Index: {widget.get('child_index', 'N/A')}")
+                # NEW: Print child texts if present
+                if 'child_texts' in widget:
+                    child_texts = widget['child_texts']
+                    if child_texts:
+                        print("    Child Texts:")
+                        for text in child_texts:
+                            print(f"      - {text}")
+    if click_data.get('type') == 'middle_mouse_press' and 'camera' in click_data:
+        camera = click_data['camera']
+        print(f"  Camera: pitch={camera.get('pitch', 'N/A')}, yaw={camera.get('yaw', 'N/A')}, zoom={camera.get('zoom', 'N/A')}")
 
     if 'widget_changes' in click_data:
         changes = click_data['widget_changes']
@@ -94,6 +93,8 @@ def _print_click_data(click_data: Dict[str, Any], print_text: bool = True, max_c
                 print("  Text Widget Changes:")
                 for change in text_changes:
                     print(f"    Type: {change.get('type', 'N/A')}, Widget ID: {change.get('widget_id', 'N/A')}, Path: {change.get('path', 'N/A')}")
+                    if 'name' in change:
+                        print(f"      Name: {change.get('name', 'N/A')}")
                     print(f"      Old Text: {change.get('old_text', 'N/A')}")
                     print(f"      New Text: {change.get('new_text', 'N/A')}")
             
@@ -104,11 +105,32 @@ def _print_click_data(click_data: Dict[str, Any], print_text: bool = True, max_c
                     print("  Sprite Widget Changes:")
                     for change in limited_sprite_changes:
                         print(f"    Type: {change.get('type', 'N/A')}, Widget ID: {change.get('widget_id', 'N/A')}, Path: {change.get('path', 'N/A')}")
-                        print(f"      Old Sprite: {change.get('old_sprite', 'N/A')}, New Sprite: {change.get('new_sprite', 'N/A')}")
+                        if 'name' in change:
+                            print(f"      Name: {change.get('name', 'N/A')}")
+                        print(f"      Old Sprite: {change.get('old_sprite', 'N/A')}, New Sprite: {change.get('new_sprite', 'N/A')}")                        
                         if 'old_text' in change:
                             print(f"      Old Text: {change['old_text']}")
                         if 'new_text' in change:
                             print(f"      New Text: {change['new_text']}")
+
+def clear_clicks() -> bool:
+    """
+    Clear all stored recent clicks on the server side.
+    
+    Returns:
+        bool: True if cleared successfully, False otherwise.
+    """
+    params = {"function": "clear_clicks"}
+    response = _default_client.send_request('click', params)
+    if response and 'data' in response:
+        data = response['data']
+        if data.get("status") == "cleared":
+            cleared = data.get("cleared_count", "unknown")
+            print(f"Recent clicks cleared successfully ({cleared} removed).")
+            return True
+    print("Failed to clear clicks (no response or error).")
+    return False
+
 
 def get_last_click(print_text: bool = True, max_changes: Optional[int] = None) -> Optional[Dict[str, Any]]:
     """
@@ -204,12 +226,21 @@ def get_minimap_click_functions(limit: int = 50):
         y = tile['y']
         plane = tile.get('plane', 0)
         
-        if plane == 0:
-            func_call = f"click_minimap_tile({x}, {y}, rand_x=2, rand_y=2, target_zoom=2.0)"
-        else:
-            func_call = f"click_minimap_tile({x}, {y}, plane={plane}, rand_x=2, rand_y=2, target_zoom=2.0)"
+        func_args = f"{x}, {y}"
+        tile_str = f"({x}, {y})"
+        if plane != 0:
+            func_args += f", plane={plane}"
+            tile_str = f"({x}, {y}, plane={plane})"
         
-        print(f"  #{i:2d}: {func_call}")
+        func_call = f"click_minimap_tile({func_args}, rand_x=2, rand_y=2, target_zoom=2.0)"
+        
+        print(f"# {i}")
+        print(f"if not {func_call}:")
+        print(f"    print(\"Failed to click minimap tile {tile_str}\")")
+        print("    exit()")
+        print("else:")
+        print("    wait_till_character_stopped_moving()")
+        print()
 
 
 
@@ -270,8 +301,10 @@ def get_widget_click_functions(limit: int = 50):
             f"hidden=False, right_click=False, action=None, "
             f"rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0))"
         )
+        print(f"# {i}")
+        print(f"if not {func_call}:")
+        print(f"   exit(f'click widget {item['widget_id']} failed, exiting... time: {{time.strftime(\"%H:%M:%S\")}}')")
         
-        print(f"  #{i:2d}: {func_call}")
 
 def get_recent_walk_clicks(limit: int = 10) -> Optional[List[Dict[str, Any]]]:
     """
@@ -305,6 +338,9 @@ def get_recent_walk_clicks(limit: int = 10) -> Optional[List[Dict[str, Any]]]:
         print("No 'Walk here' clicks in recent history.")
         return []
     
+    # Reverse to make newest #1
+    walk_clicks = list(reversed(walk_clicks))
+    
     print(f"Recent Walk Clicks (last {len(walk_clicks)}):")
     raw_walks = []
     for i, (click_data, tile) in enumerate(walk_clicks, 1):
@@ -318,7 +354,17 @@ def get_recent_walk_clicks(limit: int = 10) -> Optional[List[Dict[str, Any]]]:
         right_click = False  # Adjust if needed for right-click detection
         
         func_call = f"click_tile({x}, {y}, plane={plane}, action=\"{action}\", tile_radius={tile_radius}, right_click={right_click})"
-        print(f"  #{i:2d}: {func_call}")
+        tile_str = f"({x}, {y})" if plane == 0 else f"({x}, {y}, plane={plane})"
+        
+        print(f"# {i}")
+        print("for i in range(3):")
+        print(f"    if {func_call}:")
+        print("       if wait_till_character_stopped_moving():")
+        print("            break")
+        print("    if i == 2:")
+        print(f"        exit(\"Failed to walk to {tile_str}\")")
+        print()
+        
         raw_walks.append(click_data)
     
     return raw_walks
@@ -358,11 +404,23 @@ def get_recent_npc_clicks(limit: int = 5) -> Optional[List[Dict[str, Any]]]:
         print("No NPC menu_option clicks in recent history.")
         return []
     
+    # Reverse to make newest #1
+    npc_clicks = list(reversed(npc_clicks))
+    
     print(f"Recent NPC Clicks (last {len(npc_clicks)}):")
     raw_npc_clicks = []
     for i, (click_data, npc_name, option) in enumerate(npc_clicks, 1):
         func_call = f"click_closest_npc('{npc_name}', option='{option}', max_attempts=5)"
-        print(f"  #{i:2d}: {func_call}")
+        print(f"# {i}")
+        print("for i in range(10):")
+        print(f"    if not {func_call}:")
+        print("        wait_for_next_tick()")
+        print("    else:")
+        print("        if wait_till_character_stopped_moving():")
+        print("            break")
+        print("    if i == 9:")
+        print(f"        exit(\"Failed to click npc ({npc_name})\")")
+        print()
         raw_npc_clicks.append(click_data)
     
     return raw_npc_clicks
@@ -402,14 +460,25 @@ def get_recent_object_clicks(limit: int = 5) -> Optional[List[Dict[str, Any]]]:
         print("No object menu_option clicks in recent history.")
         return []
     
+    # Reverse to make newest #1
+    object_clicks = list(reversed(object_clicks))
+    
     print(f"Recent Object Clicks (last {len(object_clicks)}):")
     raw_object_clicks = []
     for i, (click_data, object_id, option, tile) in enumerate(object_clicks, 1):
         x = tile.get('x', 'N/A')
         y = tile.get('y', 'N/A')
         # Assume plane=0, not including it in tile tuple
-        func_call = f"click_object(\"{object_id}\", '{option}', tile=({x}, {y}), radius=20)"
-        print(f"  #{i:2d}: {func_call}")
+        func_call = f"click_gameobject(\"{object_id}\", '{option}', tile=({x}, {y}), radius=20)"
+        object_name = click_data.get('object_name', '').lower()
+        print(f"# {i}")
+        print("for i in range(5):")
+        print(f"    if {func_call}:")
+        print("        break")
+        print("    wait_for_next_tick()")
+        print("    if i == 4:")
+        print(f"        exit(\"Failed to click object ({object_name}, {option})\")")
+        print()
         raw_object_clicks.append(click_data)
     
     return raw_object_clicks
@@ -449,23 +518,442 @@ def get_recent_inventory_clicks(limit: int = 5) -> Optional[List[Dict[str, Any]]
         print("No inventory menu_option clicks (widget with target) in recent history.")
         return []
     
+    # Reverse to make newest #1
+    inventory_clicks = list(reversed(inventory_clicks))
+    
     print(f"Recent Inventory Clicks (last {len(inventory_clicks)}):")
     raw_inventory_clicks = []
     for i, (click_data, name, action) in enumerate(inventory_clicks, 1):
         func_call = f"click_inventory('{name}', action='{action}', hover_only=False)"
-        print(f"  #{i:2d}: {func_call}")
+        print(f"# {i}")
+        print("for i in range(5):")
+        print(f"    if {func_call}:")
+        print("        break")
+        print("    wait_for_next_tick()")
+        print("    if i == 4:")
+        print(f"        exit(\"Failed to click inventory ({name})\")")
+        print()
         raw_inventory_clicks.append(click_data)
     
     return raw_inventory_clicks
 
-# while True:
-# clear_clicks()
+previous_tick = None
+previous_camera = None
+was_changing = False
+camera_print_count = 0   # <-- Add this global variable at the top with the other globals
+
+
+def get_camera_changes(speed: int = 10):
+    """
+    Monitors camera yaw, pitch, and zoom changes between ticks.
+    Delays printing until the camera stabilizes (a tick with no changes after changes occurred).
+    Prints in a ready-to-copy retry block format.
+    """
+    global previous_tick, previous_camera, was_changing, camera_print_count
+
+    # Fetch current game tick to initialize if needed
+    current_tick = gametick().get('data', None)
+    if current_tick is None:
+        return
+
+    # Initialize on first call (no print)
+    if previous_tick is None or previous_camera is None:
+        previous_tick = current_tick
+        previous_camera = player().get('data', {}).get('camera', {})
+        return
+
+    # Wait for the next tick to check changes that occurred during the previous tick
+    wait_for_next_tick()
+
+    # Now fetch updated data after the tick
+    current_tick = gametick().get('data', None)
+    if current_tick is None or current_tick <= previous_tick:
+        return  # No new tick, skip
+
+    current_camera = player().get('data', {}).get('camera', {})
+    if current_camera:
+        # Check if values changed since last tick
+        changed = (
+            current_camera.get('pitch') != previous_camera.get('pitch') or
+            current_camera.get('yaw') != previous_camera.get('yaw') or
+            current_camera.get('zoom') != previous_camera.get('zoom')
+        )
+        
+        if changed:
+            # Camera is still changing
+            was_changing = True
+        else:
+            # No change this tick; if it was changing before, print the stable values now
+            if was_changing:
+                pitch = current_camera.get('pitch', 'N/A')
+                yaw = current_camera.get('yaw', 'N/A')
+                zoom = current_camera.get('zoom', 'N/A')
+
+                camera_print_count += 1
+
+                print(f"# {camera_print_count}")
+                print("for i in range(3):")
+                print(f"    if camera(pitch={pitch}, yaw={yaw}, zoom={zoom}, speed={speed}):")
+                print("        break")
+                print("    if i == 2:")
+                print('        exit("Failed to set camera")')
+                print()
+
+                was_changing = False
+        
+        # Always update previous for next comparison
+        previous_camera = current_camera.copy()
+    previous_tick = current_tick
+
 import time
-# time.sleep(0.6)
-# get_recent_clicks(limit=55, max_changes=55)
+
+event_count = 0
+last_clicks = []
+seen_ticks = set()  # Track processed ticks to prevent duplicates
+
+def monitor_actions(speed: int = 10):
+    """
+    Monitors all actions including camera changes and clicks, printing them in order with retry logic.
+    Runs in a loop, checking per tick.
+    """
+    global previous_tick, previous_camera, was_changing, event_count, last_clicks
+
+    while True:
+        # Camera check logic
+        current_tick = gametick().get('data', None)
+        if current_tick is None:
+            time.sleep(0.1)
+            continue
+
+        # Initialize if needed
+        if previous_tick is None or previous_camera is None:
+            previous_tick = current_tick
+            previous_camera = player().get('data', {}).get('camera', {})
+            continue
+
+        # Wait for next tick
+        wait_for_next_tick()
+
+        # Fetch new tick
+        current_tick = gametick().get('data', None)
+        if current_tick is None or current_tick <= previous_tick:
+            continue
+
+        current_camera = player().get('data', {}).get('camera', {})
+        if current_camera:
+            changed = (
+                current_camera.get('pitch') != previous_camera.get('pitch') or
+                current_camera.get('yaw') != previous_camera.get('yaw') or
+                current_camera.get('zoom') != previous_camera.get('zoom')
+            )
+            
+            if changed:
+                was_changing = True
+            else:
+                if was_changing:
+                    pitch = current_camera.get('pitch', 'N/A')
+                    yaw = current_camera.get('yaw', 'N/A')
+                    zoom = current_camera.get('zoom', 'N/A')
+                    event_count += 1
+                    print(f"# {event_count}")
+                    print("for i in range(3):")
+                    print(f"    if camera(pitch={pitch}, yaw={yaw}, zoom={zoom}, speed={speed}):")
+                    print("        break")
+                    print("    if i == 2:")
+                    print('        exit("Failed to set camera")')
+                    print()
+                    was_changing = False
+            
+            previous_camera = current_camera.copy()
+        previous_tick = current_tick
+
+        # Check for new clicks
+        new_clicks = get_raw_recent_clicks(50)
+        new_ones = [c for c in new_clicks if c.get('tick') not in seen_ticks]
+
+        for click in new_ones:
+            tick = click.get('tick')
+            if tick in seen_ticks:
+                continue
+            seen_ticks.add(tick)
+
+            event_count += 1
+            print(f"# {event_count}")
+
+            # Minimap click
+            if click.get('is_minimap_click') and 'minimap_tile' in click:
+                tile = click['minimap_tile']
+                tx = tile.get('x')
+                ty = tile.get('y')
+                
+                print("for i in range(10):")
+                print(f"    if click_minimap_tile({tx}, {ty}, rand_x=2, rand_y=2, target_zoom=2.0):")
+                print(f"        print(\"clicked minimap tile ({tx}, {ty})\")")
+                print("       if wait_till_character_stopped_moving():")
+                print("            break")
+                print("    wait_for_next_tick()")
+                print("    if i == 9:")
+                print(f"        exit(\"Failed to click minimap tile ({tx}, {ty})\")")
+                print()
+                continue
+
+            # Ground "Walk here" click
+            elif click.get('option') == 'Walk here' and click.get('clicked_tile'):
+                tile = click.get('clicked_tile')
+                x = tile.get('x')
+                y = tile.get('y')
+                plane = tile.get('plane', 0)
+                func_call = f"click_tile({x}, {y}, plane={plane}, action=\"Walk here\", tile_radius=2, right_click=False)"
+                tile_str = f"({x}, {y})" if plane == 0 else f"({x}, {y}, plane={plane})"
+                print("for i in range(3):")
+                print(f"    if {func_call}:")
+                print("       if wait_till_character_stopped_moving():")
+                print("            break")
+                print("    if i == 2:")
+                print(f"        exit(\"Failed to walk to {tile_str}\")")
+                print()
+                continue
+
+            # Sprite-changing widget (tabs/buttons) — includes "Worn Equipment" tab open
+            elif (click.get('entity_type') == 'widget' and 
+                  'widget_changes' in click and 
+                  any(ch.get('type') == 'new' and 
+                      ch.get('widget_id') == click['widget'].get('id') and 
+                      ch.get('new_sprite') != -1 for ch in click['widget_changes'])):
+                widget_id = click['widget']['id']
+                new_sprite = next(ch['new_sprite'] for ch in click['widget_changes'] 
+                                 if ch.get('type') == 'new' and 
+                                    ch.get('widget_id') == widget_id and 
+                                    ch.get('new_sprite') != -1)
+                widget_str = f"'{widget_id}'"
+                func_call = f"click_widget({widget_str}, sprite_id={new_sprite}, hidden=False, right_click=False, action=None, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0))"
+                print(f"if not {func_call}:")
+                print(f"   exit(f'click widget {widget_id} failed, exiting... time: {{time.strftime(\"%H:%M:%S\")}}')")
+                print()
+                continue
+
+            # Prayer toggle
+            elif (click.get('option', '').lower() in ['activate', 'deactivate'] and 
+                  click.get('target', '').strip() and 
+                  click.get('entity_type') == 'widget'):
+                prayer_name = click.get('target', '').lower()
+                option = click.get('option', '').lower()
+                widget_id = click['widget'].get('id')
+                widget_str = f"'{widget_id}'"
+                func_call = f"click_widget({widget_str}, action='{option}', hidden=False, right_click=False, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0))"
+                print("for i in range(5):")
+                print(f"    if {func_call}:")
+                print("        break")
+                print("    wait_for_next_tick()")
+                print("    if i == 4:")
+                print(f"        exit(\"Failed to {option} prayer ({prayer_name})\")")
+                print()
+                continue
+
+            # Equipment "Remove" action — handles jewelry + all other equipped items
+            elif (click.get('entity_type') == 'widget' and
+                  click.get('type') == 'menu_option' and
+                  click.get('option', '').lower() == 'remove' and
+                  click.get('target', '').strip()):
+                raw_item_name = click.get('target', '').strip()
+                
+                jewelry_bases = [
+                    'amulet of glory',
+                    'ring of dueling',
+                    'games necklace',
+                    'combat bracelet',
+                    'ring of wealth'
+                ]
+                
+                lower_name = raw_item_name.lower()
+                is_jewelry = any(base in lower_name for base in jewelry_bases)
+                
+                if is_jewelry:
+                    import re
+                    item_name = re.sub(r'\(\d+\)$', '', raw_item_name).strip()
+                    exact_match = False
+                else:
+                    item_name = raw_item_name
+                    exact_match = True
+                
+                print("for i in range(5):")
+                print(f'    if click_widget_by_name("{item_name}", action="Remove", exact_match={exact_match}):')
+                print("        break")
+                print("    wait_for_next_tick()")
+                print("    if i == 4:")
+                print(f'        exit("Failed to remove equipment item: {raw_item_name}")')
+                print()
+                continue
+
+            # Equipped jewelry action (teleport locations or Rub) — excludes Remove
+            elif (click.get('entity_type') == 'widget' and
+                  click.get('target', '').strip() and
+                  click.get('option', '').lower() != 'remove'):
+                raw_target = click.get('target', '').strip().lower()
+                option = click.get('option')
+                
+                jewelry_map = {
+                    'amulet of glory': 'click_equipped_glory',
+                    'ring of dueling': 'click_equipped_ring_of_dueling',
+                    'games necklace': 'click_equipped_games_necklace',
+                    'combat bracelet': 'click_equipped_combat_bracelet',
+                    'ring of wealth': 'click_equipped_ring_of_wealth'
+                }
+                
+                matched_base = None
+                for base in jewelry_map:
+                    if base in raw_target:
+                        matched_base = base
+                        break
+                
+                if matched_base:
+                    func_name = jewelry_map[matched_base]
+                    print("for i in range(5):")
+                    print(f"    if {func_name}(action='{option}'):") 
+                    print("        wait_for_tile_change()")
+                    print("        wait_for_next_tick()")
+                    print("        break")
+                    print("    wait_for_next_tick()")
+                    print("    if i == 4:")
+                    print(f'        exit("Failed to click equipped {matched_base} ({option})")')
+                    print()
+                    continue
+
+            # Inventory jewelry action (lowest charge)
+            elif (click.get('entity_type') == 'widget' and
+                  click.get('target', '').strip() and
+                  click.get('option')):
+                raw_target = click.get('target', '').strip().lower()
+                option = click.get('option')
+                
+                jewelry_map = {
+                    'amulet of glory': 'click_lowest_glory',
+                    'ring of dueling': 'click_lowest_ring_of_dueling',
+                    'games necklace': 'click_lowest_games_necklace',
+                    'combat bracelet': 'click_lowest_combat_bracelet',
+                    'ring of wealth': 'click_lowest_ring_of_wealth'
+                }
+                
+                matched_base = None
+                for base in jewelry_map:
+                    if base in raw_target:
+                        matched_base = base
+                        break
+                
+                if matched_base:
+                    func_name = jewelry_map[matched_base]
+                    print("for i in range(5):")
+                    print(f"    if {func_name}(action='{option}'):") 
+                    print("        break")
+                    print("    wait_for_next_tick()")
+                    print("    if i == 4:")
+                    print(f'        exit("Failed to click lowest {matched_base} ({option})")')
+                    print()
+                    continue
+
+            # Object click
+            elif click.get('entity_type') == 'object':
+                object_id = click.get('object_id')
+                option = click.get('option', '').lower()
+                tile = click.get('object_tile')
+                if tile:
+                    x = tile.get('x')
+                    y = tile.get('y')
+                    object_name = click.get('object_name', '').lower() or 'unknown'
+                    func_call = f"click_gameobject(\"{object_id}\", '{option}', tile=({x}, {y}), radius=20)"
+                    print("for i in range(5):")
+                    print(f"    if {func_call}:")
+                    print("        break")
+                    print("    wait_for_next_tick()")
+                    print("    if i == 4:")
+                    print(f"        exit(\"Failed to click object ({object_name}, {option})\")")
+                    print()
+                continue
+
+            # Generic inventory item action
+            elif (click.get('entity_type') == 'widget' and
+                  click.get('target', '').strip() and
+                  click.get('option')):
+                name = click.get('target', '').lower()
+                action = click.get('option', '').lower()
+                func_call = f"click_inventory('{name}', action='{action}', hover_only=False)"
+                print("for i in range(5):")
+                print(f"    if {func_call}:")
+                print("        break")
+                print("    wait_for_next_tick()")
+                print("    if i == 4:")
+                print(f"        exit(\"Failed to click inventory ({name})\")")
+                print()
+                continue
+
+            # Dialogue / menu option on widget (no target)
+            elif (click.get('entity_type') == 'widget' and 
+                  click.get('type') == 'menu_option' and 
+                  click.get('option') and 
+                  not click.get('target', '').strip()):
+                option = click.get('option', '').lower()
+                widget_data = click.get('widget', {})
+                widget_id = widget_data.get('id')
+                
+                if 'parent_id' in widget_data and 'child_index' in widget_data:
+                    parent_id = widget_data['parent_id']
+                    child_index = widget_data['child_index']
+                    func_call = f"click_widget_child('{parent_id}', sprite_id=None, hidden=False, child_index={child_index}, right_click=False, action=None)"
+                    fail_msg = f"Failed to click dialogue option ({option}) via child"
+                else:
+                    widget_str = f"'{widget_id}'"
+                    func_call = f"click_widget({widget_str}, action='{option}', hidden=False, right_click=False, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0))"
+                    fail_msg = f"Failed to click widget option ({option})"
+                
+                print("for i in range(5):")
+                print(f"    if {func_call}:")
+                print("        break")
+                print("    wait_for_next_tick()")
+                print("    if i == 4:")
+                print(f"        exit(\"{fail_msg}\")")
+                print()
+                continue
+
+            # NPC click
+            elif click.get('entity_type') == 'npc':
+                npc_name = click.get('npc_name', '').lower()
+                option = click.get('option', '').lower()
+                func_call = f"click_closest_npc('{npc_name}', option='{option}', max_attempts=5)"
+                print("for i in range(10):")
+                print(f"    if not {func_call}:")
+                print("        wait_for_next_tick()")
+                print("    else:")
+                print("        if wait_till_character_stopped_moving():")
+                print("            break")
+                print("    if i == 9:")
+                print(f"        exit(\"Failed to click npc ({npc_name})\")")
+                print()
+                continue
+
+            # Unknown click
+            else:
+                print("# Unknown click type - skipping")
+                print(click)
+                print()
+
+        # Update last_clicks
+        last_clicks = new_clicks[-100:]
+
+clear_clicks()
+monitor_actions()
+
+
+get_recent_clicks(limit=55, max_changes=55)
+
+
+
+
+
 # get_minimap_click_functions()
 # get_widget_click_functions()
-# get_recent_walk_clicks(limit=10)
-# get_recent_npc_clicks(limit=10)
-# get_recent_object_clicks(limit=10)
-# get_recent_inventory_clicks(limit=10)
+# get_recent_walk_clicks()
+# get_recent_npc_clicks()
+# get_recent_object_clicks()
+# get_recent_inventory_clicks()
+# get_camera_changes()
+

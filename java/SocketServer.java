@@ -90,6 +90,7 @@ public class SocketServer {
     @Inject
     private ClickHandler clickHandler;
 
+
     private final List<BufferedWriter> subscribedClients = new CopyOnWriteArrayList<>();
 
     public void setCustomOpponentInfoPlugin(CustomOpponentInfoPlugin customOpponentInfoPlugin) {
@@ -186,6 +187,7 @@ public class SocketServer {
                     case "chat":
                         responseData.setData(playerHandler.handle(function, params));
                         break;
+
                     case "npc":
                     case "opponentInfo":
                     case "pick":

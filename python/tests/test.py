@@ -1,11 +1,11 @@
 import time, re, random, math
 from modules.core.plugin_client import player, minimap_tiles, walkable_tile, gear, players, game_state, pick, gametick, npc
 from modules.utils.click_minimap_tile import click_minimap_tile
-from modules.player_data.tile_change import wait_for_tile_change
-from modules.utils.wait_for_tick import wait_for_tick
+from modules.player_data.tile_change import wait_for_tile_change, wait_until_at_tile
+from modules.utils.wait_for_tick import wait_for_tick, wait_for_next_tick
 from modules.utils.check_if_in_tile import check_if_in_tile
 from modules.utils.inventory import check_inventory, get_inventory_count, click_inventory_sequence
-from modules.widgets.widget import check_widget_text, click_widget, check_widget_name, check_widget, get_widget, click_widget_child
+from modules.widgets.widget import check_widget_text, click_widget, check_widget_name, check_widget, get_widget, click_widget_child, click_widget_by_name
 from modules.core.plugin_client import tile, stats
 from modules.weapon_data.combat_style import combat_style
 from modules.utils.camera import camera
@@ -23,8 +23,284 @@ from modules.core.plugin_client import slayer_task_remaining
 from modules.utils.check_if_in_tile import is_player_idle, check_if_in_tile
 from modules.widgets.widget import get_widget, check_widget, check_widget_text, check_widget_name, click_widget, click_widget_child, click_widget_by_name
 from modules.npc_data.click_npc import get_player_position, click_npc, click_closest_npc
+from modules.player_data.wait_till_character_stops_moving import wait_till_character_stopped_moving
+from modules.utils.automatic_scripting.small_functions import click_equipped_glory, click_lowest_games_necklace
+from modules.player_data.prayer.toggle_prayer import toggle_prayer
+from modules.utils.click_tile import click_tile
 
 
+# # 1 CROCODILE
+# for i in range(5):
+#     if click_equipped_glory(action='Al Kharid'):
+#         wait_for_tile_change()
+#         wait_for_next_tick()
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click equipped amulet of glory (Al Kharid)")
+
+# # 2
+# for i in range(2):
+#     if click_object("1511", 'open', tile=(3292, 3167), radius=20):
+#         wait_till_character_stopped_moving()
+#         break
+#     wait_for_next_tick()
+
+# # 3
+# for i in range(5):
+#     if click_widget_child('35913752', sprite_id=None, hidden=False, child_index=1, right_click=False, action=None):
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click dialogue option (look north) via child")
+
+# # 4
+# for i in range(3):
+#     if camera(pitch=319, yaw=0, zoom=306, speed=10):
+#         break
+#     if i == 2:
+#         exit("Failed to set camera")
+
+# # 5
+# if not click_minimap_tile(3276, 3148, rand_x=2, rand_y=2, target_zoom=2.0):
+#     print("Failed to click minimap tile (3276, 3148)")
+#     exit()
+# else:
+#     wait_till_character_stopped_moving()
+
+# # 6
+# for i in range(3):
+#     if camera(pitch=289, yaw=930, zoom=265, speed=10):
+#         wait_for_next_tick(2)
+#         break
+#     if i == 2:
+#         exit("Failed to set camera")
+
+# # 7
+# for i in range(5):
+#     if click_gameobject("41311", 'board', tile=(3270, 3143), radius=20):
+#         wait_for_tile_change()
+#         wait_for_next_tick(10)
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click object (ferry, board)")
+
+# # 8
+# for i in range(10):
+#     if click_minimap_tile(3180, 2841, rand_x=2, rand_y=2, target_zoom=2.0):
+#         print("clicked minimap tile (3180, 2841)")
+#         wait_till_character_stopped_moving()
+#         break
+#     wait_for_next_tick()
+#     if i == 9:
+#         exit("Failed to click minimap tile (3180, 2841)")
+
+# # 9
+# for i in range(3):
+#     if camera(pitch=295, yaw=1593, zoom=230, speed=10):
+#         break
+#     if i == 2:
+#         exit("Failed to set camera")
+
+# # 10
+# for i in range(10):
+#     if not click_closest_npc('shantay guard', option='buy-pass', max_attempts=5):
+#         wait_for_next_tick()
+#     else:
+#         if wait_till_character_stopped_moving():
+#             break
+#     if i == 9:
+#         exit("Failed to click npc (shantay guard)")
+
+# # 11
+# for i in range(5):
+#     if click_gameobject("41326", 'go-through', tile=(3194, 2841), radius=20):
+#         wait_till_character_stopped_moving()
+#         wait_for_next_tick(2)
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click object (shantay pass, go-through)")
+
+# # 12
+# if not click_minimap_tile(3194, 2828, rand_x=2, rand_y=2, target_zoom=2.0):
+#     print("Failed to click minimap tile (3194, 2828)")
+#     exit()
+# else:
+#     wait_till_character_stopped_moving()
+
+
+
+# # 1 ANKOU
+# for i in range(5):
+#     if click_lowest_games_necklace(action='rub'):
+#         wait_for_next_tick(2)
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click lowest games necklace")
+
+# # 2
+# for i in range(5):
+#     if click_widget_child('14352385', sprite_id=None, hidden=False, child_index=5, right_click=False, action=None):   
+#         wait_for_tile_change()
+#         break
+#     if i == 4:
+#         exit("Failed to click dialogue option (wintertodt camp.) via child")
+
+# # 3
+# if not click_minimap_tile(1645, 3929, rand_x=2, rand_y=2, target_zoom=2.0):
+#     print("Failed to click minimap tile (1645, 3929)")
+#     exit()
+# else:
+#     wait_till_character_stopped_moving()
+
+# # 4
+# for i in range(3):
+#     if camera(pitch=372, yaw=1735, zoom=287, speed=10):
+#         wait_for_next_tick(2)
+#         break
+#     if i == 2:
+#         exit("Failed to set camera")
+
+# # 5
+# for i in range(5):
+#     if click_gameobject("28835", 'travel', radius=20):
+#         wait_till_character_stopped_moving()
+#         wait_for_next_tick()
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click object (minecart, travel)")
+
+# # 6
+# for i in range(5):
+#     if click_widget_child('62062601', sprite_id=None, hidden=False, child_index=4, right_click=False, action=None):
+#         wait_for_tile_change()
+#         wait_for_next_tick(num_ticks=2)
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click dialogue option (look north) via child")
+# # 7
+# for i in range(5):
+#     if click_widget_child('35913752', sprite_id=None, hidden=False, child_index=1, right_click=False, action=None):
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click dialogue option (look north) via child")
+
+
+# # 8
+# if not click_minimap_tile(1666, 3672, rand_x=2, rand_y=2, target_zoom=2.0):
+#     print("Failed to click minimap tile (1666, 3672)")
+#     exit()
+# else:
+#     wait_till_character_stopped_moving()
+
+# # 9
+# if not click_minimap_tile(1655, 3673, rand_x=1, rand_y=1, target_zoom=2.0):
+#     print("Failed to click minimap tile (1655, 3673)")
+#     exit()
+# else:
+#     wait_till_character_stopped_moving()
+
+# # 10
+# if not click_minimap_tile(1636, 3673, rand_x=1, rand_y=1, target_zoom=2.0):
+#     print("Failed to click minimap tile (1636, 3673)")
+#     exit()
+# else:
+#     wait_till_character_stopped_moving()
+#     wait_for_next_tick(3)
+
+# # 11
+# for i in range(5):
+#     if click_gameobject("27785", 'investigate', tile=(1637, 3673), radius=20):
+#         wait_till_character_stopped_moving()
+#         wait_for_tile_change()
+#         wait_for_tick(3)
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click object (statue, investigate)")
+
+# # 12
+# if not click_widget('35913797', sprite_id=1030, hidden=False, right_click=False, action=None, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0)):
+#    exit(f'click widget 35913797 failed, exiting... time: {time.strftime("%H:%M:%S")}')
+
+# # 13
+# for i in range(5):
+#     if click_widget('35454999', action="activate", hidden=False, right_click=False, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0)):
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to toggle prayer (protect from melee)")
+
+# # 14
+# if not click_minimap_tile(1654, 10024, rand_x=2, rand_y=2, target_zoom=2.0):
+#     print("Failed to click minimap tile (1654, 10024)")
+#     exit()
+# else:
+#     wait_till_character_stopped_moving()
+
+# # 15
+# if not click_minimap_tile(1646, 10009, rand_x=1, rand_y=1, target_zoom=3.0):
+#     print("Failed to click minimap tile (1646, 10009)")
+#     exit()
+# else:
+#     wait_till_character_stopped_moving()
+
+# # 16
+# for i in range(5):
+#     if click_gameobject("28892", 'squeeze-through', tile=(1648, 10008), radius=20):
+#         wait_until_at_tile(1646, 10000, radius=1, plane=0, timeout_seconds=10)
+#         wait_for_next_tick()
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click object (crack, squeeze-through)")
+
+# # 17
+# for i in range(3):
+#     if click_tile(1643, 9995, plane=0, action="Walk here", tile_radius=2, right_click=False):
+#        if wait_till_character_stopped_moving():
+#             break
+#     if i == 2:
+#         exit("Failed to walk to (1643, 9995)")
+
+
+
+# # 1
+# for i in range(5):
+#     if click_inventory('cannon base', action='set-up', hover_only=False):
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click inventory (cannon base)")
+
+
+
+
+
+# for i in range(5):
+#     if click_gameobject('reward cart', 'big-search', tile=(1638, 3946), radius=20):
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click object (reward cart, big-search)")
+
+
+
+# if not click_widget('35913779', sprite_id=1030, hidden=False, right_click=False, action=None, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0)):
+#    exit(f'click widget 35913779 failed, exiting... time: {time.strftime("%H:%M:%S")}')
+
+
+# if not click_minimap_tile(1639, 3943, rand_x=2, rand_y=2, target_zoom=2.0):
+#     print("Failed to click minimap tile (1639, 3943)")
+#     exit()
+# else:
+#     wait_till_character_stopped_moving()
 
 # click_inventory('cannon base', action='Set-up', hover_only=False)
 

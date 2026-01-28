@@ -624,9 +624,9 @@ class PluginClient:
         """Manually reset cannon tracking (useful for debugging or after pickup)."""
         return self.send_request('reset_cannon', {})
 
-
     
 _default_client = PluginClient(auth_token='jQ8IHav3zA3HuH5')
+
 
 def slayer_task_remaining() -> int:
     """Get the number of NPCs left to kill in your current Slayer task."""

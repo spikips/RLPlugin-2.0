@@ -34,8 +34,8 @@ from modules.utils.camera import camera
 
 
 # Constants
-CANNON_TILE = (3192, 2826, 0)  # Cannon position (x, y, plane)
-STAND_TILE = (3190, 2825, 0)   # Standing position (x, y, plane)
+CANNON_TILE = (3191, 2825, 0)  # Cannon position (x, y, plane)
+STAND_TILE = (3191, 2823, 0)   # Standing position (x, y, plane)
 CANNON_NAME = "Dwarf multicannon"
 LOOT_ITEMS = []  # No items to loot
 LOOT_RADIUS = 15
@@ -52,7 +52,7 @@ def is_cannon_placed():
 
 def place_cannon():
     # Move to cannon tile (required for placement)
-    on_tile = check_if_in_tile(CANNON_TILE[0], CANNON_TILE[1], CANNON_TILE[2], click=True, right_click=True)
+    on_tile = check_if_in_tile(CANNON_TILE[0], CANNON_TILE[1], CANNON_TILE[2], click=True)
     if not on_tile:
         print("Standard movement failed. Falling back to minimap click with zoom 5.")
         click_minimap_tile(CANNON_TILE[0], CANNON_TILE[1], target_zoom=5.0)
@@ -106,6 +106,7 @@ def has_prayer_potion():
         if name.startswith('Prayer potion('):
             return True
     return False
+
 
 def drink_prayer_potion():
     inv_data = inventory()
@@ -184,10 +185,10 @@ def main():
                     time.sleep(2)
 
             # Always return to stand tile after placement attempts
-            check_if_in_tile(STAND_TILE[0], STAND_TILE[1], STAND_TILE[2], click=True, right_click=True)
+            check_if_in_tile(STAND_TILE[0], STAND_TILE[1], STAND_TILE[2], click=True)
 
         # Ensure standing position
-        if not check_if_in_tile(STAND_TILE[0], STAND_TILE[1], STAND_TILE[2], click=True, right_click=True):
+        if not check_if_in_tile(STAND_TILE[0], STAND_TILE[1], STAND_TILE[2], click=True):
             print("Standard movement to stand tile failed. Falling back to minimap click with zoom 5.")
             click_minimap_tile(STAND_TILE[0], STAND_TILE[1], target_zoom=5.0)
             wait_till_character_stopped_moving()
@@ -221,5 +222,7 @@ def main():
         # Tick wait
         wait_for_next_tick(1)
 
+
+# drink_prayer_potion()
 if __name__ == "__main__":
     main()

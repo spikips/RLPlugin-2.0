@@ -12,7 +12,12 @@ import random
 
 # Zoom levels for scroll adjustments
 # ZOOM_LEVELS = [1940, 1579, 1285, 1046, 851, 693, 564, 459, 373, 304, 247, 201, 163, 132, 107, 87, 71, 61]
+
+# scroll 25 with default camera
 ZOOM_LEVELS = [1448, 1349, 1257, 1172, 1092, 1018, 949, 884, 824, 768, 716, 667, 622, 579, 540, 503, 469, 437, 407, 380, 354, 330, 307, 286, 266, 248, 231, 215, 200, 186, 181]
+
+# scroll 75 with expanded zoom limit
+# ZOOM_LEVELS = [5668, 4614, 3756, 3057, 2488, 2025, 1649, 1342, 1092, 889, 724, 589, 479, 390, 317, 258, 210, 171, 139, 113, 92, 75, 61]
 
 def scroll_to_zoom(target_zoom: int, max_retries: int = 30, speed: int = 10) -> bool:
     """

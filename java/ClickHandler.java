@@ -160,145 +160,248 @@ public class ClickHandler implements RequestHandler, MouseListener {
         clickData.put("option", event.getMenuOption());
         clickData.put("target", Text.removeTags(event.getMenuTarget()));
 
-        MenuAction action = event.getMenuAction();
+        Point canvasPos = client.getMouseCanvasPosition();
+        clickData.put("canvas_pos", Map.of("x", canvasPos.getX(), "y", canvasPos.getY()));
 
-        Point mousePos = client.getMouseCanvasPosition();
-        clickData.put("canvas_pos", Map.of("x", mousePos.getX(), "y", mousePos.getY()));
-
-        boolean onMinimap = isOnMinimap(mousePos.getX(), mousePos.getY());
+        // Minimap detection
+        boolean onMinimap = isOnMinimap(canvasPos.getX(), canvasPos.getY());
         if (onMinimap) {
             clickData.put("is_minimap_click", true);
-            WorldPoint minimapTile = minimapPointToWorld(mousePos);
+            WorldPoint minimapTile = minimapPointToWorld(canvasPos);
             if (minimapTile != null) {
                 clickData.put("minimap_tile", Map.of("x", minimapTile.getX(), "y", minimapTile.getY(), "plane", minimapTile.getPlane()));
             }
         }
 
-        // Capture widget info if available
-        Widget clickedWidget = event.getWidget();
-        if (clickedWidget == null) {
-            clickedWidget = findWidgetAt(mousePos);
-        }
-        if (clickedWidget != null) {
-            Map<String, Object> widgetData = new HashMap<>();
-            widgetData.put("id", clickedWidget.getId());
-            widgetData.put("type", clickedWidget.getType());
-            if (clickedWidget.getText() != null && !clickedWidget.getText().isEmpty()) {
-                widgetData.put("text", clickedWidget.getText());
-            }
-            if (clickedWidget.getName() != null && !clickedWidget.getName().isEmpty()) {
-                widgetData.put("name", clickedWidget.getName());
-            }
-            Rectangle bounds = clickedWidget.getBounds();
-            if (bounds != null) {
-                widgetData.put("bounds", Map.of(
-                        "x", bounds.x,
-                        "y", bounds.y,
-                        "width", bounds.width,
-                        "height", bounds.height
-                ));
-            }
-            clickData.put("widget", widgetData);
-            clickData.put("entity_type", "widget");  // Override to indicate widget interaction
+        MenuAction menuAction = event.getMenuAction();
 
-            // Special handling for dialogue "Continue" to set option to widget text
-            if ("Continue".equals(event.getMenuOption()) && clickedWidget.getText() != null && !clickedWidget.getText().isEmpty()) {
-                clickData.put("option", clickedWidget.getText());
-            }
-        }
-
-        // Take snapshot on any menu click that could change widgets
-        if (action != MenuAction.WALK) {  // Exclude pure walk to reduce noise
+        // === Handle rapid click widget change association ===
+        if (menuAction != MenuAction.WALK) {
             log.info("Taking widget snapshot after menu click: {} {}", event.getMenuOption(), event.getMenuTarget());
 
-            // NEW: Handle rapid clicks — if there's a pending snapshot, detect changes NOW (using the old pre-state)
             if (snapshotTaken) {
-                List<Map<String, Object>> changes = detectWidgetChanges();  // Uses previousWidgetStates
+                List<Map<String, Object>> changes = detectWidgetChanges();
 
                 if (!changes.isEmpty() && !recentClicks.isEmpty()) {
-                    // Associate with the PREVIOUS click (the one that just finished processing)
                     Map<String, Object> previousClick = recentClicks.peekLast();
                     previousClick.put("widget_changes", changes);
                     log.info("Rapid click detected: associated {} widget change(s) to previous click (immediate)", changes.size());
                 }
 
-                // Reset pending state — we're done with the old snapshot
                 snapshotTaken = false;
                 snapshotTick = -1;
-                previousWidgetStates.clear();  // Will be repopulated below for the new click
+                previousWidgetStates.clear();
             }
 
-            // Now take a fresh PRE-state snapshot for the CURRENT click
             snapshotWidgets();
         }
 
-        if (action == MenuAction.WALK) {
-            Map<String, Integer> tile = getClickedTile();
-            if (tile != null) {
-                clickData.put("clicked_tile", tile);
-            }
-        } else if (action.toString().startsWith("NPC_")) {
+        // === Entity type classification ===
+        // NPC (including Examine)
+        if (menuAction.name().startsWith("NPC") || menuAction == MenuAction.EXAMINE_NPC) {
             clickData.put("entity_type", "npc");
-            clickData.put("npc_name", Text.removeTags(event.getMenuTarget()));
+            clickData.put("npc_id", event.getId());
+
+            String targetName = Text.removeTags(event.getMenuTarget());
+            clickData.put("npc_name", targetName);
+
             int npcIndex = event.getParam1();
             clickData.put("npc_index", npcIndex);
 
-            // Primary: Try name-based lookup (reliable for static/minigame NPCs)
-            net.runelite.api.NPC foundNpc = null;
-            String targetName = clickData.get("npc_name").toString().toLowerCase();
-            for (net.runelite.api.NPC npc : client.getNpcs()) {
-                if (npc != null && npc.getName() != null && npc.getName().toLowerCase().equals(targetName)) {
+            NPC foundNpc = null;
+            String lowerName = targetName.toLowerCase();
+            for (NPC npc : client.getNpcs()) {
+                if (npc != null && npc.getName() != null && npc.getName().toLowerCase().equals(lowerName)) {
                     foundNpc = npc;
-                    break;  // First match (unique name)
+                    break;
                 }
             }
 
             if (foundNpc != null) {
-                clickData.put("npc_id", foundNpc.getId());  // Will be 7377 (or 18475 if variant)
                 WorldPoint wp = foundNpc.getWorldLocation();
                 clickData.put("npc_tile", Map.of("x", wp.getX(), "y", wp.getY(), "plane", wp.getPlane()));
-                log.info("Found NPC by name: ID={}, Index={}", foundNpc.getId(), foundNpc.getIndex());
             } else {
-                // Fallback to index (rare)
-                net.runelite.api.NPC npcByIndex = findNpcByIndex(npcIndex);
+                NPC npcByIndex = findNpcByIndex(npcIndex);
                 if (npcByIndex != null) {
-                    clickData.put("npc_id", npcByIndex.getId());
                     WorldPoint wp = npcByIndex.getWorldLocation();
                     clickData.put("npc_tile", Map.of("x", wp.getX(), "y", wp.getY(), "plane", wp.getPlane()));
-                } else {
-                    // Ultimate fallback to menu ID
-                    clickData.put("npc_id", event.getId());
-                    log.warn("NPC lookup failed for '{}' (index {}), using menu ID {}", targetName, npcIndex, event.getId());
                 }
             }
-        } else if (action.toString().startsWith("GAME_OBJECT_")) {
+
+            Map<String, Integer> clickedTile = getClickedTile();
+            if (clickedTile != null) {
+                clickData.put("clicked_tile", clickedTile);
+            }
+        }
+        // Game Object (including Examine)
+        else if (menuAction.name().startsWith("GAME_OBJECT") || menuAction == MenuAction.EXAMINE_OBJECT) {
             clickData.put("entity_type", "object");
             clickData.put("object_id", event.getId());
             clickData.put("object_name", Text.removeTags(event.getMenuTarget()));
 
-            // Prefer object's own tile if available
+            // Primary: selected scene tile (reliable for most interactions)
             Tile selectedTile = client.getSelectedSceneTile();
+            WorldPoint objTile = null;
             if (selectedTile != null) {
-                WorldPoint objTile = selectedTile.getWorldLocation();
-                clickData.put("object_tile", Map.of(
-                        "x", objTile.getX(),
-                        "y", objTile.getY(),
-                        "plane", objTile.getPlane()
-                ));
+                objTile = selectedTile.getWorldLocation();
+            } else {
+                // Fallback for Examine (params hold scene coords)
+                LocalPoint local = LocalPoint.fromScene(event.getParam0(), event.getParam1());
+                objTile = WorldPoint.fromLocalInstance(client, local);
             }
-        } else {
-            // Fallback if no selected tile
+
+            if (objTile != null) {
+                clickData.put("object_tile", Map.of("x", objTile.getX(), "y", objTile.getY(), "plane", objTile.getPlane()));
+            }
+
+            Map<String, Integer> clickedTile = getClickedTile();
+            if (clickedTile != null) {
+                clickData.put("clicked_tile", clickedTile);
+            }
+        }
+        // Ground Item (including Examine)
+        else if (menuAction.name().startsWith("GROUND_ITEM") || menuAction == MenuAction.EXAMINE_ITEM_GROUND) {
+            clickData.put("entity_type", "ground_item");
+            // Ground items use item ID in event.getId(), quantity in param1 sometimes
+            clickData.put("item_id", event.getId());
+
             LocalPoint local = LocalPoint.fromScene(event.getParam0(), event.getParam1());
-            WorldPoint world = WorldPoint.fromLocalInstance(client, local);
-            clickData.put("object_tile", Map.of(
-                    "x", world.getX(),
-                    "y", world.getY(),
-                    "plane", world.getPlane()
-            ));
+            WorldPoint groundTile = WorldPoint.fromLocalInstance(client, local);
+            clickData.put("ground_tile", Map.of("x", groundTile.getX(), "y", groundTile.getY(), "plane", groundTile.getPlane()));
+
+            Map<String, Integer> clickedTile = getClickedTile();
+            if (clickedTile != null) {
+                clickData.put("clicked_tile", clickedTile);
+            }
+        }
+        // Walk / Ground
+        else if (menuAction == MenuAction.WALK) {
+            clickData.put("entity_type", "ground");
+
+            Map<String, Integer> clickedTile = getClickedTile();
+            if (clickedTile != null) {
+                clickData.put("clicked_tile", clickedTile);
+            }
+        }
+        // Widget
+        else if (menuAction.name().startsWith("WIDGET") || menuAction.name().startsWith("CC_OP")) {
+            Widget widget = event.getWidget();
+            if (widget != null) {
+                clickData.put("entity_type", "widget");
+
+                Map<String, Object> widgetData = new HashMap<>();
+                widgetData.put("id", widget.getId());
+                widgetData.put("type", widget.getType());
+
+                if (widget.getText() != null && !widget.getText().isEmpty()) {
+                    widgetData.put("text", widget.getText());
+                }
+                if (widget.getName() != null && !widget.getName().isEmpty()) {
+                    widgetData.put("name", widget.getName());
+                }
+
+                Rectangle bounds = widget.getBounds();
+                if (bounds != null) {
+                    widgetData.put("bounds", Map.of(
+                            "x", bounds.x,
+                            "y", bounds.y,
+                            "width", bounds.width,
+                            "height", bounds.height
+                    ));
+                }
+
+                Widget parent = widget.getParent();
+                if (parent != null) {
+                    int childIndex = findChildIndex(parent, widget);
+                    if (childIndex != -1) {
+                        widgetData.put("parent_id", parent.getId());
+                        widgetData.put("child_index", childIndex);
+                    }
+                }
+
+                List<String> childTexts = getChildTexts(widget);
+                if (!childTexts.isEmpty()) {
+                    widgetData.put("child_texts", childTexts);
+                }
+
+                clickData.put("widget", widgetData);
+
+                if ("Continue".equals(event.getMenuOption()) && widget.getText() != null && !widget.getText().isEmpty()) {
+                    clickData.put("option", widget.getText());
+                }
+            }
+        }
+        // Fallback
+        else {
+            clickData.put("entity_type", "unknown");
+            clickData.put("menu_action_raw", menuAction.name());
         }
 
         addToRecentClicks(clickData);
+
         log.info("Menu click: {}", clickData);
+    }
+
+    private List<String> getChildTexts(Widget widget) {
+        List<String> texts = new ArrayList<>();
+        collectChildTexts(widget.getDynamicChildren(), texts);
+        collectChildTexts(widget.getStaticChildren(), texts);
+        collectChildTexts(widget.getNestedChildren(), texts);
+        return texts;
+    }
+
+    private void collectChildTexts(Widget[] children, List<String> texts) {
+        if (children != null) {
+            for (Widget child : children) {
+                if (child != null && !child.isHidden() && child.getType() == WidgetType.TEXT) {
+                    String text = child.getText();
+                    if (text != null && !text.trim().isEmpty()) {
+                        texts.add(text.trim());
+                    }
+                }
+            }
+        }
+    }
+
+    private Widget findDeepestClickableAt(Point point) {
+        Widget deepestClickable = null;
+
+        for (Widget root : client.getWidgetRoots()) {
+            Widget found = findDeepestClickableIn(root, point);
+            if (found != null) {
+                deepestClickable = found;
+            }
+        }
+        return deepestClickable != null ? deepestClickable : findWidgetAt(point); // Fallback to original if no clickable found
+    }
+
+    private Widget findDeepestClickableIn(Widget widget, Point point) {
+        if (widget.isHidden() || widget.getBounds() == null || !widget.getBounds().contains(point.getX(), point.getY())) {
+            return null;
+        }
+
+        Widget deepest = null;
+
+        // Recurse into children
+        for (Widget[] children : new Widget[][] {widget.getDynamicChildren(), widget.getStaticChildren(), widget.getNestedChildren()}) {
+            if (children != null) {
+                for (Widget child : children) {
+                    if (child != null) {
+                        Widget found = findDeepestClickableIn(child, point);
+                        if (found != null) {
+                            deepest = found;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (deepest != null) {
+            return deepest;
+        } else if (widget.getOnOpListener() != null || widget.getOnKeyListener() != null) {
+            return widget;
+        }
+        return null; // No clickable found in this branch
     }
 
     private Widget findWidgetAt(Point canvasPoint) {
@@ -742,5 +845,32 @@ public class ClickHandler implements RequestHandler, MouseListener {
 
         return null;
     }
-}
 
+    private int findChildIndex(Widget parent, Widget child) {
+        // Check dynamic children
+        Widget[] children = parent.getDynamicChildren();
+        if (children != null) {
+            for (int i = 0; i < children.length; i++) {
+                if (children[i] == child) return i;
+            }
+        }
+
+        // Check static children
+        children = parent.getStaticChildren();
+        if (children != null) {
+            for (int i = 0; i < children.length; i++) {
+                if (children[i] == child) return i;
+            }
+        }
+
+        // Check nested children
+        children = parent.getNestedChildren();
+        if (children != null) {
+            for (int i = 0; i < children.length; i++) {
+                if (children[i] == child) return i;
+            }
+        }
+
+        return -1;
+    }
+}

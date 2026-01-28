@@ -31,12 +31,12 @@ def click_inventory(item: str, action: Optional[str] = None, hover_only: bool = 
     if not focus_runelite_window():
         print("Failed to focus RuneLite window.")
         return False
-
+    
     inv_data = check_widget('35913795', sprite_id=-1)
     if inv_data:
         print("Inventory not open, attempting to open it.")
         for _ in range(3):
-            click_widget('35913795', sprite_id=-1, rand_x=10, rand_y=10)
+            click_widget('35913795', sprite_id=1030, rand_x=10, rand_y=10)
 
             for _ in range(60):
                 inv_data = inventory()
@@ -76,7 +76,6 @@ def click_inventory(item: str, action: Optional[str] = None, hover_only: bool = 
         bounds = first_item['middle_point']
         rel_x = bounds['x']  # Relative to window
         rel_y = bounds['y']
-        print(bounds, rel_x, rel_y)
 
         if action:
             # Use select_menu_option for context menu action
@@ -121,21 +120,18 @@ def check_inventory(item: str) -> tuple[bool, int, tuple[int, int] | None]:
     if not focus_runelite_window():
         return False, 0, None
 
-    # oepn
-    inv_data = inventory()
-    if not inv_data or 'data' not in inv_data:
-        print("Inventory not open, attempting to open it.")
-        for _ in range(3):
-            click_widget('35913795', sprite_id=-1, rand_x=10, rand_y=10)
 
-            for _ in range(60):
-                inv_data = inventory()
-                if inv_data and 'data' in inv_data:
-                    break
-                time.sleep(0.01)
-            
-            if inv_data and 'data' in inv_data:
-                break
+    for _ in range(3):
+        click_widget('35913795', sprite_id=1030, hidden=False, right_click=False, action=None, rand_x=10, rand_y=10)
+
+
+    for _ in range(60):
+        inv_data = inventory()
+        if inv_data and 'data' in inv_data:
+            break
+        time.sleep(0.01)
+    else:
+        exit("no inventory data after attempting to open inventory")
 
 
     inv_data = inventory()

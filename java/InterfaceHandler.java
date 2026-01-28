@@ -424,34 +424,39 @@ public class InterfaceHandler implements RequestHandler {
             return optionsList;
         }
 
-        net.runelite.api.Point mousePosition = client.getMouseCanvasPosition();
-        int mouseX = mousePosition.getX();
-        int mouseY = mousePosition.getY();
+        int middleX;
+        int currentY;
 
-        FontMetrics fontMetrics = client.getCanvas().getGraphics().getFontMetrics(new Font("Arial", Font.PLAIN, 14));
-        double regularOptionHeight = 14.5;
-        double walkHereOptionHeight = 18;
-        double previousOptionHeight = 0;
-        double yPosition = mouseY + 23;
+        boolean menuOpen = client.isMenuOpen();
+        if (menuOpen) {
+            // Exact when menu is open — this is used for all context clicks
+            middleX = client.getMenuX() + (client.getMenuWidth() / 2);
+            currentY = client.getMenuY() + 12;  // Tuned offset: first middle at ~getMenuY() + 12 (matches your log: 127 + 12 ≈ 139)
+            log.debug("Menu open - getMenuY(): {}, getMenuX(): {}, width: {}", client.getMenuY(), client.getMenuX(), client.getMenuWidth());
+        } else {
+            // Fallback for hover/top-option check only (never used for context clicks)
+            net.runelite.api.Point mousePos = client.getMouseCanvasPosition();
+            middleX = mousePos.getX();
+            currentY = mousePos.getY() + 20;  // Approximate — doesn't matter for context options
+        }
 
+        final int OPTION_HEIGHT = 15;  // Fixed in OSRS
+
+        // IMPORTANT: Reverse iteration so top/visual-first option (default action, e.g. "Cage") gets lowest y (top of menu)
+        // This fixes the current reversed labeling in your logs
         for (int i = menuEntries.length - 1; i >= 0; i--) {
             MenuEntry entry = menuEntries[i];
-            String option = entry.getOption();
-            String target = entry.getTarget();
-            double currentOptionHeight = option.equals("Walk here") ? walkHereOptionHeight : regularOptionHeight;
+            int middleY = currentY + 7;  // Approximate center of 15px option height (7-8px down from top of slot)
 
-            if (i != menuEntries.length - 1) {
-                yPosition += (previousOptionHeight / 2.0) + (currentOptionHeight / 2.0);
-            }
-
-            int textBaselineY = (int) Math.round(yPosition + fontMetrics.getAscent() / 2);
             Map<String, Object> optionData = new HashMap<>();
-            optionData.put("option", option);
-            optionData.put("target", target);
-            optionData.put("middle_point", new java.awt.Point(mouseX, textBaselineY));
+            optionData.put("option", entry.getOption());
+            optionData.put("target", entry.getTarget());
+            optionData.put("middle_point", Map.of("x", middleX, "y", middleY));
             optionsList.add(optionData);
-            previousOptionHeight = currentOptionHeight;
+
+            currentY += OPTION_HEIGHT;
         }
+
         return optionsList;
     }
 }

@@ -119,7 +119,7 @@ def click_widget(id_str, sprite_id=None, hidden=False, right_click=False, action
         if widget.get("id") != widget_id:
             continue
         if sprite_id is not None and widget.get("spriteId") == sprite_id:
-            continue
+            return True  # Already in desired state
         if hidden is not None and widget.get("hidden", False) != hidden:
             continue
         if 'bounds' in widget:
@@ -403,15 +403,17 @@ def check_widget_name(id_str, child_index=None):
     print(f"Widget with ID {widget_id} not found")
     return None
 
-def click_widget_by_name(name_str, sprite_id=None, hidden=None, child_index=None, right_click=False, action=None, middle_point=False, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0)):
+def click_widget_by_name(name_str, sprite_id=None, hidden=None, exact_match=False, child_index=None, right_click=False, action=None, middle_point=False, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0)):
     """
-    Clicks a widget or child by name (case-insensitive partial match), similar to click_widget.
+    Clicks a widget or child by name (case-insensitive partial or exact match), similar to click_widget.
     First finds the widget using check_widget_name logic, then clicks it.
     
     Args:
-        name_str (str): Name to search for (partial match).
+        name_str (str): Name to search for.
         sprite_id (int, optional): Filter by sprite ID.
         hidden (bool, optional): Filter by hidden status.
+        exact_match (bool, optional): If True, require exact name match (case-insensitive) on the plain text (color/img tags stripped).
+                                     If False (default), use partial substring match on the plain text.
         child_index (int, optional): Specific child index if targeting a parent widget.
         right_click (bool): Right-click instead of left-click (default: False).
         action (str): If provided, right-click and select the action (default: None).
@@ -429,12 +431,26 @@ def click_widget_by_name(name_str, sprite_id=None, hidden=None, child_index=None
         print("No widget data available")
         return False
 
-    name_normalized = name_str.lower()
+    # Normalize target name (strip whitespace and lowercase)
+    name_normalized = name_str.strip().lower()
+
+    def strip_tags(text):
+        """Remove all RuneScape-style tags like <col=ff9040>, </col>, <img=5>, etc."""
+        if not text:
+            return ""
+        return re.sub(r'<[^>]*>', '', text).strip()
 
     def matches(widget):
-        widget_name = widget.get("name", "").lower()
-        if name_normalized not in widget_name:
-            return False
+        widget_name_raw = widget.get("name", "")
+        widget_name_plain = strip_tags(widget_name_raw).lower()
+        
+        if exact_match:
+            if widget_name_plain != name_normalized:
+                return False
+        else:
+            if name_normalized not in widget_name_plain:
+                return False
+                
         if sprite_id is not None and widget.get("spriteId") != sprite_id:
             return False
         if hidden is not None and widget.get("hidden") != hidden:
@@ -453,19 +469,19 @@ def click_widget_by_name(name_str, sprite_id=None, hidden=None, child_index=None
 
     # If child_index specified, target that specific path
     if child_index is not None:
+        target_widget = None
         for widget in widgets:
             if 'children' in widget:
                 children = widget.get('children', [])
                 if child_index < len(children) and matches(children[child_index]):
                     target_widget = children[child_index]
                     break
-        else:
-            target_widget = None
     else:
         target_widget = recursive_find(widgets)
 
     if target_widget is None:
-        print(f"No widget found with name containing '{name_str}'")
+        match_type = "exactly matching" if exact_match else "containing"
+        print(f"No widget found with plain name {match_type} '{name_str}' (tags stripped for comparison)")
         return False
 
     # Now click it (reuse logic from click_widget)
@@ -499,7 +515,10 @@ def click_widget_by_name(name_str, sprite_id=None, hidden=None, child_index=None
     
     abs_x = canvas_x + rel_x + rl_x
     abs_y = canvas_y + rel_y + rl_y
-    print(f'clicking widget by name at: {abs_x}, {abs_y}, canvas: {canvas_x}, {canvas_y}, width: {width}, height: {height}')
+    raw_name = target_widget.get("name", "")
+    plain_name = strip_tags(raw_name)
+    # Changed fancy arrow → to ASCII -> to avoid UnicodeEncodeError on Windows consoles
+    print(f'clicking widget by name at: {abs_x}, {abs_y}, canvas: {canvas_x}, {canvas_y}, width: {width}, height: {height} | raw: "{raw_name}" -> plain: "{plain_name}"')
     
     for i in range(clicks):
         if i > 0 and sleep_interval != (0, 0):
@@ -507,7 +526,9 @@ def click_widget_by_name(name_str, sprite_id=None, hidden=None, child_index=None
         
         if action:
             # Use select_menu_option logic for right-click + action
-            select_menu_option_logic(canvas_x + rel_x, canvas_y + rel_y, action)
+            if select_menu_option_logic(canvas_x + rel_x, canvas_y + rel_y, action):
+                return True
+            return False
         elif right_click:
             # Right-click only
             move(abs_x, abs_y, fast=True, sleep=True, button='right')
@@ -528,3 +549,7 @@ def click_widget_by_name(name_str, sprite_id=None, hidden=None, child_index=None
 # print(check_widget('8454157', sprite_id=699, child_index=100))
 # print(check_widget_text('8454157', child_index=1))
 # print(check_widget('8454157', child_index=4, sprite_id=699))
+print(check_widget('35913796', sprite_id=1030))
+# if not click_widget('35913795', sprite_id=1030, hidden=False, right_click=False, action=None, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0)):
+#    exit(f'click widget 35913795 failed, exiting... time: {time.strftime("%H:%M:%S")}')
+# click_widget_by_name("Monk's robe top", action="remove", exact_match=True)

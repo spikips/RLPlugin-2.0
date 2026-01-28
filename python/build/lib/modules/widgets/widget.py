@@ -1,4 +1,5 @@
 import random
+from time import time
 from modules.widgets.widget_data import get_all_widget_data
 from modules.core.mouse_control import move
 from modules.core.window_utils import runelite_window
@@ -191,8 +192,9 @@ def check_widget_text(id_str, child_index=None):
 # click_widget(35913778)
 
 # print(click_widget_child('8454157', child_index=1))
-# print(click_widget('8454157', sprite_id=699))
+# print(click_widget('35913795', sprite_id=1030))
 # click_widget('8454150')
 # print(check_widget('8454157', sprite_id=699, child_index=100))
+# print(check_widget('35913795', sprite_id=1030))
 # print(check_widget_text('8454157', child_index=1))
 # print(check_widget('8454157', child_index=4, sprite_id=699))

@@ -1,7 +1,7 @@
 import time
 import random
 import keyboard 
-from modules.core.plugin_client import inventory_random_clickpoint, player, interact_options, minimap_tiles, npc, game_object
+from modules.core.plugin_client import inventory_random_clickpoint, player, interact_options, npc, game_object
 from modules.core.mouse_control import move, scroll 
 from modules.core.window_utils import runelite_window 
 from modules.widgets.widget_data import get_all_widget_data 

@@ -11,7 +11,7 @@ public interface AsdConfig extends Config
             name = "Tile Coordinates",
             description = "Settings for Tile Coordinates Display",
             position = 1,
-            closedByDefault = false
+            closedByDefault = true
     )
     String tileCoordinatesSection = "tileCoordinates";
 
@@ -66,7 +66,7 @@ public interface AsdConfig extends Config
             name = "Player Status Overlay",
             description = "Settings for Player Status Overlay",
             position = 2,
-            closedByDefault = false
+            closedByDefault = true
     )
     String playerStatusSection = "playerStatus";
 
@@ -155,7 +155,7 @@ public interface AsdConfig extends Config
             name = "Quest and Skill States",
             description = "Settings for Quest States and Skill Levels",
             position = 3,
-            closedByDefault = false
+            closedByDefault = true
     )
     String questSkillSection = "questSkillSection";
 
@@ -188,7 +188,7 @@ public interface AsdConfig extends Config
             name = "Equipped Gear",
             description = "Settings for Equipped Gear",
             position = 4,
-            closedByDefault = false
+            closedByDefault = true
     )
     String equippedGearSection = "equippedGearSection";
 
@@ -209,7 +209,7 @@ public interface AsdConfig extends Config
             name = "Chat Messages",
             description = "Settings for Chat Messages",
             position = 5,
-            closedByDefault = false
+            closedByDefault = true
     )
     String chatMessagesSection = "chatMessagesSection";
 
@@ -230,7 +230,7 @@ public interface AsdConfig extends Config
             name = "NPC Highlight",
             description = "Settings for NPC Highlight",
             position = 6,
-            closedByDefault = false
+            closedByDefault = true
     )
     String npcSection = "npcSection";
 
@@ -342,25 +342,25 @@ public interface AsdConfig extends Config
         return new Color(255, 255, 0); // Default yellow
     }
 
+    @ConfigItem(
+            keyName = "logAggressiveNpcs",
+            name = "Log Aggressive NPCs",
+            description = "Log NPCs aggressive towards you",
+            position = 10,
+            section = npcSection
+    )
+    default boolean logAggressiveNpcs() {
+        return false;
+    }
+
     // Inventory Item IDs Section
     @ConfigSection(
             name = "Inventory Item IDs",
             description = "Settings for Inventory Item IDs",
             position = 7,
-            closedByDefault = false
+            closedByDefault = true
     )
     String inventorySection = "inventorySection";
-
-    @ConfigItem(
-            keyName = "displayItemIDOverlays",
-            name = "Display Item ID Overlays",
-            description = "Enable displaying item IDs over inventory items",
-            position = 2,
-            section = inventorySection
-    )
-    default boolean displayItemIDOverlays() {
-        return false;
-    }
 
     @ConfigItem(
             keyName = "inventoryItemIDsEnabled",
@@ -374,10 +374,21 @@ public interface AsdConfig extends Config
     }
 
     @ConfigItem(
+            keyName = "displayItemIDOverlays",
+            name = "Display Item ID Overlays",
+            description = "Enable displaying item IDs over inventory items",
+            position = 2,
+            section = inventorySection
+    )
+    default boolean displayItemIDOverlays() {
+        return false;
+    }
+
+    @ConfigItem(
             keyName = "inventoryItemTextSize",
             name = "Inventory Item Text Size",
             description = "Adjust the size of the text displayed over inventory items",
-            position = 2,
+            position = 3,
             section = inventorySection
     )
     default int inventoryItemTextSize()
@@ -389,7 +400,7 @@ public interface AsdConfig extends Config
             keyName = "inventoryItemTextColor",
             name = "Inventory Item Text Color",
             description = "Choose the color of the inventory item text",
-            position = 3,
+            position = 4,
             section = inventorySection
     )
     default Color inventoryItemTextColor()
@@ -402,7 +413,7 @@ public interface AsdConfig extends Config
             name = "Object IDs",
             description = "Settings for Object IDs",
             position = 8,
-            closedByDefault = false
+            closedByDefault = true
     )
     String objectIDsSection = "objectIDsSection";
 
@@ -417,16 +428,7 @@ public interface AsdConfig extends Config
     {
         return false;
     }
-    @ConfigItem(
-            keyName = "objectIdFont",
-            name = "Object ID Font",
-            description = "Font style for object ID text",
-            position = 5,
-            section = objectIDsSection
-    )
-    default String objectIdFont() {
-        return "Arial";
-    }
+
     @ConfigItem(
             keyName = "interactableActions",
             name = "Interactable Actions",
@@ -473,120 +475,23 @@ public interface AsdConfig extends Config
         return new Color(255, 0, 0, 255); // Default opaque red
     }
 
-    // Colors Section
-    @ConfigSection(
-            name = "Colors",
-            description = "Customize colors for various elements",
-            position = 99,
-            closedByDefault = true
-    )
-    String colorSettingsSection = "colorSettings";
-
-    @Alpha
     @ConfigItem(
-            keyName = "tileOutlineColor",
-            name = "Tile Outline Color",
-            description = "Choose the color of the tile outlines",
-            position = 1,
-            section = colorSettingsSection
+            keyName = "objectIdFont",
+            name = "Object ID Font",
+            description = "Font style for object ID text",
+            position = 6,
+            section = objectIDsSection
     )
-    default Color tileOutlineColor() {
-        return new Color(255, 255, 0, 255); // Default opaque yellow
+    default String objectIdFont() {
+        return "Arial";
     }
 
-    @ConfigItem(
-            keyName = "tileTextColor",
-            name = "Tile Text Color",
-            description = "Color of the text displayed on tiles",
-            position = 2,
-            section = colorSettingsSection
-    )
-    default Color tileTextColor() {
-        return Color.WHITE;
-    }
-
-    @ConfigItem(
-            keyName = "overlayTextColor",
-            name = "Overlay Text Color",
-            description = "Choose the color of the overlay text",
-            position = 3,
-            section = colorSettingsSection
-    )
-    default Color overlayTextColor() {
-        return Color.WHITE;
-    }
-    @Alpha
-    @ConfigItem(
-            keyName = "overlayBorderColor",
-            name = "Overlay Border Color",
-            description = "Choose the color of the overlay border, including transparency",
-            position = 11
-    )
-    default Color overlayBorderColor()
-    {
-        return new Color(255, 255, 255, 255); // Default white, fully opaque
-    }
-
-    @Alpha
-    @ConfigItem(
-            keyName = "overlayTextShadowColor",
-            name = "Overlay Text Shadow Color",
-            description = "Choose the color of the overlay text shadow",
-            position = 12
-    )
-    default Color overlayTextShadowColor()
-    {
-        return new Color(0, 0, 0, 255); // Default black, fully opaque
-    }
-
-    @Alpha
-    @ConfigItem(
-            keyName = "overlayBackgroundColor",
-            name = "Overlay Background Color",
-            description = "Background color of the overlays",
-            position = 5,
-            section = colorSettingsSection
-    )
-    default Color overlayBackgroundColor() {
-        return new Color(64, 64, 64, 100); // Dark gray with opacity of 100
-    }
-
-    // Text Sizes Section
-    @ConfigSection(
-            name = "Text Sizes",
-            description = "Adjust text sizes for overlay elements",
-            position = 100,
-            closedByDefault = true
-    )
-    String textSizeSettingsSection = "textSizeSettings";
-
-    @ConfigItem(
-            keyName = "overlayTextSize",
-            name = "Overlay Text Size",
-            description = "Adjust the size of the text displayed in the overlay",
-            position = 1,
-            section = textSizeSettingsSection
-    )
-    default int overlayTextSize() {
-        return 12;
-    }
-
-    @ConfigItem(
-            keyName = "tileTextSize",
-            name = "Tile Text Size",
-            description = "Adjust the size of the text displayed on tiles",
-            position = 2,
-            section = textSizeSettingsSection
-    )
-    default int tileTextSize() {
-        return 10;
-    }
     // Game Object Highlight Section
     @ConfigSection(
             name = "Game Object Highlight",
             description = "Settings for Game Object Highlight",
             position = 9,
-            closedByDefault = false
+            closedByDefault = true
     )
     String gameObjectSection = "gameObjectSection";
 
@@ -650,12 +555,71 @@ public interface AsdConfig extends Config
         return 12;
     }
 
+    // Under Attack Indicator Section
+    @ConfigSection(
+            name = "Under Attack Indicator",
+            description = "Settings for under attack indicator",
+            position = 10,
+            closedByDefault = true
+    )
+    String underAttackSection = "underAttack";
+
+    @ConfigItem(
+            keyName = "enableUnderAttackIndicator",
+            name = "Enable Targeting Indicator",
+            description = "Show indicator for when targeted (even if blocked)",
+            position = 1,
+            section = underAttackSection
+    )
+    default boolean enableUnderAttackIndicator()
+    {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "enableReachableIndicator",
+            name = "Enable Reachable Indicator",
+            description = "Show indicator for when targeted NPC can actually reach/hit you (obstacles checked)",
+            position = 2,
+            section = underAttackSection
+    )
+    default boolean enableReachableIndicator()
+    {
+        return true;
+    }
+
+    @Alpha
+    @ConfigItem(
+            keyName = "underAttackColor",
+            name = "Under Attack Color",
+            description = "Color when under attack/reachable",
+            position = 3,
+            section = underAttackSection
+    )
+    default Color underAttackColor()
+    {
+        return new Color(0, 255, 0, 255); // Default opaque green
+    }
+
+    @Alpha
+    @ConfigItem(
+            keyName = "notUnderAttackColor",
+            name = "Not Under Attack Color",
+            description = "Color when not under attack/reachable",
+            position = 4,
+            section = underAttackSection
+    )
+    default Color notUnderAttackColor()
+    {
+        return new Color(255, 0, 0, 255); // Default opaque red
+    }
+
     // Mouse Hover Interaction Options Section
     @ConfigSection(
             name = "Mouse Hover Interaction Options",
             description = "Settings for displaying interaction options when hovering over locations",
             position = 11,
-            closedByDefault = false
+            closedByDefault = true
     )
     String mouseHoverSection = "mouseHoverSection";
 
@@ -695,192 +659,134 @@ public interface AsdConfig extends Config
         return Color.WHITE;
     }
 
-    // Under Attack Indicator Section
+    // Minimap Hover Section
     @ConfigSection(
-            name = "Under Attack Indicator",
-            description = "Settings for under attack indicator",
-            position = 10,
-            closedByDefault = false
+            name = "Minimap Hover",
+            description = "Settings for Minimap Hover Tile Display",
+            position = 12,
+            closedByDefault = true
     )
-    String underAttackSection = "underAttack";
+    String minimapHoverSection = "minimapHoverSection";
 
     @ConfigItem(
-            keyName = "enableUnderAttackIndicator",
-            name = "Enable Targeting Indicator",
-            description = "Show indicator for when targeted (even if blocked)",
+            keyName = "enableMinimapHoverTile",
+            name = "Enable Minimap Hover Tile",
+            description = "Show tile coordinates when hovering over the minimap",
             position = 1,
-            section = underAttackSection
+            section = minimapHoverSection
     )
-    default boolean enableUnderAttackIndicator()
+    default boolean enableMinimapHoverTile()
     {
-        return true;
-    }
-
-    @ConfigItem(
-            keyName = "logAggressiveNpcs",
-            name = "Log Aggressive NPCs",
-            description = "Log NPCs aggressive towards you",
-            position = 10,
-            section = npcSection
-    )
-    default boolean logAggressiveNpcs() {
         return false;
     }
+
     @ConfigItem(
-            keyName = "enableReachableIndicator",
-            name = "Enable Reachable Indicator",
-            description = "Show indicator for when targeted NPC can actually reach/hit you (obstacles checked)",
+            keyName = "minimapHoverTextSize",
+            name = "Minimap Hover Text Size",
+            description = "Font size for minimap hover tile coordinates",
             position = 2,
-            section = underAttackSection
+            section = minimapHoverSection
     )
-    default boolean enableReachableIndicator()
+    default int minimapHoverTextSize()
+    {
+        return 10; // Small text size
+    }
+
+    @ConfigItem(
+            keyName = "minimapHoverTextColor",
+            name = "Minimap Hover Text Color",
+            description = "Color of the minimap hover tile text",
+            position = 3,
+            section = minimapHoverSection
+    )
+    default Color minimapHoverTextColor()
+    {
+        return Color.WHITE;
+    }
+
+    @Alpha
+    @ConfigItem(
+            keyName = "minimapHoverTextShadowColor",
+            name = "Minimap Hover Text Shadow Color",
+            description = "Color of the shadow for minimap hover tile text",
+            position = 4,
+            section = minimapHoverSection
+    )
+    default Color minimapHoverTextShadowColor()
+    {
+        return new Color(0, 0, 0, 255); // Black shadow
+    }
+
+    // Varbit Monitoring Section
+    @ConfigSection(
+            name = "Varbit Monitoring",
+            description = "Settings for monitoring varbit changes",
+            position = 13,
+            closedByDefault = true
+    )
+    String varbitMonitoringSection = "varbitMonitoringSection";
+
+    @ConfigItem(
+            keyName = "varbitMonitoringEnabled",
+            name = "Enable Varbit Monitoring",
+            description = "Listen for varbit changes and log to console",
+            position = 1,
+            section = varbitMonitoringSection
+    )
+    default boolean varbitMonitoringEnabled()
+    {
+        return false;
+    }
+
+    @ConfigItem(
+            keyName = "includeVarbits",
+            name = "Include Varbits",
+            description = "Comma-separated varbit IDs to monitor (leave empty for all)",
+            position = 2,
+            section = varbitMonitoringSection
+    )
+    default String includeVarbits() {
+        return "";
+    }
+
+    @ConfigItem(
+            keyName = "excludeVarbits",
+            name = "Exclude Varbits",
+            description = "Comma-separated varbit IDs to ignore",
+            position = 3,
+            section = varbitMonitoringSection
+    )
+    default String excludeVarbits() {
+        return "";
+    }
+
+    @ConfigItem(
+            keyName = "enableVarbitNames",
+            name = "Enable Varbit Names",
+            description = "Include varbit names and descriptions in logs",
+            position = 4,
+            section = varbitMonitoringSection
+    )
+    default boolean enableVarbitNames()
     {
         return true;
     }
 
-    @Alpha
     @ConfigItem(
-            keyName = "underAttackColor",
-            name = "Under Attack Color",
-            description = "Color when under attack/reachable",
-            position = 3,
-            section = underAttackSection
+            keyName = "varbitChangeLogger",
+            name = "Varbit Change Logger",
+            description = "Log all varbit changes to console and expose via socket for debugging",
+            position = 5,
+            section = varbitMonitoringSection
     )
-    default Color underAttackColor()
-    {
-        return new Color(0, 255, 0, 255); // Default opaque green
-    }
+    default boolean varbitChangeLogger() { return false; }
 
-    @Alpha
-    @ConfigItem(
-            keyName = "notUnderAttackColor",
-            name = "Not Under Attack Color",
-            description = "Color when not under attack/reachable",
-            position = 4,
-            section = underAttackSection
-    )
-    default Color notUnderAttackColor()
-    {
-        return new Color(255, 0, 0, 255); // Default opaque red
-    }
-
-        @ConfigSection(
-                name = "Minimap Hover",
-                description = "Settings for Minimap Hover Tile Display",
-                position = 12,
-                closedByDefault = false
-        )
-        String minimapHoverSection = "minimapHoverSection";
-
-        @ConfigItem(
-                keyName = "enableMinimapHoverTile",
-                name = "Enable Minimap Hover Tile",
-                description = "Show tile coordinates when hovering over the minimap",
-                position = 1,
-                section = minimapHoverSection
-        )
-        default boolean enableMinimapHoverTile()
-        {
-            return false;
-        }
-
-        @ConfigItem(
-                keyName = "minimapHoverTextSize",
-                name = "Minimap Hover Text Size",
-                description = "Font size for minimap hover tile coordinates",
-                position = 2,
-                section = minimapHoverSection
-        )
-        default int minimapHoverTextSize()
-        {
-            return 10; // Small text size
-        }
-
-        @ConfigItem(
-                keyName = "minimapHoverTextColor",
-                name = "Minimap Hover Text Color",
-                description = "Color of the minimap hover tile text",
-                position = 3,
-                section = minimapHoverSection
-        )
-        default Color minimapHoverTextColor()
-        {
-            return Color.WHITE;
-        }
-
-        @Alpha
-        @ConfigItem(
-                keyName = "minimapHoverTextShadowColor",
-                name = "Minimap Hover Text Shadow Color",
-                description = "Color of the shadow for minimap hover tile text",
-                position = 4,
-                section = minimapHoverSection
-        )
-        default Color minimapHoverTextShadowColor()
-        {
-            return new Color(0, 0, 0, 255); // Black shadow
-        }
-
-        // Varbit Monitoring Section
-        @ConfigSection(
-                name = "Varbit Monitoring",
-                description = "Settings for monitoring varbit changes",
-                position = 13,
-                closedByDefault = false
-        )
-        String varbitMonitoringSection = "varbitMonitoringSection";
-
-        @ConfigItem(
-                keyName = "varbitMonitoringEnabled",
-                name = "Enable Varbit Monitoring",
-                description = "Listen for varbit changes and log to console",
-                position = 1,
-                section = varbitMonitoringSection
-        )
-        default boolean varbitMonitoringEnabled()
-        {
-            return false;
-        }
-
-        @ConfigItem(
-                keyName = "includeVarbits",
-                name = "Include Varbits",
-                description = "Comma-separated varbit IDs to monitor (leave empty for all)",
-                position = 2,
-                section = varbitMonitoringSection
-        )
-        default String includeVarbits() {
-            return "";
-        }
-
-        @ConfigItem(
-                keyName = "excludeVarbits",
-                name = "Exclude Varbits",
-                description = "Comma-separated varbit IDs to ignore",
-                position = 3,
-                section = varbitMonitoringSection
-        )
-        default String excludeVarbits() {
-            return "";
-        }
-
-        @ConfigItem(
-                keyName = "enableVarbitNames",
-                name = "Enable Varbit Names",
-                description = "Include varbit names and descriptions in logs",
-                position = 4,
-                section = varbitMonitoringSection
-        )
-        default boolean enableVarbitNames()
-        {
-            return true;
-        }
-
+    // Player Highlight Section
     @ConfigSection(
             name = "Player Highlight",
             description = "Settings for Player Highlight",
             position = 14,
-            closedByDefault = false
+            closedByDefault = true
     )
     String playerSection = "playerSection";
 
@@ -1002,17 +908,12 @@ public interface AsdConfig extends Config
     default int playerRadius() {
         return 10;
     }
-    @ConfigItem(
-            keyName = "varbitChangeLogger",
-            name = "Varbit Change Logger",
-            description = "Log all varbit changes to console and expose via socket for debugging",
-            position = 100
-    )
-    default boolean varbitChangeLogger() { return false; }
+
+    // Click Logging Section
     @ConfigSection(
             name = "Click Logging",
             description = "Settings for tracking and exposing mouse clicks",
-            position = 15,  // Adjust position
+            position = 15,
             closedByDefault = true
     )
     String clickSection = "clickLogging";
@@ -1026,5 +927,117 @@ public interface AsdConfig extends Config
     )
     default boolean enableClickLogging() {
         return false;
+    }
+
+    // Colors Section
+    @ConfigSection(
+            name = "Colors",
+            description = "Customize colors for various elements",
+            position = 99,
+            closedByDefault = true
+    )
+    String colorSettingsSection = "colorSettings";
+
+    @Alpha
+    @ConfigItem(
+            keyName = "tileOutlineColor",
+            name = "Tile Outline Color",
+            description = "Choose the color of the tile outlines",
+            position = 1,
+            section = colorSettingsSection
+    )
+    default Color tileOutlineColor() {
+        return new Color(255, 255, 0, 255); // Default opaque yellow
+    }
+
+    @ConfigItem(
+            keyName = "tileTextColor",
+            name = "Tile Text Color",
+            description = "Color of the text displayed on tiles",
+            position = 2,
+            section = colorSettingsSection
+    )
+    default Color tileTextColor() {
+        return Color.WHITE;
+    }
+
+    @ConfigItem(
+            keyName = "overlayTextColor",
+            name = "Overlay Text Color",
+            description = "Choose the color of the overlay text",
+            position = 3,
+            section = colorSettingsSection
+    )
+    default Color overlayTextColor() {
+        return Color.WHITE;
+    }
+
+    @Alpha
+    @ConfigItem(
+            keyName = "overlayBackgroundColor",
+            name = "Overlay Background Color",
+            description = "Background color of the overlays",
+            position = 5,
+            section = colorSettingsSection
+    )
+    default Color overlayBackgroundColor() {
+        return new Color(64, 64, 64, 100); // Dark gray with opacity of 100
+    }
+
+    @Alpha
+    @ConfigItem(
+            keyName = "overlayBorderColor",
+            name = "Overlay Border Color",
+            description = "Choose the color of the overlay border, including transparency",
+            position = 11,
+            section = colorSettingsSection
+    )
+    default Color overlayBorderColor()
+    {
+        return new Color(255, 255, 255, 255); // Default white, fully opaque
+    }
+
+    @Alpha
+    @ConfigItem(
+            keyName = "overlayTextShadowColor",
+            name = "Overlay Text Shadow Color",
+            description = "Choose the color of the overlay text shadow",
+            position = 12,
+            section = colorSettingsSection
+    )
+    default Color overlayTextShadowColor()
+    {
+        return new Color(0, 0, 0, 255); // Default black, fully opaque
+    }
+
+    // Text Sizes Section
+    @ConfigSection(
+            name = "Text Sizes",
+            description = "Adjust text sizes for overlay elements",
+            position = 100,
+            closedByDefault = true
+    )
+    String textSizeSettingsSection = "textSizeSettings";
+
+    @ConfigItem(
+            keyName = "overlayTextSize",
+            name = "Overlay Text Size",
+            description = "Adjust the size of the text displayed in the overlay",
+            position = 1,
+            section = textSizeSettingsSection
+    )
+    default int overlayTextSize() {
+        return 12;
+    }
+
+    @ConfigItem(
+            keyName = "tileTextSize",
+            name = "Tile Text Size",
+            description = "Adjust the size of the text displayed on tiles",
+            position = 2,
+            section = textSizeSettingsSection
+    )
+    default int tileTextSize() {
+        return 10;
     }
 }

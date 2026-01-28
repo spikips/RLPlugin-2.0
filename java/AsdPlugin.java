@@ -1,4 +1,5 @@
 package net.runelite.client.plugins.asd;
+import lombok.Getter;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.VarClientIntChanged;
 import com.google.inject.Provides;
@@ -102,7 +103,9 @@ public class AsdPlugin extends Plugin {
     protected String equippedGearText;
     protected String chatMessagesText;
     private WorldPoint referencePosition;
+    @Getter
     private boolean underAttack = false;
+    @Getter
     private boolean reachableUnderAttack = false;
 
     private static final int[] DX = {0, 1, 0, -1}; // N, E, S, W
@@ -420,14 +423,6 @@ public class AsdPlugin extends Plugin {
                 }
             }
         }
-    }
-
-    public boolean isUnderAttack() {
-        return underAttack;
-    }
-
-    public boolean isReachableUnderAttack() {
-        return reachableUnderAttack;
     }
 
     private WorldPoint predictNextPosition(WorldPoint start, WorldPoint target, int speed, int width, int height, int[][] tempCollisionFlags) {

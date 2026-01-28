@@ -117,6 +117,7 @@ def click_gameobject(object_identifier: str, action: str, tile: Optional[Tuple[i
 
     if obj is None or 'middle_point' not in obj:
         print(f"No game object found for identifier '{object_identifier}' within radius {radius} or canvas bounds.")
+        print(f"Checked objects: {obj}")
         return False
 
     mp = obj['middle_point']

@@ -253,7 +253,7 @@ wait_till_character_stopped_moving(max_ticks=50, required_idle_ticks=3)
 
 #---#
 # player_data/tile_change.py
-from modules.player_data.tile_change import wait_for_tile_change
+from modules.player_data.tile_change import wait_for_tile_change, wait_until_at_tile
 
 # Note: This module waits for the player's tile to change in Old School RuneScape via a RuneLite plugin.
 # It relies on modules.utils.wait_for_tick and modules.core.plugin_client (for player data).
@@ -269,6 +269,9 @@ else:
 
 # With custom parameters
 wait_for_tile_change(timeout_ticks=30, max_retries=5)
+
+# Example for wait_until_at_tile(target_x: int, target_y: int, radius: int = 2, plane: Optional[int] = None, timeout_seconds: Optional[float] = None) -> bool
+wait_until_at_tile(target_x=3200, target_y=3200, radius=3, plane=0, timeout_seconds=60.0)
 
 #---#
 # player_data/check_run.py
@@ -587,8 +590,8 @@ from modules.utils.varbit_change import varbit_change
 # It relies on modules.core.plugin_client (varbit_changes), time.
 # No functions defined; runs a loop printing changes every tick (0.6s).
 
-while True:
-    varbit_change()
+# while True:
+#     varbit_change()
 # returns:
 # Varbit 12391 changed: 923 -> 525 (tick 1)
 # Varbit 12392 changed: 16 -> 17 (tick 1)
@@ -897,8 +900,8 @@ print(f"Clicked child: {clicked_child}")
 
 # Example for click_widget_by_name(name: str, action=None, right_click=False, sleep_interval=(0,0), clicks=1, rand_x=0, rand_y=0) -> bool
 # Clicks widget by name match.
-clicked_by_name = click_widget_by_name('Some Widget Name', right_click=True)
-print(f"Clicked by name: {clicked_by_name}")
+click_widget_by_name("Monk's robe top", action="remove", exact_match=True)
+
 
 #---#  
 # core/plugin_client.py

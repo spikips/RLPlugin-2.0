@@ -29,7 +29,7 @@ def select_menu_option(x: int, y: int, action: str, hover_only: bool = False) ->
     
     # Hover to load interaction options
     move(screen_x, screen_y, fast=True, sleep=True)
-    time.sleep(random.uniform(0.05, 0.1))
+    time.sleep(random.uniform(0.03, 0.05))
     
     # Get available interaction options
     options = interact_options().get('data', [])
@@ -40,9 +40,12 @@ def select_menu_option(x: int, y: int, action: str, hover_only: bool = False) ->
     # Normalize action for comparison
     action_normalized = ' '.join(action.lower().split())
     
+    def clean_target(target: str) -> str:
+        return re.sub(r'<[^>]+>', '', target).strip().lower()
+    
     # Check if the first option matches the desired action
     first_option = options[0]
-    first_option_target_clean = re.sub(r'<[^>]+>', '', first_option['target']).lower()
+    first_option_target_clean = clean_target(first_option['target'])
     first_option_combined = f"{first_option['option'].lower()} {first_option_target_clean}".strip()
     print(f"Checking first option: option='{first_option['option']}', target='{first_option['target']}', combined='{first_option_combined}'")
     
@@ -51,39 +54,52 @@ def select_menu_option(x: int, y: int, action: str, hover_only: bool = False) ->
         if not hover_only:
             click_x = screen_x
             click_y = screen_y
-            move(click_x, click_y, fast=True, sleep=True, button='left')
+            move(click_x, click_y, fast=True, sleep=True)
+            time.sleep(random.uniform(0.03, 0.05))
+            left_click()
         return first_option
     
-    # Look for the action in the context menu
-    found_action = False
-    action_x, action_y = 0, 0
+    # If not top option, right-click to open full context menu and refresh options
+    print("Top option mismatch -> right-clicking to open full context menu...")
+    move(screen_x + random.randint(-6, 6), screen_y + random.randint(-6, 6), fast=True, sleep=True, button='right')
+    time.sleep(random.uniform(0.03, 0.05))
+    
+    # Refresh options now that menu is open
+    options = interact_options().get('data', [])
+    if not options:
+        print("No interaction options available after right-click.")
+        return None
+    
+    # Look for the action in the refreshed context menu
     matched_option = None
     for option in options:
-        option_target_clean = re.sub(r'<[^>]+>', '', option['target']).lower()
+        option_target_clean = clean_target(option['target'])
         option_combined = f"{option['option'].lower()} {option_target_clean}".strip()
         print(f"Checking option: option='{option['option']}', target='{option['target']}', combined='{option_combined}'")
         
         if option['option'].lower() == action_normalized or option_combined == action_normalized:
-            action_x = option['middle_point']['x'] + rl_x
-            action_y = option['middle_point']['y'] + rl_y
-            found_action = True
             matched_option = option
             break
     
-    if found_action:
-        print(f"Matched context menu option: {matched_option}")
-        # Right-click to open context menu
-        move(screen_x, screen_y, fast=True, sleep=True, button='right')
-        time.sleep(random.uniform(0.05, 0.1))
-        # Move to the action with random offset
-        click_x = action_x
-        click_y = action_y
-        move(click_x, click_y, fast=True, sleep=True)
-        if not hover_only:
-            left_click()
+    if not matched_option:
+        clean_opts = [f"{opt['option']} {clean_target(opt['target'])}" for opt in options]
+        print(f"No '{action}' option found. Available options: {clean_opts}")
+        return None
+    
+    print(f"Matched context menu option: {matched_option}")
+    
+    if hover_only:
         return matched_option
     
-    print(f"No '{action}' option found. Available options: {[f'{opt['option']} {re.sub(r'<[^>]+>', '', opt['target'])}' for opt in options]}")
-    return None
+    # Click the exact middle point with small horizontal randomness only
+    mid = matched_option['middle_point']
+    click_x = rl_x + mid['x'] + random.randint(-6, 6)
+    click_y = rl_y + mid['y']  # Exact vertical (no offset to avoid crossing 15px boundaries)
+    
+    move(click_x, click_y, fast=True, sleep=True)
+    time.sleep(random.uniform(0.03, 0.05))
+    left_click()
+    
+    return matched_option
 
 # select_menu_option(249, 140, "Take absorption potion")

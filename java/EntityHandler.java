@@ -1,6 +1,7 @@
 package net.runelite.client.plugins.asd;
 
 import com.google.gson.Gson;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Point;
 import net.runelite.api.*;
@@ -26,11 +27,8 @@ public class EntityHandler implements RequestHandler {
     @Inject
     private Gson gson;
 
+    @Setter
     private CustomOpponentInfoPlugin customOpponentInfoPlugin;
-
-    public void setCustomOpponentInfoPlugin(CustomOpponentInfoPlugin customOpponentInfoPlugin) {
-        this.customOpponentInfoPlugin = customOpponentInfoPlugin;
-    }
 
     @Override
     public Object handle(String function, Map<String, Object> params) {
