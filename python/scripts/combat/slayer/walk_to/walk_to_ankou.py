@@ -1,4 +1,5 @@
 import time, re, random, math
+from modules.banking.bank_castlewars import bank_castlewars
 from modules.core.plugin_client import player, minimap_tiles, walkable_tile, gear, players, game_state, pick, gametick, npc
 from modules.utils.click_minimap_tile import click_minimap_tile
 from modules.player_data.tile_change import wait_for_tile_change, wait_until_at_tile
@@ -28,11 +29,29 @@ from modules.utils.automatic_scripting.small_functions import click_equipped_glo
 from modules.player_data.prayer.toggle_prayer import toggle_prayer
 from modules.utils.click_tile import click_tile
 
+from modules.utils.hop import hop_to_random_world
+from modules.banking.bank_castlewars import bank_castlewars
+from modules.utils.check_players import check_for_players
+from scripts.combat.slayer.slayer_gear import get_target_gear
+
+
+target_gear = get_target_gear()
+
+target_inventory = {
+    "Amulet of glory": 1,
+    "Games necklace": 1,
+    "Prayer potion": 5,
+    "Ring of dueling": 2,
+    "Coins": 1000,
+}
+
+bank_castlewars(target_gear=target_gear, target_inventory=target_inventory)
+
+
 
 # 1 ANKOU
 for i in range(5):
     if click_lowest_games_necklace(action='rub'):
-        wait_for_next_tick(2)
         break
     wait_for_next_tick()
     if i == 4:
@@ -45,13 +64,14 @@ for i in range(5):
         break
     if i == 4:
         exit("Failed to click dialogue option (wintertodt camp.) via child")
+    wait_for_next_tick()
 
 # 3
 if not click_minimap_tile(1645, 3929, rand_x=2, rand_y=2, target_zoom=2.0):
     print("Failed to click minimap tile (1645, 3929)")
     exit()
 else:
-    wait_till_character_stopped_moving()
+    wait_till_character_stopped_moving(required_idle_ticks=2)
 
 # 4
 for i in range(3):
@@ -94,14 +114,17 @@ if not click_minimap_tile(1666, 3672, rand_x=2, rand_y=2, target_zoom=2.0):
     print("Failed to click minimap tile (1666, 3672)")
     exit()
 else:
-    wait_till_character_stopped_moving()
+    wait_till_character_stopped_moving(required_idle_ticks=2)
 
-# 9
-if not click_minimap_tile(1655, 3673, rand_x=1, rand_y=1, target_zoom=2.0):
-    print("Failed to click minimap tile (1655, 3673)")
-    exit()
-else:
-    wait_till_character_stopped_moving()
+for i in range(10):
+    if click_minimap_tile(1655, 3673, rand_x=1, rand_y=1, target_zoom=2.0):
+        print("clicked minimap tile (3303, 3125)")
+        if wait_till_character_stopped_moving(required_idle_ticks=2):
+            break
+    wait_for_next_tick()
+    if i == 9:
+        exit("Failed to click minimap tile (3303, 3125)")
+
 
 # 10
 if not click_minimap_tile(1636, 3673, rand_x=1, rand_y=1, target_zoom=2.0):
@@ -135,14 +158,14 @@ for i in range(5):
         exit("Failed to toggle prayer (protect from melee)")
 
 # 14
-if not click_minimap_tile(1654, 10024, rand_x=2, rand_y=2, target_zoom=2.0):
+if not click_minimap_tile(1654, 10024, rand_x=1, rand_y=1, target_zoom=2.0):
     print("Failed to click minimap tile (1654, 10024)")
     exit()
 else:
     wait_till_character_stopped_moving()
 
 # 15
-if not click_minimap_tile(1646, 10009, rand_x=1, rand_y=1, target_zoom=3.0):
+if not click_minimap_tile(1648, 10011, rand_x=1, rand_y=1, target_zoom=3.0):
     print("Failed to click minimap tile (1646, 10009)")
     exit()
 else:
@@ -160,8 +183,43 @@ for i in range(5):
 
 # 17
 for i in range(3):
-    if click_tile(1643, 9995, plane=0, action="Walk here", tile_radius=2, right_click=False):
+    if click_tile(1643, 9995, action="Walk here", tile_radius=2, right_click=False):
        if wait_till_character_stopped_moving():
             break
     if i == 2:
         exit("Failed to walk to (1643, 9995)")
+
+hop_tile = (1421, 9893, 0)
+stand_tile = (1435, 9884, 0)
+
+# hop until empty world
+max_hop_attempts = 15  # Safety limit to avoid infinite hopping
+for hop_attempt in range(max_hop_attempts):
+    print(f"Checking for nearby players (attempt {hop_attempt + 1}/{max_hop_attempts})...")
+    
+    players_detected = check_for_players(radius=10, max_wait_ticks=2)
+    
+    if not players_detected:
+        print("No players detected in 10 tile radius -> safe spot")
+        break
+
+    click_minimap_tile(hop_tile[0], hop_tile[1], target_zoom=2.0)
+    wait_till_character_stopped_moving(required_idle_ticks=2)
+    wait_for_next_tick(8)
+
+
+    print("Players detected -> hopping to new P2P world")
+    if not hop_to_random_world('p2p'):
+        print("Hop failed -> retrying check")
+        wait_for_tick(3)
+        continue
+
+    click_minimap_tile(stand_tile[0], stand_tile[1], target_zoom=2.0)
+
+
+else:
+    exit('Too many hops')
+
+from scripts.combat.slayer.ankou import main
+
+main()

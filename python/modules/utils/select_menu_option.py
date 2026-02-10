@@ -84,6 +84,7 @@ def select_menu_option(x: int, y: int, action: str, hover_only: bool = False) ->
     if not matched_option:
         clean_opts = [f"{opt['option']} {clean_target(opt['target'])}" for opt in options]
         print(f"No '{action}' option found. Available options: {clean_opts}")
+        move(screen_x + random.randint(-6, 6), screen_y + random.randint(50, 120), fast=True, sleep=True)
         return None
     
     print(f"Matched context menu option: {matched_option}")

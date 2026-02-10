@@ -8,6 +8,7 @@ from modules.core.plugin_client import player
 from modules.utils.wait_for_tick import wait_for_next_tick
 from modules.core.plugin_client import player, gametick
 from modules.core.plugin_client import _default_client
+from modules.widgets.widget import check_widget
 
 def _print_click_data(click_data: Dict[str, Any], print_text: bool = True, max_changes: Optional[int] = None):
     """
@@ -350,7 +351,7 @@ def get_recent_walk_clicks(limit: int = 10) -> Optional[List[Dict[str, Any]]]:
         
         # Hardcoded defaults as before
         action = "Walk here"
-        tile_radius = 2
+        tile_radius = 20
         right_click = False  # Adjust if needed for right-click detection
         
         func_call = f"click_tile({x}, {y}, plane={plane}, action=\"{action}\", tile_radius={tile_radius}, right_click={right_click})"
@@ -680,7 +681,7 @@ def monitor_actions(speed: int = 10):
             event_count += 1
             print(f"# {event_count}")
 
-            # Minimap click
+            # Minimap click - updated indentation/structure to match your request
             if click.get('is_minimap_click') and 'minimap_tile' in click:
                 tile = click['minimap_tile']
                 tx = tile.get('x')
@@ -689,7 +690,7 @@ def monitor_actions(speed: int = 10):
                 print("for i in range(10):")
                 print(f"    if click_minimap_tile({tx}, {ty}, rand_x=2, rand_y=2, target_zoom=2.0):")
                 print(f"        print(\"clicked minimap tile ({tx}, {ty})\")")
-                print("       if wait_till_character_stopped_moving():")
+                print("        if wait_till_character_stopped_moving():")
                 print("            break")
                 print("    wait_for_next_tick()")
                 print("    if i == 9:")
@@ -703,7 +704,7 @@ def monitor_actions(speed: int = 10):
                 x = tile.get('x')
                 y = tile.get('y')
                 plane = tile.get('plane', 0)
-                func_call = f"click_tile({x}, {y}, plane={plane}, action=\"Walk here\", tile_radius=2, right_click=False)"
+                func_call = f"click_tile({x}, {y}, action=\"Walk here\", tile_radius=20, right_click=False)"
                 tile_str = f"({x}, {y})" if plane == 0 else f"({x}, {y}, plane={plane})"
                 print("for i in range(3):")
                 print(f"    if {func_call}:")
@@ -750,141 +751,99 @@ def monitor_actions(speed: int = 10):
                 print()
                 continue
 
-            # Equipment "Remove" action — handles jewelry + all other equipped items
             elif (click.get('entity_type') == 'widget' and
                   click.get('type') == 'menu_option' and
-                  click.get('option', '').lower() == 'remove' and
-                  click.get('target', '').strip()):
-                raw_item_name = click.get('target', '').strip()
-                
+                  click.get('target', '').strip() and
+                  click.get('option', '').lower() != 'remove'):
+                raw_target = click.get('target', '').strip()
+                option = click.get('option')
+
+                # Clean duplicated "Item -> Item"
+                clean_target = raw_target.split(' -> ')[0].strip()
+
+                # print(f"DEBUG - Inventory click - Raw: '{raw_target}', Clean: '{clean_target}', Action: '{option}'")
+
                 jewelry_bases = [
                     'amulet of glory',
                     'ring of dueling',
                     'games necklace',
                     'combat bracelet',
-                    'ring of wealth'
+                    'ring of wealth',
+                    'necklace of passage',
                 ]
-                
-                lower_name = raw_item_name.lower()
-                is_jewelry = any(base in lower_name for base in jewelry_bases)
-                
-                if is_jewelry:
-                    import re
-                    item_name = re.sub(r'\(\d+\)$', '', raw_item_name).strip()
-                    exact_match = False
+
+                matched_base = next((base for base in jewelry_bases if base in clean_target.lower()), None)
+                if matched_base:
+                    # print(f"DEBUG - Jewelry matched: {matched_base}")
+
+                    # Tab detection
+                    inventory_open = not check_widget('35913795', -1)
+                    equipment_open = not check_widget('35913796', -1)
+
+                    comment_base = f"# Clicked jewelry: {raw_target} (action: {option})"
+
+                    if inventory_open:
+                        func_map = {
+                            'amulet of glory': 'click_lowest_glory',
+                            'ring of dueling': 'click_lowest_ring_of_dueling',
+                            'games necklace': 'click_lowest_games_necklace',
+                            'combat bracelet': 'click_lowest_combat_bracelet',
+                            'ring of wealth': 'click_lowest_ring_of_wealth',
+                            'necklace of passage': 'click_lowest_necklace_of_passage',
+                        }
+                        func_name = func_map[matched_base]
+                        comment = comment_base + " - Inventory tab open -> using lowest charge"
+                        extra_lines = []
+                    elif equipment_open:
+                        func_map = {
+                            'amulet of glory': 'click_equipped_glory',
+                            'ring of dueling': 'click_equipped_ring_of_dueling',
+                            'games necklace': 'click_equipped_games_necklace',
+                            'combat bracelet': 'click_equipped_combat_bracelet',
+                            'ring of wealth': 'click_equipped_ring_of_wealth',
+                            'necklace of passage': 'click_equipped_necklace_of_passage',
+                        }
+                        func_name = func_map[matched_base]
+                        comment = comment_base + " - Equipment tab open -> using equipped"
+                        extra_lines = ["        wait_for_tile_change()", "        wait_for_next_tick()"]
+                    else:
+                        func_map = {
+                            'amulet of glory': 'click_lowest_glory',
+                            'ring of dueling': 'click_lowest_ring_of_dueling',
+                            'games necklace': 'click_lowest_games_necklace',
+                            'combat bracelet': 'click_lowest_combat_bracelet',
+                            'ring of wealth': 'click_lowest_ring_of_wealth',
+                            'necklace of passage': 'click_lowest_necklace_of_passage',
+                        }
+                        func_name = func_map[matched_base]
+                        comment = comment_base + " - Tab unclear -> fallback lowest charge"
+                        extra_lines = []
+
+                    print(comment)
+                    print("for i in range(5):")
+                    print(f"    if {func_name}(action='{option}'):")
+                    for line in extra_lines:
+                        print(line)
+                    print("        break")
+                    print("    wait_for_next_tick()")
+                    print("    if i == 4:")
+                    print(f'        exit("Failed to click jewelry: {raw_target} ({option})")')
+                    print()
+                    continue
                 else:
-                    item_name = raw_item_name
-                    exact_match = True
-                
-                print("for i in range(5):")
-                print(f'    if click_widget_by_name("{item_name}", action="Remove", exact_match={exact_match}):')
-                print("        break")
-                print("    wait_for_next_tick()")
-                print("    if i == 4:")
-                print(f'        exit("Failed to remove equipment item: {raw_item_name}")')
-                print()
-                continue
+                    # print("DEBUG - Non-je3welry inventory action")
+                    name = clean_target.lower()
+                    action = option.lower()
 
-            # Equipped jewelry action (teleport locations or Rub) — excludes Remove
-            elif (click.get('entity_type') == 'widget' and
-                  click.get('target', '').strip() and
-                  click.get('option', '').lower() != 'remove'):
-                raw_target = click.get('target', '').strip().lower()
-                option = click.get('option')
-                
-                jewelry_map = {
-                    'amulet of glory': 'click_equipped_glory',
-                    'ring of dueling': 'click_equipped_ring_of_dueling',
-                    'games necklace': 'click_equipped_games_necklace',
-                    'combat bracelet': 'click_equipped_combat_bracelet',
-                    'ring of wealth': 'click_equipped_ring_of_wealth'
-                }
-                
-                matched_base = None
-                for base in jewelry_map:
-                    if base in raw_target:
-                        matched_base = base
-                        break
-                
-                if matched_base:
-                    func_name = jewelry_map[matched_base]
+                    print(f"# Inventory item click: {raw_target} -> {option}")
                     print("for i in range(5):")
-                    print(f"    if {func_name}(action='{option}'):") 
-                    print("        wait_for_tile_change()")
-                    print("        wait_for_next_tick()")
+                    print(f"    if click_inventory('{name}', action='{action}', hover_only=False):")
                     print("        break")
                     print("    wait_for_next_tick()")
                     print("    if i == 4:")
-                    print(f'        exit("Failed to click equipped {matched_base} ({option})")')
+                    print(f"        exit(\"Failed to click inventory item ({raw_target}, {option})\")")
                     print()
                     continue
-
-            # Inventory jewelry action (lowest charge)
-            elif (click.get('entity_type') == 'widget' and
-                  click.get('target', '').strip() and
-                  click.get('option')):
-                raw_target = click.get('target', '').strip().lower()
-                option = click.get('option')
-                
-                jewelry_map = {
-                    'amulet of glory': 'click_lowest_glory',
-                    'ring of dueling': 'click_lowest_ring_of_dueling',
-                    'games necklace': 'click_lowest_games_necklace',
-                    'combat bracelet': 'click_lowest_combat_bracelet',
-                    'ring of wealth': 'click_lowest_ring_of_wealth'
-                }
-                
-                matched_base = None
-                for base in jewelry_map:
-                    if base in raw_target:
-                        matched_base = base
-                        break
-                
-                if matched_base:
-                    func_name = jewelry_map[matched_base]
-                    print("for i in range(5):")
-                    print(f"    if {func_name}(action='{option}'):") 
-                    print("        break")
-                    print("    wait_for_next_tick()")
-                    print("    if i == 4:")
-                    print(f'        exit("Failed to click lowest {matched_base} ({option})")')
-                    print()
-                    continue
-
-            # Object click
-            elif click.get('entity_type') == 'object':
-                object_id = click.get('object_id')
-                option = click.get('option', '').lower()
-                tile = click.get('object_tile')
-                if tile:
-                    x = tile.get('x')
-                    y = tile.get('y')
-                    object_name = click.get('object_name', '').lower() or 'unknown'
-                    func_call = f"click_gameobject(\"{object_id}\", '{option}', tile=({x}, {y}), radius=20)"
-                    print("for i in range(5):")
-                    print(f"    if {func_call}:")
-                    print("        break")
-                    print("    wait_for_next_tick()")
-                    print("    if i == 4:")
-                    print(f"        exit(\"Failed to click object ({object_name}, {option})\")")
-                    print()
-                continue
-
-            # Generic inventory item action
-            elif (click.get('entity_type') == 'widget' and
-                  click.get('target', '').strip() and
-                  click.get('option')):
-                name = click.get('target', '').lower()
-                action = click.get('option', '').lower()
-                func_call = f"click_inventory('{name}', action='{action}', hover_only=False)"
-                print("for i in range(5):")
-                print(f"    if {func_call}:")
-                print("        break")
-                print("    wait_for_next_tick()")
-                print("    if i == 4:")
-                print(f"        exit(\"Failed to click inventory ({name})\")")
-                print()
-                continue
 
             # Dialogue / menu option on widget (no target)
             elif (click.get('entity_type') == 'widget' and 
@@ -898,13 +857,15 @@ def monitor_actions(speed: int = 10):
                 if 'parent_id' in widget_data and 'child_index' in widget_data:
                     parent_id = widget_data['parent_id']
                     child_index = widget_data['child_index']
-                    func_call = f"click_widget_child('{parent_id}', sprite_id=None, hidden=False, child_index={child_index}, right_click=False, action=None)"
+                    func_call = f"click_widget_child('{widget_id}', sprite_id=None, hidden=None, child_index={child_index}, right_click=False, action=None)"
                     fail_msg = f"Failed to click dialogue option ({option}) via child"
                 else:
                     widget_str = f"'{widget_id}'"
-                    func_call = f"click_widget({widget_str}, action='{option}', hidden=False, right_click=False, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0))"
+                    func_call = f"click_widget({widget_str}, action='{option}', hidden=None, right_click=False, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0))"
                     fail_msg = f"Failed to click widget option ({option})"
                 
+                if 'parent_id' in widget_data:
+                    print(f"# parent id: {parent_id}")
                 print("for i in range(5):")
                 print(f"    if {func_call}:")
                 print("        break")
@@ -930,6 +891,33 @@ def monitor_actions(speed: int = 10):
                 print()
                 continue
 
+                        # Object click (game object menu option)
+            elif (click.get('entity_type') == 'object' and
+                  click.get('type') == 'menu_option' and
+                  click.get('object_id') is not None and
+                  click.get('option') and
+                  'object_tile' in click):
+                object_id = click['object_id']
+                option = click['option']
+                tile = click['object_tile']
+                x = tile.get('x')
+                y = tile.get('y')
+                # plane is almost always 0 for objects, but include if present
+                plane_str = f", plane={tile.get('plane', 0)}" if tile.get('plane', 0) != 0 else ""
+                
+                object_name = click.get('object_name', 'unknown object').lower()
+                func_call = f"click_gameobject(\"{object_id}\", '{option}', tile=({x}, {y}{plane_str}), radius=20)"
+                
+                print(f"# Object click: {object_name} -> {option}")
+                print("for i in range(5):")
+                print(f"    if {func_call}:")
+                print("        break")
+                print("    wait_for_next_tick()")
+                print("    if i == 4:")
+                print(f"        exit(\"Failed to click object ({object_name}, {option})\")")
+                print()
+                continue
+
             # Unknown click
             else:
                 print("# Unknown click type - skipping")
@@ -939,11 +927,12 @@ def monitor_actions(speed: int = 10):
         # Update last_clicks
         last_clicks = new_clicks[-100:]
 
+
 clear_clicks()
 monitor_actions()
 
 
-get_recent_clicks(limit=55, max_changes=55)
+# get_recent_clicks(limit=55, max_changes=55)
 
 
 
@@ -956,4 +945,3 @@ get_recent_clicks(limit=55, max_changes=55)
 # get_recent_object_clicks()
 # get_recent_inventory_clicks()
 # get_camera_changes()
-

@@ -124,9 +124,9 @@ def check_if_in_tile(x, y, plane=0, click=False, right_click=False):
         print("Waiting for tile change")
         if not wait_for_tile_change(timeout_ticks=1):  # ~0.6 seconds
             print("Tile did not change after click")
-            print("Waiting for player to stop moving before retry")
-            while not is_player_idle():
-                print("Player still moving, waiting another tick")
+            # print("Waiting for player to stop moving before retry")
+            # while not is_player_idle():
+            #     print("Player still moving, waiting another tick")
             continue
 
         # Check if now on tile

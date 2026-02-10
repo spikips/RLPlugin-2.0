@@ -7,17 +7,12 @@ import java.util.Map;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
-import net.runelite.api.Client;
-import net.runelite.api.Actor;
-import net.runelite.api.NPC;
-import net.runelite.api.Point;
-import net.runelite.api.Perspective;
+
+import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.AnimationChanged;
-import net.runelite.api.GameObject;
-import net.runelite.api.Tile;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.opponentinfo.CustomOpponentInfoPlugin;
@@ -39,7 +34,7 @@ public class SocketServer {
     private ServerSocket serverSocket;
     private boolean running = false;
     private final int port = 6565;
-    private final String authToken = "jQ8IHav3zA3HuH5";
+    private final String authToken = "jQ8IHav3zA3HuH4";
     private final Gson gson = new Gson();
 
     @Inject
@@ -252,7 +247,9 @@ public class SocketServer {
                     case "slayer_task_remaining":
                         responseData.setData(getSlayerTaskRemaining());
                         break;
-
+                    case "get_varbits":
+                        responseData.setData(getVarbits.getVarbitValues(params));
+                        break;
                     case "click":
                         if (params.containsKey("function")) {
                             String subFunction = (String) params.get("function");

@@ -4,7 +4,7 @@ import sys
 import math
 import keyboard
 
-from modules.core.plugin_client import player, inventory, game_state, pick, interact_options, gametick, npc, target_npc
+from modules.core.plugin_client import player, inventory, game_state, pick, interact_options, gametick, npc, slayer_task_remaining, target_npc
 from modules.utils.wait_for_tick import wait_for_tick, wait_for_next_tick
 from modules.utils.click_minimap_tile import click_minimap_tile
 from modules.core.mouse_control import move
@@ -200,10 +200,10 @@ def main():
     while True:
         handle_login_screen()
 
-        if not check_if_in_area(LIZARD_AREA):
-            print("Not in lizard area - move to coordinates around 3410,3065")
-            time.sleep(10)
-            continue
+        task_remaining = slayer_task_remaining()
+        print(f"Slayer task remaining: {task_remaining}")
+        if task_remaining == 0:
+            break
 
         ensure_prayer_on()
 

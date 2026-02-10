@@ -1,17 +1,18 @@
-# hill_giant_task.py
-# A script for automating a Hill Giant task using a cannon in Old School RuneScape via RuneLite plugin.
+# moss_giants.py
+# A script for automating a Moss Giant task using a cannon in Old School RuneScape via RuneLite plugin.
 # Uses reliable object detection via get_closest_object for cannon existence/placement.
 # Uses cannon_data() for ammo count to decide reload.
 # Prints full cannon_info every loop for debug.
 # If no cannon base in inventory, assumes cannon is already placed.
 # Runs in an infinite loop with tick-based delays.
+# Loots specified rare drops.
 
 import time
 import random
 
 # Core imports
 from modules.core.window_utils import focus_runelite_window, runelite_window
-from modules.core.plugin_client import cannon_data, minimap_tile_point, player, inventory
+from modules.core.plugin_client import cannon_data, minimap_tile_point, player, inventory, slayer_task_remaining
 
 from modules.core.mouse_control import move, right_click
 # Player data imports
@@ -35,8 +36,8 @@ from modules.utils.camera import camera
 
 
 # Constants
-CANNON_TILE = (1434, 9886, 0)  # Cannon position (x, y, plane)
-STAND_TILE = (1435, 9884, 0)   # Standing position (x, y, plane)
+CANNON_TILE = (1419, 9862, 0)  # Cannon position (x, y, plane)
+STAND_TILE = (1421, 9862, 0)   # Standing position (x, y, plane)
 CANNON_NAME = "Dwarf multicannon"
 LOOT_ITEMS = [
     "loop half of key",
@@ -44,7 +45,7 @@ LOOT_ITEMS = [
     "rune spear",
     "shield left half",
     "dragon spear",
-    "giant key",
+    "mossy key",
     "long bone",
     "curved bone",
     "snapdragon seed",
@@ -66,7 +67,7 @@ def is_cannon_placed():
 
 def place_cannon():
     # Move to cannon tile (required for placement)
-    on_tile = check_if_in_tile(CANNON_TILE[0], CANNON_TILE[1], CANNON_TILE[2], click=True, right_click=True)
+    on_tile = check_if_in_tile(CANNON_TILE[0], CANNON_TILE[1], CANNON_TILE[2], click=True)
     if not on_tile:
         print("Standard movement failed. Falling back to minimap click with zoom 5.")
         click_minimap_tile(CANNON_TILE[0], CANNON_TILE[1], target_zoom=5.0)
@@ -97,7 +98,7 @@ def place_cannon():
         if get_closest_object(CANNON_NAME, "Fire", tile=CANNON_TILE, radius=10):
             print("Cannon placed successfully ('Fire' option detected).")
             wait_for_next_tick(1)
-            click_cannon('Fire')  # Load immediately after placement
+            click_cannon('Fire', exact_tile=CANNON_TILE)  # Load immediately after placement
             return True
         wait_for_next_tick(1)
         waited_ticks += 1
@@ -152,7 +153,6 @@ def main():
         yaw=random.randint(0, 200),
         zoom=213
     )
-    time.sleep(1)  # Let camera settle
 
     # Initial random thresholds
     prayer_threshold = random.randint(15, 25)
@@ -160,9 +160,19 @@ def main():
     print(f"Initial prayer drink threshold set to {prayer_threshold}")
     print(f"Initial cannon reload threshold set to {cannon_threshold}")
 
-    print("Starting Hill Giant task with cannon.")
+    print("Starting Moss Giant task with cannon.")
 
     while True:
+        task_remaining = slayer_task_remaining()
+        print(f"Slayer task remaining: {task_remaining}")
+        if task_remaining == 0:
+            if is_cannon_placed():
+                if click_cannon('Pick-up', exact_tile=CANNON_TILE):
+                    print("Cannon picked up.")
+                else:
+                    print("Failed to pick up cannon.")
+            break
+
         # Get and print cannon_info every loop
         raw_cannon_info = cannon_data()
         cannon_info = raw_cannon_info.get('data', {}) if raw_cannon_info else {}
@@ -176,7 +186,7 @@ def main():
                 print(f"Placement attempt {attempt}/{MAX_PLACEMENT_TRIES}")
                 if place_cannon():
                     # Force load after successful placement
-                    if click_cannon('Fire'):
+                    if click_cannon('Fire', exact_tile=CANNON_TILE):
                         print("Cannon loaded after placement.")
                     else:
                         print("Failed to load cannon after placement.")
@@ -186,10 +196,10 @@ def main():
                     time.sleep(2)
 
             # Always return to stand tile after placement attempts
-            check_if_in_tile(STAND_TILE[0], STAND_TILE[1], STAND_TILE[2], click=True, right_click=True)
+            check_if_in_tile(STAND_TILE[0], STAND_TILE[1], STAND_TILE[2], click=True)
 
         # Ensure standing position
-        if not check_if_in_tile(STAND_TILE[0], STAND_TILE[1], STAND_TILE[2], click=True, right_click=True):
+        if not check_if_in_tile(STAND_TILE[0], STAND_TILE[1], STAND_TILE[2], click=True):
             print("Standard movement to stand tile failed. Falling back to minimap click with zoom 5.")
             click_minimap_tile(STAND_TILE[0], STAND_TILE[1], target_zoom=5.0)
             wait_till_character_stopped_moving()
@@ -210,14 +220,24 @@ def main():
         # Cannon reload with dynamic threshold
         ball_count = cannon_info.get('ammo', 0)
         if cannon_placed and ball_count <= cannon_threshold:
-            if click_cannon('Fire'):
+            if click_cannon('Fire', exact_tile=CANNON_TILE):
                 print(f"Cannon reloaded (ammo {ball_count} <= threshold {cannon_threshold})")
                 # Choose new random threshold for next reload
                 cannon_threshold = random.randint(5, 25)
                 print(f"New cannon reload threshold set to {cannon_threshold}")
             else:
-                print(f"Failed to reload cannon (ammo reported {ball_count})")
-
+                if click_cannon('repair', exact_tile=CANNON_TILE):
+                    print('cannon repaired, reloading')
+                    for _ in range(10):
+                        if click_cannon('Fire', exact_tile=CANNON_TILE):
+                            print(f"Cannon reloaded after repair (ammo {ball_count} <= threshold {cannon_threshold})")
+                            # Choose new random threshold for next reload
+                            cannon_threshold = random.randint(5, 25)
+                            print(f"New cannon reload threshold set to {cannon_threshold}")
+                            break
+                        wait_for_next_tick(1)
+                else:
+                    print("Failed to reload or repair cannon.")
         # Loot
         for item in LOOT_ITEMS:
             looted_count = loot_all_ground_items(item, tile_radius=LOOT_RADIUS, delay_range=(0.2, 0.5))

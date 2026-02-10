@@ -30,7 +30,6 @@ def _click_lowest_tele_jewelry(base_name: str, max_charges: int, action: str = '
             for i in range(retries):
                 if click_inventory(name, action=action, hover_only=False):
                     print(f"Clicked {name} successfully")
-                    time.sleep(1)
                     return True
                 wait_for_next_tick()
 
@@ -61,8 +60,15 @@ def click_lowest_combat_bracelet(action: str = 'rub', retries: int = 5) -> bool:
 def click_lowest_ring_of_wealth(action: str = 'rub', retries: int = 5) -> bool:
     return _click_lowest_tele_jewelry("ring of wealth", 5, action, retries)
 
+# Inventory helpers (add this with the other click_lowest_ functions)
+def click_lowest_necklace_of_passage(action: str = 'rub', retries: int = 5) -> bool:
+    return _click_lowest_tele_jewelry("necklace of passage", 5, action, retries)
 
-# NEW: Equipped jewelry helpers (with automatic equipment tab open)
+
+
+def click_equipped_necklace_of_passage(action: str = 'Rub', retries: int = 5) -> bool:
+    return _click_equipped_jewelry("Necklace of passage", action, retries)
+
 def _click_equipped_jewelry(base_name: str, action: str = 'Rub', retries: int = 5) -> bool:
     """
     Internal helper for equipped jewelry: opens equipment tab first, then clicks with fuzzy matching.

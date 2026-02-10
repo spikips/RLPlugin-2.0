@@ -50,11 +50,14 @@ def get_objects(object_identifier: str, action: str, tile: Optional[Tuple[int, i
     
     return filtered_objs
 
-def get_closest_object(object_identifier: str, action: str, tile: Optional[Tuple[int, int]] = None, radius: int = 20) -> Optional[Dict[str, Any]]:
+def get_closest_object(object_identifier: str, action: str, tile: Optional[Tuple[int, int]] = None, radius: int = 20, disregard_canvas: bool = False) -> Optional[Dict[str, Any]]:
     """
-    Get the closest matching object within canvas bounds (x: 4-512, y: 4-334).
-    - Prioritizes proximity for precision in crowded areas.
-    - View: Reduces errors in multi-object scenarios; ensures clicks are within valid canvas.
+    Get the closest matching object.
+    - Prioritizes tile proximity for precision in crowded areas.
+    - By default (disregard_canvas=False): Filters to objects whose middle_point is within canvas bounds
+      (x: CANVAS_X_MIN to CANVAS_X_MAX, y: CANVAS_Y_MIN to CANVAS_Y_MAX) to ensure clickability on-screen.
+    - If disregard_canvas=True: Ignores canvas bounds and considers all objects with a middle_point
+      (useful for off-screen objects or when you plan to move/camera first).
     """
     objs = get_objects(object_identifier, action, tile, radius)
     if not objs:
@@ -69,23 +72,44 @@ def get_closest_object(object_identifier: str, action: str, tile: Optional[Tuple
     else:
         center_tile = tile
 
-    # Log all objects' canvas coordinates for debugging
+    # Log all objects' canvas coordinates for debugging (only if middle_point exists)
     for o in objs:
         if 'middle_point' in o:
-            print(f"Found object '{object_identifier}' with action '{action}' at canvas ({o['middle_point']['x']}, {o['middle_point']['y']})")
-    
-    # Filter objects by canvas bounds
-    valid_objs = [
-        o for o in objs
-        if 'middle_point' in o and
-        CANVAS_X_MIN <= o['middle_point']['x'] <= CANVAS_X_MAX and
-        CANVAS_Y_MIN <= o['middle_point']['y'] <= CANVAS_Y_MAX
-    ]
+            canvas_x = o['middle_point']['x']
+            canvas_y = o['middle_point']['y']
+            on_canvas = (CANVAS_X_MIN <= canvas_x <= CANVAS_X_MAX and
+                         CANVAS_Y_MIN <= canvas_y <= CANVAS_Y_MAX)
+            status = " (on canvas)" if on_canvas else " (off canvas)"
+            print(f"Found object '{object_identifier}' with action '{action}' at canvas ({canvas_x}, {canvas_y}){status}")
+
+    # Filter objects: always require middle_point (needed for clicking)
+    candidate_objs = [o for o in objs if 'middle_point' in o]
+
+    if disregard_canvas:
+        valid_objs = candidate_objs  # Consider all, even off-screen
+        print(f"disregard_canvas=True: Considering {len(valid_objs)} object(s) (ignoring canvas bounds)")
+    else:
+        valid_objs = [
+            o for o in candidate_objs
+            if CANVAS_X_MIN <= o['middle_point']['x'] <= CANVAS_X_MAX and
+               CANVAS_Y_MIN <= o['middle_point']['y'] <= CANVAS_Y_MAX
+        ]
+        print(f"disregard_canvas=False: Considering {len(valid_objs)} object(s) within canvas bounds")
+
     if not valid_objs:
-        print(f"No objects found for identifier '{object_identifier}' with action '{action}' within canvas bounds.")
+        reason = "off-screen (outside canvas bounds)" if not disregard_canvas else "no middle_point available"
+        print(f"No valid objects found for identifier '{object_identifier}' with action '{action}' ({reason}).")
         return None
 
-    return min(valid_objs, key=lambda o: tile_distance((o['tile']['x'], o['tile']['y']), center_tile))
+    # Return the closest by tile distance
+    closest = min(valid_objs, key=lambda o: tile_distance((o['tile']['x'], o['tile']['y']), center_tile))
+    final_canvas_x = closest['middle_point']['x']
+    final_canvas_y = closest['middle_point']['y']
+    on_canvas = (CANVAS_X_MIN <= final_canvas_x <= CANVAS_X_MAX and
+                 CANVAS_Y_MIN <= final_canvas_y <= CANVAS_Y_MAX)
+    print(f"Selected closest object at tile ({closest['tile']['x']}, {closest['tile']['y']}) "
+          f"with canvas middle_point ({final_canvas_x}, {final_canvas_y}){' (on canvas)' if on_canvas else ' (off canvas)'}")
+    return closest
 
 def check_object(object_identifier: str, action: str, tile: Optional[Tuple[int, int]] = None, radius: int = 20) -> bool:
     """

@@ -1,11 +1,10 @@
-# crocodile.py
-# A script for automating a crocodile slayer task using a cannon in Old School RuneScape via RuneLite plugin.
+# hill_giant_task.py
+# A script for automating a Hill Giant task using a cannon in Old School RuneScape via RuneLite plugin.
 # Uses reliable object detection via get_closest_object for cannon existence/placement.
 # Uses cannon_data() for ammo count to decide reload.
 # Prints full cannon_info every loop for debug.
 # If no cannon base in inventory, assumes cannon is already placed.
-# Runs in a loop until slayer task is completed (slayer_task_remaining == 0).
-# Picks up the cannon when task is completed.
+# Runs in an infinite loop with tick-based delays.
 
 import time
 import random
@@ -27,6 +26,8 @@ from modules.utils.check_if_in_tile import check_if_in_tile
 from modules.utils.click_minimap_tile import click_minimap_tile
 from modules.utils.inventory import click_inventory
 
+from modules.utils.loot import loot_all_ground_items
+
 from modules.utils.select_menu_option import select_menu_option
 from modules.utils.wait_for_tick import wait_for_next_tick, wait_for_tick
 from modules.player_data.wait_till_character_stops_moving import wait_till_character_stopped_moving
@@ -34,10 +35,23 @@ from modules.utils.camera import camera
 
 
 # Constants
-CANNON_TILE = (3191, 2825, 0)  # Cannon position (x, y, plane)
-STAND_TILE = (3191, 2823, 0)   # Standing position (x, y, plane)
+CANNON_TILE = (1434, 9886, 0)  # Cannon position (x, y, plane)
+STAND_TILE = (1435, 9884, 0)   # Standing position (x, y, plane)
 CANNON_NAME = "Dwarf multicannon"
-LOOT_ITEMS = []  # No items to loot
+LOOT_ITEMS = [
+    "loop half of key",
+    "tooth half of key",
+    "rune spear",
+    "shield left half",
+    "dragon spear",
+    "giant key",
+    "long bone",
+    "curved bone",
+    "snapdragon seed",
+    "torstol seed",
+    "ranarr seed",
+    "snape grass seed"
+]
 LOOT_RADIUS = 15
 CANNON_PLACE_TIMEOUT_TICKS = 40
 MAX_PLACEMENT_TRIES = 3
@@ -83,7 +97,7 @@ def place_cannon():
         if get_closest_object(CANNON_NAME, "Fire", tile=CANNON_TILE, radius=10):
             print("Cannon placed successfully ('Fire' option detected).")
             wait_for_next_tick(1)
-            click_cannon('Fire')  # Load immediately after placement
+            click_cannon('Fire', exact_tile=CANNON_TILE)  # Load immediately after placement
             return True
         wait_for_next_tick(1)
         waited_ticks += 1
@@ -106,7 +120,6 @@ def has_prayer_potion():
         if name.startswith('Prayer potion('):
             return True
     return False
-
 
 def drink_prayer_potion():
     inv_data = inventory()
@@ -135,9 +148,9 @@ def main():
     # Camera setup at start (random pitch/yaw, fixed zoom)
     print("Setting up camera...")
     camera(
-        pitch=random.randint(300, 512),
-        yaw=random.randint(600, 1000),
-        zoom=random.randint(250, 300)
+        pitch=random.randint(450, 512),
+        yaw=random.randint(0, 200),
+        zoom=213
     )
     time.sleep(1)  # Let camera settle
 
@@ -147,19 +160,20 @@ def main():
     print(f"Initial prayer drink threshold set to {prayer_threshold}")
     print(f"Initial cannon reload threshold set to {cannon_threshold}")
 
-    print("Starting crocodile slayer task with cannon.")
+    print("Starting Hill Giant task with cannon.")
 
     while True:
-        # Check slayer task remaining
+        # Task completion check
         task_remaining = slayer_task_remaining()
         print(f"Slayer task remaining: {task_remaining}")
         if task_remaining == 0:
+            print("Task completed - navigating to Slayer Master Vannaka in Edgeville Dungeon.")
             if is_cannon_placed():
-                if click_cannon('Pick-up'):
+                if click_cannon('Pick-up', exact_tile=CANNON_TILE):
                     print("Cannon picked up.")
                 else:
                     print("Failed to pick up cannon.")
-            print("Slayer task completed. Stopping script.")
+            print("Navigation complete - script ending (restart for new task).")
             break
 
         # Get and print cannon_info every loop
@@ -175,7 +189,7 @@ def main():
                 print(f"Placement attempt {attempt}/{MAX_PLACEMENT_TRIES}")
                 if place_cannon():
                     # Force load after successful placement
-                    if click_cannon('Fire'):
+                    if click_cannon('Fire', exact_tile=CANNON_TILE):
                         print("Cannon loaded after placement.")
                     else:
                         print("Failed to load cannon after placement.")
@@ -209,20 +223,33 @@ def main():
         # Cannon reload with dynamic threshold
         ball_count = cannon_info.get('ammo', 0)
         if cannon_placed and ball_count <= cannon_threshold:
-            if click_cannon('Fire'):
+            if click_cannon('Fire', exact_tile=CANNON_TILE):
                 print(f"Cannon reloaded (ammo {ball_count} <= threshold {cannon_threshold})")
                 # Choose new random threshold for next reload
                 cannon_threshold = random.randint(5, 25)
                 print(f"New cannon reload threshold set to {cannon_threshold}")
             else:
-                print(f"Failed to reload cannon (ammo reported {ball_count})")
+                if click_cannon('repair', exact_tile=CANNON_TILE):
+                    print('cannon repaired, reloading')
+                    for _ in range(10):
+                        if click_cannon('Fire', exact_tile=CANNON_TILE):
+                            print(f"Cannon reloaded after repair (ammo {ball_count} <= threshold {cannon_threshold})")
+                            # Choose new random threshold for next reload
+                            cannon_threshold = random.randint(5, 25)
+                            print(f"New cannon reload threshold set to {cannon_threshold}")
+                            break
+                        wait_for_next_tick(1)
+                else:
+                    print("Failed to reload or repair cannon.")
 
-        # No loot to handle
+        # Loot
+        for item in LOOT_ITEMS:
+            looted_count = loot_all_ground_items(item, tile_radius=LOOT_RADIUS, delay_range=(0.2, 0.5))
+            if looted_count > 0:
+                print(f"Looted {looted_count} x {item}.")
 
         # Tick wait
         wait_for_next_tick(1)
 
-
-# drink_prayer_potion()
 if __name__ == "__main__":
     main()

@@ -1,4 +1,5 @@
 # from modules.core.plugin_client import fetch_bank_items
+# print(fetch_bank_items())
 
 import json
 from typing import List, Tuple, Optional, Dict
@@ -47,3 +48,4 @@ def fetch_bank_items(items_to_check: List[Tuple[str, int]]) -> bool:
     return True
 
 # print(fetch_bank_items([("rune scimitar", 1), ("prayer potion(4)", 5)]))
+print(fetch_bank_items([("Glacial temotli", 1)]))

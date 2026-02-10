@@ -119,15 +119,23 @@ public class InterfaceHandler implements RequestHandler {
     private Object handleBankItemsRequest(Map<String, Object> params) {
         List<Map<String, Object>> bankItems = new ArrayList<>();
         String itemFilter = (String) params.getOrDefault("item", "");
-        Widget bankWidget = client.getWidget(WidgetInfo.BANK_ITEM_CONTAINER);
+
+        // Hardcode the new bank item container ID (786444)
+        Widget bankWidget = client.getWidget(786444);
+
+        // Optional: fallback to group/child if preferred
+        // Widget bankWidget = client.getWidget(12, 12);
+
         if (bankWidget == null || bankWidget.isHidden() || bankWidget.getDynamicChildren() == null) {
-            log.warn("Bank data requested but bank interface is not open.");
+            log.warn("Bank data requested but bank interface is not open or container not found.");
             return bankItems;
         }
         Random random = new Random();
 
         for (Widget itemWidget : bankWidget.getDynamicChildren()) {
             if (itemWidget == null || itemWidget.getItemId() <= 0) continue;
+
+            // Rest of the code remains exactly the same...
             int itemId = itemWidget.getItemId();
             ItemComposition itemComp = itemManager.getItemComposition(itemId);
             String itemName = itemComp != null ? itemComp.getName() : "Unknown";
@@ -142,11 +150,13 @@ public class InterfaceHandler implements RequestHandler {
                 itemData.put("name", itemName);
                 itemData.put("id", itemId);
                 itemData.put("quantity", quantity);
+
                 net.runelite.api.Point canvasLocation = itemWidget.getCanvasLocation();
                 if (canvasLocation != null) {
                     int centerX = canvasLocation.getX() + itemWidget.getWidth() / 2;
                     int centerY = canvasLocation.getY() + itemWidget.getHeight() / 2;
                     itemData.put("middle_point", Map.of("x", centerX, "y", centerY));
+
                     Map<String, Integer> randomPoint = getRandomPointInRectangle(
                             canvasLocation.getX(), canvasLocation.getY(),
                             itemWidget.getWidth(), itemWidget.getHeight(), random);

@@ -1,7 +1,9 @@
+// GetVarbits.java - Updated to support single ID query across Varbit, Varp (Varplayer), and VarClientInt
+// Bulk mode remains Varbit-only for backward compatibility
+
 package net.runelite.client.plugins.asd;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Varbits;
@@ -40,29 +42,58 @@ public class GetVarbits {
 
     public Map<String, Object> getVarbitValues(Map<String, Object> params) {
         Map<String, Object> response = new HashMap<>();
-        Map<String, Integer> values = new HashMap<>();
 
         if (params == null || params.isEmpty()) {
-            response.put("error", "No varbit IDs provided");
+            response.put("error", "No parameters provided");
             return response;
         }
 
+        // Single ID mode: {"id": 102}
+        if (params.containsKey("id")) {
+            int id;
+            try {
+                id = ((Number) params.get("id")).intValue();
+            } catch (Exception e) {
+                response.put("error", "Invalid 'id' parameter");
+                return response;
+            }
+
+            Map<String, Object> values = new HashMap<>();
+            values.put("varbit", client.getVarbitValue(id));
+            values.put("varp", client.getVarpValue(id));        // Varplayer
+            values.put("varcint", client.getVarcIntValue(id));  // VarClientInt
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("id", id);
+            result.put("values", values);
+
+            // Optional: Add known Varbit name
+            String name = varbitNames.getOrDefault(id, null);
+            if (name != null) {
+                result.put("name", name);
+            }
+
+            response.put("data", result);
+            return response;
+        }
+
+        // Bulk mode (backward compatible - keys are string IDs, only Varbit values)
+        Map<String, Integer> bulkValues = new HashMap<>();
         for (Map.Entry<String, Object> entry : params.entrySet()) {
             try {
-                int varbitId = Integer.parseInt(entry.getKey());
-                int value = client.getVarbitValue(varbitId);
-                values.put(String.valueOf(varbitId), value);
+                int id = Integer.parseInt(entry.getKey());
+                int value = client.getVarbitValue(id);
+                bulkValues.put(String.valueOf(id), value);
 
-                String name = varbitNames.getOrDefault(varbitId, "Unknown");
+                String name = varbitNames.getOrDefault(id, "Unknown");
                 if (!name.equals("Unknown")) {
-                    response.put("name_" + varbitId, name);  // Optional: include name
+                    response.put("name_" + id, name);
                 }
             } catch (NumberFormatException e) {
                 log.warn("Invalid varbit ID: {}", entry.getKey());
             }
         }
-
-        response.put("values", values);
+        response.put("values", bulkValues);
         return response;
     }
 }

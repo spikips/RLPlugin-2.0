@@ -30,7 +30,7 @@ public class BankCache {
     private ItemManager itemManager;
 
     private List<Map<String, Object>> previousData = new ArrayList<>();
-    private final String filePath = "C:\\Users\\Asd\\source\\repos\\runelite_plugin\\modules\\fetch_data\\bank\\bank_items.json";
+    private final String filePath = "C:\\Users\\asd\\Desktop\\project\\python\\modules\\fetch_data\\bank\\bank_items.json";
 
     @Subscribe
     public void onGameTick(GameTick event) {

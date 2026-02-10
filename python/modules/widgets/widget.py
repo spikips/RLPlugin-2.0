@@ -1,4 +1,5 @@
 import random
+from modules.utils.select_menu_option import select_menu_option
 from modules.widgets.widget_data import get_all_widget_data
 from modules.core.mouse_control import move
 from modules.core.window_utils import runelite_window
@@ -99,7 +100,7 @@ def click_widget(id_str, sprite_id=None, hidden=False, right_click=False, action
     Modified to support right-click and action selection.
     - If right_click=False and action=None: Left-clicks the widget.
     - If right_click=True and action=None: Right-clicks the widget.
-    - If action is provided: Right-clicks and selects the specified action using select_menu_option logic.
+    - If action is provided: Right-clicks and selects the specified action using select_menu_option
     - If middle_point=True: Clicks the middle of the widget, optionally randomized by rand_x and rand_y.
     - If middle_point=False: Clicks a random point within the widget (original behavior).
     - clicks: Number of times to click (default: 1).
@@ -156,7 +157,11 @@ def click_widget(id_str, sprite_id=None, hidden=False, right_click=False, action
                 
                 if action:
                     # Use select_menu_option logic for right-click + action
-                    select_menu_option_logic(canvas_x + rel_x, canvas_y + rel_y, action)
+                    for i in range(5):
+                        if select_menu_option(canvas_x + rel_x, canvas_y + rel_y, action):
+                            return True
+                        else:
+                            return False
                 elif right_click:
                     # Right-click only
                     move(abs_x, abs_y, fast=True, sleep=True, button='right')
@@ -167,12 +172,13 @@ def click_widget(id_str, sprite_id=None, hidden=False, right_click=False, action
 
     return False
 
-def click_widget_child(id_str, sprite_id=None, hidden=None, child_index=None, right_click=False, action=None):
+def click_widget_child(id_str, sprite_id=None, hidden=None, child_index=None, right_click=False, action=None, middle_point=True, rand_x=5, rand_y=5, clicks=1, sleep_interval=(0, 0)):
     """
-    Modified to support right-click and action selection.
-    - If right_click=False and action=None: Left-clicks the widget/child.
-    - If right_click=True and action=None: Right-clicks the widget/child.
-    - If action is provided: Right-clicks and selects the specified action using select_menu_option logic.
+    Clicks a child widget by parent ID and child_index (or falls back to any matching widget/child).
+    - Defaults to reliable center click (+ small safe randomization).
+    - Always clamps to stay strictly inside bounds (2px inset from edges).
+    - No artificial +1 offset on canvas_x/y.
+    - Supports right-click and action selection.
     """
     rl_x, rl_y = runelite_window(0, 0)
     try:
@@ -186,7 +192,7 @@ def click_widget_child(id_str, sprite_id=None, hidden=None, child_index=None, ri
         print("No widget data available")
         return False
 
-    # Find all widgets with the matching ID, including children
+    # Find matching widgets (parent or child level)
     matching_widgets = []
     for widget in widgets:
         if widget.get("id") == widget_id and 'bounds' in widget:
@@ -208,111 +214,88 @@ def click_widget_child(id_str, sprite_id=None, hidden=None, child_index=None, ri
     target_widget = None
     if child_index is not None:
         for widget in widgets:
-            if 'children' in widget and widget.get("id") == widget_id:
+            if widget.get("id") == widget_id and 'children' in widget:
                 children = widget.get('children', [])
                 if child_index < len(children):
                     candidate = children[child_index]
-                    if candidate.get("id") == widget_id and 'bounds' in candidate and candidate['bounds'].get('width', 0) > 0 and candidate['bounds'].get('height', 0) > 0:
-                        if sprite_id is not None and candidate.get("spriteId") == sprite_id:
-                            print(f"Child {child_index} widget with ID {widget_id}, spriteId {sprite_id} is already in desired state")
-                            return True
+                    # Optional sprite check
+                    if sprite_id is not None and candidate.get("spriteId") != sprite_id:
+                        continue
+                    if 'bounds' in candidate and candidate['bounds'].get('width', 0) > 0 and candidate['bounds'].get('height', 0) > 0:
                         target_widget = candidate
-                        print(f"Selected child {child_index} widget with ID {widget_id}, spriteId {candidate.get('spriteId')}, bounds {candidate['bounds']}")
                         break
+        if target_widget is None:
+            print(f"No child widget at index {child_index} or invalid, falling back to first matching widget")
+    
+    # If no child match or no child_index, use first matching widget
+    if target_widget is None and matching_widgets:
+        target_widget = matching_widgets[0]
 
-    # Fallback: If no child_index specified or invalid, pick widget with largest bounds
-    if not target_widget:
-        matching_widgets = [
-            w for w in matching_widgets if 'bounds' in w and w['bounds'].get('width', 0) > 0 and w['bounds'].get('height', 0) > 0
-        ]
-        if not matching_widgets:
-            print(f"No clickable widgets found with ID {widget_id}")
-            return False
-        target_widget = max(matching_widgets, key=lambda w: w['bounds']['width'] * w['bounds']['height'])
-        print(f"No child widget at index {child_index} or invalid, using widget with ID {widget_id}, spriteId {target_widget.get('spriteId')}, bounds {target_widget['bounds']}")
+    if target_widget is None:
+        print(f"No valid target widget found for ID {widget_id}" + (f", child_index {child_index}" if child_index is not None else ""))
+        return False
 
-    # Perform the action
+    # Optional early return if already in desired sprite state
+    if sprite_id is not None and target_widget.get("spriteId") == sprite_id:
+        print(f"Target widget already has spriteId {sprite_id}")
+        return True
+
+    # Click logic
+    if 'bounds' not in target_widget:
+        print("Target widget has no bounds")
+        return False
+
     bounds = target_widget['bounds']
-    canvas_x = bounds['x'] + 1
-    canvas_y = bounds['y'] + 1
+    canvas_x = bounds['x']          # No +1 offset
+    canvas_y = bounds['y']          # No +1 offset
     width = bounds['width']
     height = bounds['height']
 
-    # Generate random relative coordinates
-    rel_random_x = random.randint(1, width - 2)
-    rel_random_y = random.randint(1, height - 2)
-    abs_random_x = canvas_x + rel_random_x + rl_x
-    abs_random_y = canvas_y + rel_random_y + rl_y
-
-    print(f"Clicking at coordinates: ({abs_random_x}, {abs_random_y})")
-
-    if action:
-        # Use select_menu_option logic for right-click + action
-        return select_menu_option_logic(rel_random_x + canvas_x, rel_random_y + canvas_y, action)
-    elif right_click:
-        # Right-click only
-        move(abs_random_x, abs_random_y, fast=True, sleep=True, button='right')
+    # Safety for tiny widgets
+    if width < 5 or height < 5:
+        print(f"Widget too small ({width}x{height}) - forcing exact center")
+        rel_x = width // 2
+        rel_y = height // 2
     else:
-        # Left-click (original)
-        move(abs_random_x, abs_random_y, fast=True, sleep=True, button='left')
+        if middle_point or rand_x > 0 or rand_y > 0:
+            rel_x = width // 2
+            rel_y = height // 2
+            if rand_x > 0:
+                rel_x += random.randint(-rand_x, rand_x)
+            if rand_y > 0:
+                rel_y += random.randint(-rand_y, rand_y)
+        else:
+            rel_x = random.randint(2, width - 3)
+            rel_y = random.randint(2, height - 3)
+
+    # CRITICAL: Clamp to stay safely inside (2px inset)
+    rel_x = max(2, min(rel_x, width - 3))
+    rel_y = max(2, min(rel_y, height - 3))
+
+    abs_x = canvas_x + rel_x + rl_x
+    abs_y = canvas_y + rel_y + rl_y
+
+    print(f'click_widget_child: Clicking at screen ({abs_x}, {abs_y}) | Canvas ({canvas_x + rel_x}, {canvas_y + rel_y}) | '
+          f'Bounds x={canvas_x}-{canvas_x + width - 1}, y={canvas_y}-{canvas_y + height - 1} '
+          f'(child_index={child_index if child_index is not None else "N/A"})')
+
+    for i in range(clicks):
+        if i > 0 and sleep_interval != (0, 0):
+            time.sleep(random.uniform(sleep_interval[0], sleep_interval[1]))
+
+        if action:
+            # Right-click + select action (reuse your existing select_menu_option if defined)
+            # Replace with your actual function name
+            if select_menu_option(canvas_x + rel_x, canvas_y + rel_y, action):
+                return True
+            return False
+        elif right_click:
+            move(abs_x, abs_y, fast=True, sleep=True, button='right')
+        else:
+            move(abs_x, abs_y, fast=True, sleep=True, button='left')
+
     return True
 
-def select_menu_option_logic(rel_x: int, rel_y: int, action: str) -> bool:
-    """
-    Internal logic adapted from select_menu_option.py.
-    Hovers over relative coords, right-clicks if needed, and selects the action.
-    Returns True if successful.
-    """
-    rl_x, rl_y = runelite_window(0, 0)
-    screen_x = rl_x + rel_x
-    screen_y = rl_y + rel_y
-    
-    # Hover to load interaction options
-    move(screen_x, screen_y, fast=True, sleep=True)
-    time.sleep(random.uniform(0.05, 0.1))
-    
-    # Get available interaction options
-    options = interact_options().get('data', [])
-    if not options:
-        print("No interaction options available.")
-        return False
-    
-    # Normalize action for comparison
-    action_normalized = ' '.join(action.lower().split())
-    
-    # Check if the first option matches the desired action
-    first_option = options[0]
-    first_option_target_clean = re.sub(r'<[^>]+>', '', first_option['target']).lower()
-    first_option_combined = f"{first_option['option'].lower()} {first_option_target_clean}".strip()
-    
-    if first_option['option'].lower() == action_normalized or first_option_combined == action_normalized:
-        print(f"Matched first option: {first_option}")
-        move(screen_x, screen_y, fast=True, sleep=True, button='left')
-        return True
-    
-    # Look for the action in the context menu
-    found_action = False
-    action_x, action_y = 0, 0
-    for option in options:
-        option_target_clean = re.sub(r'<[^>]+>', '', option['target']).lower()
-        option_combined = f"{option['option'].lower()} {option_target_clean}".strip()
-        
-        if option['option'].lower() == action_normalized or option_combined == action_normalized:
-            action_x = option['middle_point']['x'] + rl_x
-            action_y = option['middle_point']['y'] + rl_y
-            found_action = True
-            break
-    
-    if found_action:
-        # Right-click to open context menu
-        move(screen_x, screen_y, fast=True, sleep=True, button='right')
-        time.sleep(random.uniform(0.05, 0.1))
-        # Move to the action and click
-        move(action_x, action_y, fast=True, sleep=True, button='left')
-        return True
-    
-    print(f"No '{action}' option found. Available options: {[f'{opt['option']} {re.sub(r'<[^>]+>', '', opt['target'])}' for opt in options]}")
-    return False
 
 def check_widget_text(id_str, child_index=None):
     """Retrieve the text from a widget or its child by ID and optional child index."""
@@ -525,8 +508,8 @@ def click_widget_by_name(name_str, sprite_id=None, hidden=None, exact_match=Fals
             time.sleep(random.uniform(sleep_interval[0], sleep_interval[1]))
         
         if action:
-            # Use select_menu_option logic for right-click + action
-            if select_menu_option_logic(canvas_x + rel_x, canvas_y + rel_y, action):
+            # Use select_menu_option for right-click + action
+            if select_menu_option(canvas_x + rel_x, canvas_y + rel_y, action):
                 return True
             return False
         elif right_click:
@@ -549,7 +532,7 @@ def click_widget_by_name(name_str, sprite_id=None, hidden=None, exact_match=Fals
 # print(check_widget('8454157', sprite_id=699, child_index=100))
 # print(check_widget_text('8454157', child_index=1))
 # print(check_widget('8454157', child_index=4, sprite_id=699))
-print(check_widget('35913796', sprite_id=1030))
+# print(check_widget('35913796', sprite_id=1030))
 # if not click_widget('35913795', sprite_id=1030, hidden=False, right_click=False, action=None, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0)):
 #    exit(f'click widget 35913795 failed, exiting... time: {time.strftime("%H:%M:%S")}')
 # click_widget_by_name("Monk's robe top", action="remove", exact_match=True)

@@ -1,5 +1,7 @@
 import time, re, random, math
 from modules.core.plugin_client import player, minimap_tiles, walkable_tile, gear, players, game_state, pick, gametick, npc
+from modules.player_data.prayer.toggle_prayer import toggle_prayer
+from modules.utils.check_players import check_for_players
 from modules.utils.click_minimap_tile import click_minimap_tile
 from modules.player_data.tile_change import wait_for_tile_change, wait_until_at_tile
 from modules.utils.wait_for_tick import wait_for_tick, wait_for_next_tick
@@ -19,6 +21,29 @@ from modules.npc_data.click_npc import click_closest_npc
 from modules.player_data.wait_till_character_stops_moving import wait_till_character_stopped_moving
 from modules.utils.automatic_scripting.small_functions import click_equipped_glory
 
+
+from modules.utils.hop import hop_to_random_world
+from modules.banking.bank_castlewars import bank_castlewars
+from modules.utils.check_players import check_for_players
+from scripts.combat.slayer.slayer_gear import get_target_gear
+
+target_gear = get_target_gear()
+
+target_inventory = {
+    "Prayer potion": 6,
+    "Games necklace": 1,
+    "Amulet of glory": 1,
+    "Ring of dueling": 2,
+    "Cannon barrels": 1,
+    "Cannon furnace": 1,
+    "Cannon base": 1,
+    "Cannon stand": 1,
+    "Steel cannonball": "all",
+    "Coins": 1000,
+    "Waterskin": 6
+}
+
+bank_castlewars(target_gear=target_gear, target_inventory=target_inventory)
 
 
 # 1
@@ -72,7 +97,7 @@ for i in range(3):
 for i in range(5):
     if click_gameobject("41311", 'board', tile=(3270, 3143), radius=20):
         wait_for_tile_change()
-        wait_for_next_tick(10)
+        wait_for_next_tick(15)
         break
     wait_for_next_tick()
     if i == 4:
@@ -101,6 +126,7 @@ for i in range(10):
         wait_for_next_tick()
     else:
         if wait_till_character_stopped_moving():
+            wait_for_next_tick(2)
             break
     if i == 9:
         exit("Failed to click npc (shantay guard)")
@@ -110,6 +136,13 @@ for i in range(5):
     if click_gameobject("41326", 'go-through', tile=(3194, 2841), radius=20):
         wait_till_character_stopped_moving()
         wait_for_next_tick(2)
+        for _ in range(5):
+            if click_widget('37027860'):
+                if click_widget('37027857'):
+                    break
+            wait_for_next_tick(1)
+
+
         break
     wait_for_next_tick()
     if i == 4:
@@ -120,4 +153,41 @@ if not click_minimap_tile(3194, 2828, rand_x=2, rand_y=2, target_zoom=2.0):
     print("Failed to click minimap tile (3194, 2828)")
     exit()
 else:
+    toggle_prayer('PROTECT_FROM_MELEE', activate=True)
     wait_till_character_stopped_moving()
+
+
+hop_tile = (3191, 2823, 0)
+stand_tile = (1435, 9884, 0)
+
+# hop until empty world
+max_hop_attempts = 15  # Safety limit to avoid infinite hopping
+for hop_attempt in range(max_hop_attempts):
+    print(f"Checking for nearby players (attempt {hop_attempt + 1}/{max_hop_attempts})...")
+    
+    players_detected = check_for_players(radius=10, max_wait_ticks=2)
+    
+    if not players_detected:
+        print("No players detected in 10 tile radius -> safe spot")
+        break
+
+    click_minimap_tile(hop_tile[0], hop_tile[1], target_zoom=2.0)
+    wait_till_character_stopped_moving(required_idle_ticks=2)
+    wait_for_next_tick(8)
+
+
+    print("Players detected -> hopping to new P2P world")
+    if not hop_to_random_world('p2p'):
+        print("Hop failed -> retrying check")
+        wait_for_tick(3)
+        continue
+
+    click_minimap_tile(stand_tile[0], stand_tile[1], target_zoom=2.0)
+
+
+else:
+    exit('Too many hops')
+
+from scripts.combat.slayer.crocodiles import main
+
+main()

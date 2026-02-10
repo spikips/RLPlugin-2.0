@@ -182,9 +182,9 @@ def check_if_in_area(area_tiles, click=False):
         if not wait_for_tile_change(timeout_ticks=1):  # ~0.6 seconds
             # print("Tile did not change after click")
             # print("Waiting for player to stop moving before retry")
-            while not is_player_idle():
-                # print("Player still moving, waiting another tick")
-                continue
+            # while not is_player_idle():
+            #     # print("Player still moving, waiting another tick")
+            #     continue
             continue
 
         # Check if now in area

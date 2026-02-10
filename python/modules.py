@@ -128,6 +128,13 @@ if success:
 else:
     print("Failed to click closest NPC.")
 
+escort_ids = [1566, 1567, 1578, 1577]
+success = click_closest_npc(escort_ids, 'Escort')  # Click closest from ID list and select 'Escort'
+if success:
+    print("Closest NPC clicked successfully.")
+else:
+    print("Failed to click closest NPC.")
+
 # Alternative: Name-based search
 click_closest_npc('undead lumberjack', 'attack')  # Click closest 'undead lumberjack' and select 'attack'
 
@@ -582,6 +589,43 @@ drop_inventory("Bones", 'all')
 # Clicks a sequence of items, optionally with action.
 success = click_inventory_sequence(["Knife", "Logs"], "Use", delay=0.5)
 print(f"Sequence success: {success}")
+#---#
+from modules.utils.check_players import check_for_player_in_area, check_for_players
+# AREA_POLYGON = [
+#     (3494, 3322),
+#     (3496, 3323),
+#     (3497, 3323),
+#     (3499, 3322),
+#     (3502, 3322),
+#     (3503, 3323),
+#     (3508, 3323),
+#     (3512, 3323),
+#     (3518, 3317),
+#     (3518, 3314),
+#     (3516, 3312),
+#     (3512, 3311),
+#     (3510, 3309),
+#     (3504, 3309),
+#     (3498, 3312),
+#     (3496, 3312),
+#     (3495, 3314),
+#     (3494, 3314),
+#     (3492, 3316),
+#     (3492, 3318),
+#     (3491, 3320),
+# ]
+
+# if check_for_player_in_area(AREA_POLYGON):
+#     print("Player in area - react/hop!")
+# else:
+#     print("Area clear")
+# returns True when players
+
+# Quick check (1 tick = instant detection)
+# if check_for_players(ticks=1):
+#     print("Player spotted!")
+# returns True when players
+
 
 #---#  
 # utils/varbit_change.py
@@ -907,7 +951,7 @@ click_widget_by_name("Monk's robe top", action="remove", exact_match=True)
 # core/plugin_client.py
 from modules.core.plugin_client import slayer_task_remaining, varbit_changes, cannon_data, target_npc, fetch_object, players, varbit, quest, stats, gear, chat, npc, inventory, combat_style, inventory_random_clickpoint, game_object, player, tile, walkable_tile, gametick, interact_options, pick, main_menu, bank_items, game_state, get_varbits, get_active_prayers, npc_agro, minimap_tile_point
 
-# print(slayer_task_remaining()) returns: 35
+# print(slayer_task_remaining()) returns: 35yyyyyyyyyyyyyyyy
 # print(varbit_changes()) returns: {'data': [{'new': 0, 'old': 399, 'tick': 1028, 'varbit': 12391}, {'new': 21, 'old': 20, 'tick': 1028, 'varbit': 12392}, {'new': 409124, 'old': 409123, 'tick': 1028, 'varbit': -1}]}
 # print(cannon_data()) returns: {'data': {'ammo': 30, 'exists': True, 'position': 'WorldPoint(x=3195, y=3489, plane=0)', 'id': 6, 'middle_point': {'x': 292, 'y': 223}}}
 # print(target_npc()) returns: {'data': {'healthRatio': -1, 'healthScale': -1, 'name': 'Guard', 'index': 19463, 'location': {'plane': 0, 'x': 3208, 'y': 3464}, 'id': 11913, 'middle_point': {'x': 326, 'y': 88}, 'animation': -1}}
@@ -954,13 +998,13 @@ from modules.core.plugin_client import slayer_task_remaining, varbit_changes, ca
 #---#  
 # scripts/combat/slayer/slayer_master_edgeville.py
 # A script for navigating to the Slayer Master Vannaka in Edgeville Dungeon in Old School RuneScape via RuneLite plugin.
-from scripts.combat.slayer.slayer_master_edgeville import full_navigation
+from scripts.combat.slayer.walk_to.slayer_master_edgeville import full_navigation
 full_navigation()
 
 from modules.utils.monitor_clicks import get_recent_clicks
-while True:
-    get_recent_clicks(limit=50, max_changes=55)
-    wait_for_next_tick()
+# while True:
+#     get_recent_clicks(limit=50, max_changes=55)
+#     wait_for_next_tick()
 # returns: 
 # Click #1:
 #   Tick: 4
@@ -985,3 +1029,7 @@ while True:
 #       Old Sprite: -1, New Sprite: 2420
 #     Type: new, Widget ID: 35913795, Path: _1_9_1_3
 #       Old Sprite: -1, New Sprite: 1030
+from modules.utils.check_players import check_for_players
+
+print(check_for_players(max_wait_ticks=1, radius=20))
+# if players in the given radius it returns true

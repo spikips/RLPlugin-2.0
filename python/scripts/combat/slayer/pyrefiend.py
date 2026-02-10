@@ -59,7 +59,7 @@ def is_cannon_placed():
 
 def place_cannon():
     # Move to cannon tile (required for placement)
-    on_tile = check_if_in_tile(CANNON_TILE[0], CANNON_TILE[1], CANNON_TILE[2], click=True, right_click=True)
+    on_tile = check_if_in_tile(CANNON_TILE[0], CANNON_TILE[1], CANNON_TILE[2], click=True)
     if not on_tile:
         print("Standard movement failed. Falling back to minimap click with zoom 5.")
         click_minimap_tile(CANNON_TILE[0], CANNON_TILE[1], target_zoom=5.0)
@@ -90,7 +90,7 @@ def place_cannon():
         if get_closest_object(CANNON_NAME, "Fire", tile=CANNON_TILE, radius=10):
             print("Cannon placed successfully ('Fire' option detected).")
             wait_for_next_tick(1)
-            click_cannon('Fire')  # Load immediately after placement
+            click_cannon('Fire', exact_tile=CANNON_TILE)  # Load immediately after placement
             return True
         wait_for_next_tick(1)
         waited_ticks += 1
@@ -160,8 +160,13 @@ def main():
         task_remaining = slayer_task_remaining()
         print(f"Slayer task remaining: {task_remaining}")
         if task_remaining == 0:
-            click_cannon('Pick-up')
-            print("Slayer task completed. Stopping script.")
+            print("Slayer task completed - picking up cannon and navigating back.")
+            cannon_placed = is_cannon_placed()  # re-check just in case
+            if cannon_placed:
+                if click_cannon('Pick-up', exact_tile=CANNON_TILE):
+                    print("Cannon picked up.")
+                else:
+                    print("Failed to pick up cannon.")
             break
 
         # Get and print cannon_info every loop
@@ -177,7 +182,7 @@ def main():
                 print(f"Placement attempt {attempt}/{MAX_PLACEMENT_TRIES}")
                 if place_cannon():
                     # Force load after successful placement
-                    if click_cannon('Fire'):
+                    if click_cannon('Fire', exact_tile=CANNON_TILE):
                         print("Cannon loaded after placement.")
                     else:
                         print("Failed to load cannon after placement.")
@@ -187,10 +192,10 @@ def main():
                     time.sleep(2)
 
             # Always return to stand tile after placement attempts
-            check_if_in_tile(STAND_TILE[0], STAND_TILE[1], STAND_TILE[2], click=True, right_click=True)
+            check_if_in_tile(STAND_TILE[0], STAND_TILE[1], STAND_TILE[2], click=True)
 
         # Ensure standing position
-        if not check_if_in_tile(STAND_TILE[0], STAND_TILE[1], STAND_TILE[2], click=True, right_click=True):
+        if not check_if_in_tile(STAND_TILE[0], STAND_TILE[1], STAND_TILE[2], click=True):
             print("Standard movement to stand tile failed. Falling back to minimap click with zoom 5.")
             click_minimap_tile(STAND_TILE[0], STAND_TILE[1], target_zoom=5.0)
             wait_till_character_stopped_moving()
@@ -208,16 +213,25 @@ def main():
             else:
                 print("Prayer low and no potion available")
 
-        # Cannon reload with dynamic threshold
+        # Cannon reload with dynamic threshold + repair fallback (same as ghoul.py)
         ball_count = cannon_info.get('ammo', 0)
         if cannon_placed and ball_count <= cannon_threshold:
-            if click_cannon('Fire'):
+            if click_cannon('Fire', exact_tile=CANNON_TILE):
                 print(f"Cannon reloaded (ammo {ball_count} <= threshold {cannon_threshold})")
-                # Choose new random threshold for next reload
                 cannon_threshold = random.randint(5, 25)
                 print(f"New cannon reload threshold set to {cannon_threshold}")
             else:
-                print(f"Failed to reload cannon (ammo reported {ball_count})")
+                if click_cannon('repair', exact_tile=CANNON_TILE):
+                    print('cannon repaired, reloading')
+                    for _ in range(10):
+                        if click_cannon('Fire', exact_tile=CANNON_TILE):
+                            print(f"Cannon reloaded after repair (ammo {ball_count} <= threshold {cannon_threshold})")
+                            cannon_threshold = random.randint(5, 25)
+                            print(f"New cannon reload threshold set to {cannon_threshold}")
+                            break
+                        wait_for_next_tick(1)
+                else:
+                    print(f"Failed to reload or repair cannon (ammo reported {ball_count})")
 
         # Loot
         for item in LOOT_ITEMS:

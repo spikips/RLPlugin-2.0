@@ -5,8 +5,10 @@ import keyboard
 from modules.core.plugin_client import npc, inventory, stats as plugin_stats
 from modules.core.mouse_control import move as mouse
 from modules.core.window_utils import runelite_window
+from modules.npc_data.click_npc import click_closest_npc
 from modules.utils.banking import bank
 from modules.utils.logout import logout_and_break
+from modules.utils.wait_for_tick import wait_for_next_tick
 
 def crafting(allow_break=True):
     """
@@ -132,21 +134,14 @@ def crafting(allow_break=True):
                         print(f"Debug: Long break for {break_time / 60:.1f} minutes")
                         logout_and_break(break_time)
 
-                # Find Banker to reopen bank
-                banker_data = npc(id="1634", name="Banker", middle_point=True)
-                if not banker_data or 'data' not in banker_data or not banker_data['data']:
-                    print("No Banker NPC (ID: 1634) found, exiting")
-                    exit()
-                banker = banker_data['data'][0]
-                middle_point = banker.get('middle_point')
-                if middle_point:
-                    x, y = middle_point['x'], middle_point['y']
-                    mouse(x + rl_x, y + rl_y, button="left", fast=True, sleep=True)
-                    print(f"Clicked Banker at x={x + rl_x}, y={y + rl_y}")
-                    time.sleep(1)
-                else:
-                    print("No middle_point for Banker, exiting")
-                    exit()
+                for i in range(10):
+                    if not click_closest_npc('banker', option='bank', max_attempts=5):
+                        wait_for_next_tick()
+                    else:
+                        wait_for_next_tick()
+                        break
+                    if i == 9:
+                        exit("Failed to click npc (banker)")
 
                 # Deposit sapphires and withdraw more
                 sapphire_deposited = None

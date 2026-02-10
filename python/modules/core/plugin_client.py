@@ -5,7 +5,7 @@ import random
 from typing import Optional, Dict, Any, List
 
 class PluginClient:
-    def __init__(self, host: str = 'localhost', port: int = 6565, auth_token: str = 'jQ8IHav3zA3HuH5'):
+    def __init__(self, host: str = 'localhost', port: int = 6565, auth_token: str = 'jQ8IHav3zA3HuH4'):
         """
         Initialize the PluginClient for communicating with the RuneLite plugin server.
 
@@ -55,34 +55,49 @@ class PluginClient:
 
 
     def _receive_response(self, sock: socket.socket) -> Optional[Dict[str, Any]]:
-        """
-        Receive and parse the response from the server.
+            """
+            Receive full response until newline terminator, with robust UTF-8 fallback.
+            Handles large responses and invalid UTF-8 bytes (common in widget data).
+            """
+            data = b''
+            while True:
+                try:
+                    part = sock.recv(4096)
+                    if not part:
+                        break
+                    data += part
+                    if b'\n' in data:
+                        break
+                except socket.timeout:
+                    print("Socket timeout while receiving response.")
+                    return None
 
-        Args:
-            sock (socket.socket): The connected socket.
-
-        Returns:
-            Optional[Dict[str, Any]]: Parsed JSON response or None if parsing fails.
-        """
-        data = b''
-        while True:
-            try:
-                part = sock.recv(4096)
-                if not part:
-                    break
-                data += part
-                if b'\n' in part:
-                    break
-            except socket.timeout:
-                print("Socket timeout while receiving response.")
+            if not data:
+                print("No data received from server.")
                 return None
-        response_str = data.decode('utf-8').strip()
-        # print(f"Raw server response: {response_str}")  # Debug log
-        try:
-            return json.loads(response_str)
-        except json.JSONDecodeError as e:
-            print(f"Failed to parse JSON response: {e}")
-            return None
+
+            # Split on first newline (server terminates with \n)
+            if b'\n' in data:
+                response_bytes = data.split(b'\n', 1)[0]
+            else:
+                response_bytes = data  # Fallback if no newline
+
+            # Robust decoding: Try UTF-8, fallback to latin-1 (maps all bytes, no error)
+            try:
+                response_str = response_bytes.decode('utf-8')
+            except UnicodeDecodeError:
+                response_str = response_bytes.decode('latin-1')
+
+            response_str = response_str.strip()
+
+            # Optional debug for large responses
+
+            try:
+                return json.loads(response_str)
+            except json.JSONDecodeError as e:
+                print(f"Failed to parse JSON response: {e}")
+                print(f"Response preview (first 500 chars): {response_str[:500]}")
+                return None
 
     def fetch_bank_items(self) -> Optional[List[Dict[str, Any]]]:
         """
@@ -464,19 +479,6 @@ class PluginClient:
         }
         return self.send_request('bank', params)
 
-    def get_varbits(self, varbit_ids: List[int]) -> Optional[Dict[str, int]]:
-        """
-        Retrieve the values of specific Varbits from the plugin server.
-
-        Args:
-            varbit_ids (List[int]): List of Varbit IDs to query.
-
-        Returns:
-            Optional[Dict[str, int]]: Dictionary mapping Varbit IDs to their values, or None if failed.
-        """
-        params = {str(varbit_id): None for varbit_id in varbit_ids}
-        return self.send_request('varbits', params)
-
     def get_active_prayers(self) -> Optional[Dict[str, bool]]:
         """
         Retrieve the active status of all prayers from the plugin server.
@@ -624,9 +626,22 @@ class PluginClient:
         """Manually reset cannon tracking (useful for debugging or after pickup)."""
         return self.send_request('reset_cannon', {})
 
-    
-_default_client = PluginClient(auth_token='jQ8IHav3zA3HuH5')
+    def get_var(self, var_id: int) -> Optional[Dict[str, Any]]:
+        """Single ID query across Varbit, Varp, VarClientInt."""
+        return self.send_request('get_varbits', {'id': var_id})
 
+    def get_varbits(self, varbit_ids: List[int]) -> Optional[Dict[str, Any]]:
+        """Bulk Varbit query (backward compatible)."""
+        params = {str(id): 0 for id in varbit_ids}
+        return self.send_request('get_varbits', params)
+
+_default_client = PluginClient(auth_token='jQ8IHav3zA3HuH4')
+
+def get_var(var_id: int) -> Optional[Dict[str, Any]]:
+    return _default_client.get_var(var_id)
+
+def get_varbits(varbit_ids: List[int]) -> Optional[Dict[str, Any]]:
+    return _default_client.get_varbits(varbit_ids)
 
 def slayer_task_remaining() -> int:
     """Get the number of NPCs left to kill in your current Slayer task."""
@@ -765,18 +780,6 @@ def bank(deposit_inventory: bool = False, deposit_equipment: bool = False, place
     """Retrieve bank button states and handle deposit/withdraw actions."""
     return _default_client.bank(deposit_inventory, deposit_equipment, placeholder, noted, withdraw_1, withdraw_5,
                                withdraw_10, withdraw_x, withdraw_all, deposit, withdraw, quantity)
-
-def get_varbits(varbit_ids: List[int]) -> Optional[Dict[str, int]]:
-    """
-    Retrieve the values of specific Varbits from the plugin server.
-
-    Args:
-        varbit_ids (List[int]): List of Varbit IDs to query.
-
-    Returns:
-        Optional[Dict[str, int]]: Dictionary mapping Varbit IDs to their values, or None if failed.
-    """
-    return _default_client.get_varbits(varbit_ids)
 
 def get_active_prayers() -> Optional[Dict[str, bool]]:
     """
