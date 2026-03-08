@@ -18,8 +18,11 @@ from modules.player_data.click_equipment import click_equipment_item
 from modules.utils.banking import bank
 from modules.object_data.object import click_object, check_object
 from modules.core.plugin_client import gametick
-from modules.utils.hop import logout_widget, quickhop_widget, get_hop_worlds, click_scrollbar
+from modules.utils.hop import logout_widget, quickhop_widget, get_hop_worlds, click_scrollbar, reset_quickhop
+from modules.player_data.get_level import get_level
+from modules.utils.logout import logout
 
+TARGET_PRAYER_LEVEL = 77
 
 hopping = False  # Shared global flag to pause/resume main loop
 has_dragon_bones = True  # Track if we still have dragon bones (updated in main loop)
@@ -68,6 +71,27 @@ inside_altar_area = [
     "2949,3823,0",
     "2947,3821,0"
 ]
+
+def check_prayer_level_and_stop():
+    if TARGET_PRAYER_LEVEL is None:
+        return
+    try:
+        current = get_level('prayer')
+        if current >= TARGET_PRAYER_LEVEL:
+            print("Prayer level " + str(current) + " reached target " + str(TARGET_PRAYER_LEVEL) + "! Logging out and stopping...")
+            logout()
+            time.sleep(1.5)
+            exit(0)
+    except Exception:
+        pass
+
+def is_player_dead():
+    p_data = player(health=True)
+    if p_data and 'data' in p_data:
+        health = p_data['data'].get('health', 99)
+        health_ratio = p_data['data'].get('healthRatio', 100)
+        return health <= 0 or health_ratio == 0
+    return False
 
 def get_player_tile():
     p_data = player(location=True)
@@ -195,12 +219,13 @@ def use_bone():
                             pyautogui.press('f5')
                             
                 success = True
-                break
+                return success
             else:
                 print('No altar found')
         wait_for_tick(1)
     if not success:
         print("Failed to use bone after 3 attempts, continuing to next check.")
+        return success
 
 def open_bank():
     # Find bank chest with a broader tile radius
@@ -344,14 +369,15 @@ def monitor_until_safe_or_hop():
             print(f"Players detected ({num_players}), hopping...")
             if hop_coordinates is None:
                 print('no hop coordinates')
-                quickhop_widget()
-                logout_widget()
+
+                while not get_hop_worlds():
+                    quickhop_widget()
+                    logout_widget()
                 worlds = get_hop_worlds()
+
                 if worlds and 'screen_x' in worlds and 'screen_y' in worlds:
                     hop_coordinates = (worlds['screen_x'], worlds['screen_y'])
-                else:
-                    print("Failed to get hop coordinates.")
-                    return 'hopped'  # Fail safe, assume hopped
+
             if hop_coordinates:
                 for _ in range(2):
                     move(hop_coordinates[0], hop_coordinates[1], button='left', fast=True, sleep=True)
@@ -367,7 +393,7 @@ def monitor_until_safe_or_hop():
             hop_coordinates = None
             # Recheck after hop
             wait_for_tick(1)
-            player_data = players(radius=15)
+            player_data = players(radius=12)
             num_players_after = len(player_data['data']) if player_data and 'data' in player_data else 0
             if num_players_after == 0:
                 print("Cleared after hop.")
@@ -584,8 +610,11 @@ def navigate_from_lava_maze():
             return True
     return False
 
+
 while True:
+    check_prayer_level_and_stop()
     if check_if_in_area(lumbridge_area):
+        reset_quickhop()
         print("In Lumbridge, handling teleport to Castle Wars.")
         wait_for_tick(1)  # Allow time for respawn to fully load
         # Check for ring of dueling in inventory first (try variants)
@@ -617,13 +646,13 @@ while True:
             print("No ring of dueling in inventory, attempting widget teleport to Castle Wars.")
             for i in range(7):
                 click_widget('35913776', rand_x=10, rand_y=10)
-                time.sleep(0.3)
+                wait_for_tick(1)
                 click_widget('46333957', rand_x=10, rand_y=10)
-                time.sleep(0.3)
+                wait_for_tick(1)
                 click_widget('35913776')
-                time.sleep(0.3)
+                wait_for_tick(1)
                 click_widget('4980746', rand_x=50, rand_y=5)
-                time.sleep(0.3)
+                wait_for_tick(1)
 
                 # 4980758       
                 for child in range(8):
@@ -754,7 +783,13 @@ while True:
         continue
 
     if has_dragon_bones:
-        # Ensure we are inside the altar before using bones
+        # === STRONG DEATH / LUMBRIDGE CHECK FIRST ===
+        if is_player_dead() or check_if_in_area(lumbridge_area):
+            reset_quickhop()
+            print("Detected death or Lumbridge respawn while we still have bones.")
+            has_dragon_bones = False
+            continue
+
         inside_altar = is_inside_altar()
         if not inside_altar:
             if check_if_in_area(lava_maze_area):
@@ -763,72 +798,92 @@ while True:
             else:
                 print("Not in expected area, skipping navigation.")
             inside_altar = is_inside_altar()
-        
+
         if inside_altar:
-            # Set camera once for altar
             camera(465, 1192, 1448)
-            
-            # Check players and hop if needed (this may hop and return here after login)
-            if monitor_players_clear():  # This function monitors players in the area and hops if any are detected (and not under attack)
-                # Use initial bone if available  <-- THIS IS THE SINGLE BONE USAGE CALL
+
+            if monitor_players_clear():
                 bone_count = get_inventory_count('Dragon bones')
                 if bone_count > 0:
-                    use_bone()  # Calls the use_bone() function, which attempts to click/use a Dragon bone on the Chaos Altar (up to 3 times) and opens the logout widget (F5) for quick-hop readiness
-                # Start looping the monitoring and bone use  <-- COMMENT INDICATES INTENT FOR BONE USAGE IN LOOP, BUT NO BONE USAGE HAPPENS HERE
-                while True:  # <-- THIS IS THE MONITORING LOOP
-                    result = monitor_until_safe_or_hop()  # Calls the monitoring function (explained below)
-                    if result == 'no_bones':
-                        has_dragon_bones = False
-                        print("No more dragon bones.")
-                        break
-                    elif result in ['hopped', 'left_area']:
-                        print(f"Monitoring resulted in {result}, breaking bone use loop.")
-                        break
+                    if use_bone():
+                        check_prayer_level_and_stop()
+                        while True:
+                            result = monitor_until_safe_or_hop()
+                            if result == 'no_bones':
+                                has_dragon_bones = False
+                                print("No more dragon bones.")
+                                break
+                            elif result in ['hopped']:
+                                use_bone()
 
+                                # === CRITICAL FIX: Check if we actually died and respawned ===
+                            if is_player_dead() or check_if_in_area(lumbridge_area):
+                                reset_quickhop()
+                                print("Detected Lumbridge respawn after being killed during hop!")
+                                has_dragon_bones = False
+                                break
+                    else:
+                        if is_player_dead() or check_if_in_area(lumbridge_area):
+                            reset_quickhop()
+                            print("Respawned in Lumbridge after failed bone use.")
+                            has_dragon_bones = False
+                            break
+                else:
+                    has_dragon_bones = False
         else:
             print("Failed to reach inside altar, skipping bone use.")
+
     else:
+        # === IMPROVED SUICIDE MODE (already has Lumbridge check every cycle) ===
         print('no more dragon bones')
-        # If not in Lumbridge, entering suicide mode with Wine of Zamorak.
-        print("Not in Lumbridge, entering suicide mode with Wine of Zamorak.")
-        # Set camera for suicide mode
+        print("Entering suicide mode with Wine of Zamorak...")
+
+        if check_if_in_area(lumbridge_area):
+            reset_quickhop()
+            print("Already in Lumbridge - skipping suicide completely.")
+            continue
+
         camera(512, 2017, 534)
-        # Suicide loop: Pick Wine until HP == 0 (3 clicks per tick ~0.2s intervals)
+
+        suicide_attempts = 0
+        max_suicide_attempts = 300
+
         while True:
-            # Get player health
-            p_data = player(health=True)
-            if p_data and 'data' in p_data:
-                health = p_data['data'].get('health', 99)
-                health_ratio = p_data['data'].get('healthRatio', 100)
-                if health <= 0 or health_ratio == 0:
-                    print("HP reached 0, waiting for respawn in Lumbridge.")
-                    break
-            else:
-                print("Failed to get health, continuing...")
-            
-            # Pick Wine of Zamorak from ground (loop 3 times per tick equivalent)
-            for _ in range(3):  # 3 attempts per ~0.6s tick
+            check_prayer_level_and_stop()
+            suicide_attempts += 1
+            if suicide_attempts > max_suicide_attempts:
+                print("Suicide mode timeout reached.")
+                break
+
+            if check_if_in_area(lumbridge_area) or is_player_dead():
+                print("Detected Lumbridge respawn during suicide mode.")
+                reset_quickhop()
+                break
+
+            # Click wine 3x per cycle
+            wine_picked = False
+            for _ in range(3):
                 wine_data = pick(2950, 3824, size=10, item='Wine of zamorak')
-                if wine_data and 'data' in wine_data and 'items' in wine_data['data'] and wine_data['data']['items']:
+                if suicide_attempts < 1:
+                    wait_for_tick(2)
+                if wine_data and 'data' in wine_data and wine_data['data'].get('items'):
                     wine_item = wine_data['data']['items'][0]
                     if 'middle_point' in wine_item:
-                        mp_x = wine_item['middle_point']['x']
-                        mp_y = wine_item['middle_point']['y']
-                        # Left-click to take (use select_menu_option with action='Take')
-                        select_menu_option(mp_x, mp_y, 'Take')
-                        time.sleep(random.uniform(0.05, 0.1))  # ~0.05-0.1s between clicks
-                        break  # Break inner loop if successful
-                else:
-                    print("No Wine of Zamorak found in this attempt, retrying...")
-                    time.sleep(random.uniform(0.05, 0.1))  # Short pause between attempts
-            # End of 3 attempts, equivalent to 1 tick
-            time.sleep(0.1)  # Brief pause before next full cycle
-        
-        # After death, loop until in Lumbridge
-        while True:
-            if check_if_in_area(lumbridge_area):
-                print("Respawned in Lumbridge.")
-                break
+                        select_menu_option(wine_item['middle_point']['x'], wine_item['middle_point']['y'], 'Take')
+                        time.sleep(random.uniform(0.04, 0.09))
+                        wine_picked = True
+                        break
+                time.sleep(random.uniform(0.04, 0.07))
+
+            if not wine_picked and suicide_attempts % 20 == 0:
+                print(f"No wine found on attempt {suicide_attempts}")
+
+            time.sleep(0.08)
+
+        # Confirm we are really in Lumbridge
+        print("Waiting to confirm Lumbridge respawn...")
+        while not check_if_in_area(lumbridge_area):
+            reset_quickhop()
             wait_for_tick(1)
-        # Optionally continue or exit after respawn
-        continue  # Back to main loop, now in Lumbridge, will handle teleport
+        print("Successfully back in Lumbridge.")
+        continue

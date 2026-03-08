@@ -3,9 +3,12 @@ import time, re, random, math
 import keyboard
 from modules.core.plugin_client import inventory, bank_items, cannon_data, minimap_tile_point, npc_agro, player, minimap_tiles, walkable_tile, gear, players, game_state, pick, gametick, npc
 from modules.player_data.cannon import click_cannon
+from modules.utils.check_if_in_area import check_if_in_area
 from modules.utils.check_players import check_for_players
 from modules.utils.click_minimap_tile import click_minimap_tile
 from modules.player_data.tile_change import wait_for_tile_change, wait_until_at_tile
+from modules.utils.hop import hop_to_random_world
+from modules.utils.loot import has_ground_items, loot_all_ground_items
 from modules.utils.wait_for_tick import wait_for_tick, wait_for_next_tick
 from modules.utils.check_if_in_tile import check_if_in_tile
 from modules.utils.inventory import check_inventory, get_inventory_count, click_inventory_sequence
@@ -15,7 +18,7 @@ from modules.weapon_data.combat_style import combat_style
 from modules.utils.camera import camera
 from modules.utils.select_menu_option import select_menu_option
 from modules.player_data.click_equipment import click_equipment_item
-from modules.utils.inventory import click_inventory
+from modules.utils.inventory import click_inventory, is_inventory_full
 from modules.object_data.game_object import click_gameobject, get_closest_game_object
 from modules.core.plugin_client import fetch_object
 from modules.object_data.object import click_object, get_closest_object
@@ -28,77 +31,461 @@ from modules.utils.check_if_in_tile import is_player_idle, check_if_in_tile
 from modules.widgets.widget import get_widget, check_widget, check_widget_text, check_widget_name, click_widget, click_widget_child, click_widget_by_name
 from modules.npc_data.click_npc import get_player_position, click_npc, click_closest_npc
 from modules.player_data.wait_till_character_stops_moving import wait_till_character_stopped_moving
-from modules.utils.automatic_scripting.small_functions import click_equipped_glory, click_equipped_necklace_of_passage, click_lowest_games_necklace, click_lowest_glory, click_lowest_necklace_of_passage, click_lowest_ring_of_dueling
+from modules.utils.automatic_scripting.small_functions import click_equipped_glory, click_equipped_necklace_of_passage, click_equipped_ring_of_wealth, click_lowest_games_necklace, click_lowest_glory, click_lowest_necklace_of_passage, click_lowest_ring_of_dueling
 from modules.player_data.prayer.toggle_prayer import toggle_prayer
 from modules.utils.click_tile import click_tile
 from modules.player_data.check_run import click_run
-from modules.banking.bank_castlewars import bank_castlewars
+from modules.banking.bank_castlewars import bank_castlewars, clean_item_name, get_inventory_data
+
+print(check_widget_text(15138822))
 
 
 
 
-# for index in range(0, 28):
+# Inventory item click: Uncut sapphire -> Cut
+
+
+# 1
+# Inventory item click: Needle -> Use
 # for i in range(5):
-#     if click_lowest_glory(action='Rub'):
+#     if click_inventory('needle', action='use', hover_only=False):
 #         break
 #     wait_for_next_tick()
 #     if i == 4:
-#         exit("Failed to click jewelry: Amulet of glory(5) (Rub)")
+#         exit("Failed to click inventory item (Needle, Use)")
 
 # # 2
-# # parent id: 14352385
+# # Inventory item click: Needle -> Leather -> Use
 # for i in range(5):
-#     if click_widget_child('14352385', sprite_id=None, hidden=None, child_index=1, right_click=False, action=None):
+#     if click_inventory('leather', action='use', hover_only=False):
 #         break
 #     wait_for_next_tick()
 #     if i == 4:
-#         exit("Failed to click dialogue option (edgeville) via child")
+#         exit("Failed to click inventory item (Needle -> Leather, Use)")
 
-#{'random_clickpoint': {'x': 704, 'y': 272}, 'itemId': 995, 'quantity': 7626, 'spriteId': -1, 'name': '<col=ff9040>Coins</col>', 'bounds': {'x': 696, 'width': 36, 'y': 249, 'height': 32}, 'id': 983043, 'text': '', 'OnOpListener': [487, -2147483645, -2147483643, 100, 0], 'textColor': 0, 'hasOnOpListener': True, 'enabled': False}
+# for i in range(5):
+#     if click_widget_by_name('leather gloves', action='make', canvas=(0, 341, 514, 141)):
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click inventory item (Leather gloves, Make)")
+
+# for i in range(5):
+#     if click_widget_child('30474246', sprite_id=None, hidden=None, child_index=0, right_click=False, action="collect to bank"):
+#         wait_for_next_tick(2)
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click dialogue option (collect to bank) via child")
 
 
-# print(check_for_players(max_wait_ticks=1))
+# check_widget('30474242', sprite_id=None, hidden=None, child_index=11)
+# 1
+# for i in range(10):
+#     if not click_closest_npc('grand exchange clerk', option='exchange', max_attempts=5):
+#         wait_for_next_tick()
+#     else:
+#         if wait_till_character_stopped_moving():
+#             break
+#     if i == 9:
+#         exit("Failed to click npc (grand exchange clerk)")
 
-# target_gear = [
-#     "Amulet of glory",
-#     "Ancient cloak",
-#     "Ancient mitre",
-#     "Antler guard",
-#     "Brine sabre",
-#     "Climbing boots",
-#     "Combat bracelet",
-#     "Honourable blessing",
-#     "Monk's robe",
-#     "Monk's robe top",
-#     "Ring of wealth"
-# ]
 
-# target_inventory = {
-#     "Amulet of glory": 1,
-#     "Games necklace": 1,
-#     "Prayer potion": 5,
-#     "Ring of dueling": 2,
-# }
+# for i in range(5):
+#     if click_widget_child('30474247', sprite_id=None, hidden=None, child_index=3, right_click=False, action=None):
+#         wait_for_next_tick()
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click dialogue option (create <col=ff9040>buy</col> offer) via child")
 
-# bank_castlewars(target_gear=target_gear, target_inventory=target_inventory)
+# click_widget_by_name('ring of wealth (5)', action='Select')
 
+# parent id: 30474266
+# for i in range(4):
+#     click_widget_child('30474266', sprite_id=None, hidden=None, child_index=13, right_click=False, action=None)
+
+
+# for i in range(5):
+#     if click_widget_child('30474270', sprite_id=None, hidden=None, child_index=3, right_click=False, action=None):
+#         wait_for_next_tick(2)
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click dialogue option (confirm) via child")
+
+
+# for i in range(5):
+#     if click_widget_child('30474246', sprite_id=None, hidden=None, child_index=0, right_click=False, action=None):
+#         wait_for_next_tick(2)
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click dialogue option (collect to inventory) via child")
+
+
+
+# 1
+# parent id: 30474248
+# for i in range(5):
+#     if click_widget_child('30474248', sprite_id=None, hidden=None, child_index=2, right_click=False, action="abort offer"):
+#         wait_for_tick(2)
+#         for i in range(5):
+#             if click_widget_child('30474246', sprite_id=None, hidden=None, child_index=0, right_click=False, action=None):
+#                 break
+#             wait_for_next_tick()
+#             if i == 4:
+#                 exit("Failed to click dialogue option (collect to inventory) via child")
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click dialogue option (modify offer) via child")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def auto_retaliate(enable: bool):
+#     # open combat options tab
+#     if not click_widget('35913792', sprite_id=1026, hidden=False, right_click=False, action=None, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0)):
+#         exit(f'click widget 35913792 failed, exiting... time: {time.strftime("%H:%M:%S")}')
+
+#     if enable:
+#         check_auto_retaliate = check_widget("38862882", sprite_id=1141)
+#         if check_auto_retaliate:
+#             for i in range(5):
+#                     if click_widget_child('38862880', sprite_id=None, hidden=None, child_index=8, right_click=False, action=None):
+#                         print('enabled auto retaliate')
+#                         break
+#                     wait_for_next_tick()
+#                     if i == 4:
+#                         exit("Failed to click dialogue option (auto retaliate) via child")
+#     else:
+#         check_auto_retaliate = check_widget("38862882", sprite_id=1150)
+#         if check_auto_retaliate:
+#             for i in range(5):
+#                     if click_widget_child('38862880', sprite_id=None, hidden=None, child_index=8, right_click=False, action=None):
+#                         print('disabled auto retaliate')
+#                         break
+#                     wait_for_next_tick()
+#                     if i == 4:
+#                         exit("Failed to click dialogue option (auto retaliate) via child")
+#     # open inventory
+#     if not click_widget('35913795', sprite_id=1030, hidden=False, right_click=False, action=None, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0)):
+#         exit(f'click widget 35913795 failed, exiting... time: {time.strftime("%H:%M:%S")}')
+
+# # auto_retaliate(enable=False)
+# # auto_retaliate(enable=True)
+
+# 2
+# parent id: 38862848
+# for i in range(5):
+#     if click_widget_child('38862880', sprite_id=None, hidden=None, child_index=8, right_click=False, action=None):
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click dialogue option (auto retaliate) via child")
+
+# # 3
+# # parent id: 38862848
+# for i in range(5):
+#     if click_widget_child('38862880', sprite_id=None, hidden=None, child_index=8, right_click=False, action=None):
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click dialogue option (auto retaliate) via child")
+
+# 4
+# if not click_widget('35913795', sprite_id=1030, hidden=False, right_click=False, action=None, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0)):
+#    exit(f'click widget 35913795 failed, exiting... time: {time.strftime("%H:%M:%S")}')
+
+
+
+
+
+
+# def get_widget_item_quantities(item_names: list[str]) -> dict[str, int]:
+#     """
+#     Return quantities for each item in `item_names` by parsing the current
+#     inventory widget data (falls back to plugin inventory()). Names are
+#     normalized using `clean_item_name` so matching is case-insensitive and
+#     ignores trailing charge/dose suffixes like "(3)".
+
+#     Returns a dict mapping the original requested name to the aggregated
+#     quantity found (0 if not present).
+#     """
+#     if not item_names:
+#         return {}
+
+#     # Map normalized base -> original provided name (first occurrence)
+#     normalized_to_original: dict[str, str] = {}
+#     for orig in item_names:
+#         normalized_to_original[clean_item_name(orig)] = orig
+
+#     # Prepare result with 0 defaults
+#     results: dict[str, int] = {orig: 0 for orig in item_names}
+
+#     inv = get_inventory_data()
+#     if not inv:
+#         return results
+
+#     for entry in inv:
+#         raw_name = entry.get('name', '')
+#         if not raw_name:
+#             continue
+#         base = clean_item_name(raw_name)
+#         qty = int(entry.get('quantity', 1) or 0)
+
+#         if base in normalized_to_original:
+#             orig = normalized_to_original[base]
+#             results[orig] += qty
+
+#     return results
+
+# print(get_widget_item_quantities(['adamant 2h sword', 'adamant battleaxe', 'rune scimitar', 'fire rune', 'nature rune', 'death rune']))
+
+
+# click_widget_by_name('High Level Alchemy', action='Cast')
+
+# for i in range(5):
+#     if click_object("30236", 'Enter', tile=(1436, 3671), radius=20):
+#         wait_till_character_stopped_moving(required_idle_ticks=2)
+#         wait_for_tile_change()
+#         wait_for_next_tick(2)
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click object (chasm, Enter)")
+
+# 1
+# Clicked jewelry: Ring of wealth (5) (action: Grand Exchange) - Equipment tab open -> using equipped
+# for i in range(5):
+#     if click_equipped_ring_of_wealth(action='Grand Exchange'):
+#         wait_for_tile_change()
+#         wait_for_next_tick(2)
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click jewelry: Ring of wealth (5) (Grand Exchange)")
+
+# # 2
+# # parent id: 35913752
+# for i in range(5):
+#     if click_widget_child('35913752', sprite_id=None, hidden=None, child_index=1, right_click=False, action=None):
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click dialogue option (look north) via child")
+
+# # 3
+# for i in range(10):
+#     if click_minimap_tile(3184, 3508, rand_x=2, rand_y=2, target_zoom=2.0):
+#         print("clicked minimap tile (3184, 3508)")
+#         if wait_till_character_stopped_moving():
+#             wait_for_next_tick(2)
+#             break
+#     wait_for_next_tick()
+#     if i == 9:
+#         exit("Failed to click minimap tile (3184, 3508)")
+
+# # 4
+# # Object click: spirit tree -> Travel
+# for i in range(5):
+#     if click_gameobject("1295", 'Travel', tile=(3184, 3509), radius=20):
+#         if wait_till_character_stopped_moving(required_idle_ticks=2):
+#             break
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click object (spirit tree, Travel)")
+
+# # 5
+# # parent id: 62062601
+# for i in range(5):
+#     if click_widget_child('62062601', sprite_id=None, hidden=None, child_index=1, right_click=False, action=None):
+#         if wait_till_character_stopped_moving(required_idle_ticks=2):
+#             break
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click dialogue option (<col=ffffff>2</col>: gnome stronghold) via child")
+
+# # 6
+# for i in range(10):
+#     if click_minimap_tile(2435, 3425, rand_x=2, rand_y=2, target_zoom=2.0):
+#         print("clicked minimap tile (2435, 3425)")
+#         # 7
+#         for i in range(3):
+#             if camera(pitch=453, yaw=14, zoom=423, speed=10):
+#                 break
+#             if i == 2:
+#                 exit("Failed to set camera")
+#         if wait_till_character_stopped_moving(required_idle_ticks=2):
+#             break
+#     wait_for_next_tick()
+#     if i == 9:
+#         exit("Failed to click minimap tile (2435, 3425)")
+
+
+
+# # 8
+# # Object click: cave -> Enter
+# for i in range(5):
+#     if click_gameobject("26709", 'Enter', tile=(2428, 3424), radius=20):
+#         break
+#     wait_for_next_tick()
+#     if i == 4:
+#         exit("Failed to click object (cave, Enter)")
+
+# # 9
+# for i in range(10):
+#     if click_minimap_tile(2463, 9822, rand_x=2, rand_y=2, target_zoom=2.0):
+#         print("clicked minimap tile (2463, 9822)")
+#         if wait_till_character_stopped_moving():
+#             break
+#     wait_for_next_tick()
+#     if i == 9:
+#         exit("Failed to click minimap tile (2463, 9822)")
+
+# # 10
+# for i in range(10):
+#     if click_minimap_tile(2476, 9816, rand_x=2, rand_y=2, target_zoom=2.0):
+#         print("clicked minimap tile (2476, 9816)")
+#         if wait_till_character_stopped_moving():
+#             break
+#     wait_for_next_tick()
+#     if i == 9:
+#         exit("Failed to click minimap tile (2476, 9816)")
+
+# # 11
 # for i in range(3):
-#     if camera(pitch=434, yaw=1710, zoom=352, speed=10):
-#         break
+#     if click_tile(2479, 9819, action="Walk here", tile_radius=20, right_click=False):
+#        if wait_till_character_stopped_moving():
+#             break
 #     if i == 2:
-#         exit("Failed to set camera")
+#         exit("Failed to walk to (2479, 9819)")
 
-# for i in range(5):
-#     if click_gameobject("4483", 'Use', tile=(2444, 3083), radius=20):
-#         wait_till_character_stopped_moving()
-#         wait_for_next_tick(1)
-#         break
-#     wait_for_next_tick()
-#     if i == 4:
-#         exit("Failed to click object (bank chest, Use)")
+        
 
-# print(check_inventory("coins"))
-# print(f"gear: {gear()}\n\ninventory: {inventory()}")
+
+# # RARE_ITEMS = ['Mystic hat (dark)', 'Mystic boots (dark)']
+# # COMMON_ITEMS = ['Death rune']  # Or add more commons if desired
+# # def loot_drops():
+# #     """Loot drops similar to ogre.py style.
+# #     - Triggers special phase only on rares.
+# #     - Always loots commons if rares are present.
+# #     - Returns True if any looting occurred."""
+    
+# #     looted = False
+    
+# #     # Check for rares only (one efficient call if function accepts list)
+    
+# #     if has_ground_items(RARE_ITEMS, tile_radius=20):
+# #         print("Rare drop(s) detected - entering loot phase")
+        
+# #         # Loot all rares
+# #         for item in RARE_ITEMS:
+# #             if loot_all_ground_items(item):
+# #                 looted = True
+        
+# #         # Loot commons while we're here (extra death runes during rare phase)
+# #         for item in COMMON_ITEMS:
+# #             if loot_all_ground_items(item):
+# #                 looted = True
+
+# #     else:
+# #         # Optional quick common looting even without rares (safe during combat)
+# #         for item in COMMON_ITEMS:
+# #             if loot_all_ground_items(item):
+# #                 looted = True
+    
+# #     return looted
+
+
+# # start_time = time.perf_counter()
+# # loot_drops()
+# # end_time = time.perf_counter()
+
+# # elapsed = end_time - start_time
+# # print(f"Function took {elapsed:.4f} seconds")
+
+
+# # toggle_prayer('PROTECT_FROM_MAGIC', activate=True)
+
+# # Object click: broken window -> Climb-through
+
+
+# # for index in range(0, 28):
+# # for i in range(5):
+# #     if click_lowest_glory(action='Rub'):
+# #         break
+# #     wait_for_next_tick()
+# #     if i == 4:
+# #         exit("Failed to click jewelry: Amulet of glory(5) (Rub)")
+
+# # # 2
+# # # parent id: 14352385
+# # for i in range(5):
+# #     if click_widget_child('14352385', sprite_id=None, hidden=None, child_index=1, right_click=False, action=None):
+# #         break
+# #     wait_for_next_tick()
+# #     if i == 4:
+# #         exit("Failed to click dialogue option (edgeville) via child")
+
+# #{'random_clickpoint': {'x': 704, 'y': 272}, 'itemId': 995, 'quantity': 7626, 'spriteId': -1, 'name': '<col=ff9040>Coins</col>', 'bounds': {'x': 696, 'width': 36, 'y': 249, 'height': 32}, 'id': 983043, 'text': '', 'OnOpListener': [487, -2147483645, -2147483643, 100, 0], 'textColor': 0, 'hasOnOpListener': True, 'enabled': False}
+
+
+# # print(check_for_players(max_wait_ticks=1))
+
+# # target_gear = [
+# #     "Amulet of glory",
+# #     "Ancient cloak",
+# #     "Ancient mitre",
+# #     "Antler guard",
+# #     "Brine sabre",
+# #     "Climbing boots",
+# #     "Combat bracelet",
+# #     "Honourable blessing",
+# #     "Monk's robe",
+# #     "Monk's robe top",
+# #     "Ring of wealth"
+# # ]
+
+# # target_inventory = {
+# #     "Amulet of glory": 1,
+# #     "Games necklace": 1,
+# #     "Prayer potion": 5,
+# #     "Ring of dueling": 2,
+# # }
+
+# # bank_castlewars(target_gear=target_gear, target_inventory=target_inventory)
+
+# # for i in range(3):
+# #     if camera(pitch=434, yaw=1710, zoom=352, speed=10):
+# #         break
+# #     if i == 2:
+# #         exit("Failed to set camera")
+
+# # for i in range(5):
+# #     if click_gameobject("4483", 'Use', tile=(2444, 3083), radius=20):
+# #         wait_till_character_stopped_moving()
+# #         wait_for_next_tick(1)
+# #         break
+# #     wait_for_next_tick()
+# #     if i == 4:
+# #         exit("Failed to click object (bank chest, Use)")
+
+# print(check_inventory("slayer helmet"))
+# # print(f"gear: {gear()}\n\ninventory: {inventory()}")
 
 
 
@@ -139,7 +526,7 @@ from modules.banking.bank_castlewars import bank_castlewars
 # 1
 # Inventory item click: Fenkenstrain's castle teleport -> Break
 # for i in range(5):
-#     if click_inventory("fenkenstrain's castle teleport", action='break', hover_only=False):
+    # if click_inventory("fenkenstrain's castle teleport", action='break', hover_only=False):
 #         wait_for_tile_change()
 #         wait_for_next_tick(2)
 #         break

@@ -2,6 +2,7 @@
 # core/mouse_control.py
 from modules.core.mouse_control import move, move_mouse, get_cursor_pos, click_down, click_up, left_click, right_click, middle_click, scroll
 
+
 # Example for move_mouse(x, y)
 # Moves the mouse cursor directly to the specified screen coordinates (e.g., 100, 200)
 move_mouse(100, 200)
@@ -290,7 +291,8 @@ from modules.player_data.check_run import click_run
 
 # Example for click_run(enable=True)
 # Enables run if off, or prints if already enabled. For disable, set enable=False.
-click_run(enable=True)  # Enable run
+
+
 click_run(enable=False)  # Disable run (enable walk)
 
 #---#
@@ -385,7 +387,7 @@ else:
 
 #---#
 # player_data/prayer/toggle_prayer.py
-from modules.player_data.prayer.toggle_prayer import check_prayer, toggle_prayer
+from modules.player_data.prayer.toggle_prayer import check_prayer, toggle_prayer, disable_all_prayer
 
 # Note: This module checks and toggles prayers in Old School RuneScape via a RuneLite plugin.
 # It relies on modules.core.plugin_client (for get_active_prayers), modules.player_data.prayer.check_prayer_book, modules.widgets.widget_data, modules.core.mouse_control, modules.core.window_utils, and keyboard.
@@ -414,6 +416,8 @@ toggle_prayer(['PROTECT_FROM_RANGE', 'STEEL_SKIN'], activate=False)  # Deactivat
 # Tuple
 toggle_prayer(('PROTECT_FROM_MELEE', 'STEEL_SKIN'))
 
+
+disable_all_prayer()  # Disables all prayers
 #---#  
 # utils/hop.py
 from modules.utils.hop import quickhop_widget, logout_widget, extract_world_number, get_hop_worlds, hop_to_random_world, click_scrollbar
@@ -547,7 +551,7 @@ print(f"Looted {count} items.")
 
 #---#  
 # utils/inventory.py
-from modules.utils.inventory import click_inventory, get_inventory_count, check_inventory, drop_inventory, click_inventory_sequence
+from modules.utils.inventory import click_inventory, get_inventory_count, check_inventory, drop_inventory, click_inventory_sequence, is_inventory_full
 
 # Note: This module manages inventory interactions in Old School RuneScape via a RuneLite plugin.
 # It relies on modules.core.plugin_client (inventory), modules.core.mouse_control, modules.core.window_utils, modules.widgets.widget, modules.utils.select_menu_option, modules.utils.wait_for_tick, random, keyboard, time, re.
@@ -589,6 +593,11 @@ drop_inventory("Bones", 'all')
 # Clicks a sequence of items, optionally with action.
 success = click_inventory_sequence(["Knife", "Logs"], "Use", delay=0.5)
 print(f"Sequence success: {success}")
+
+
+
+
+auto_retaliate()
 #---#
 from modules.utils.check_players import check_for_player_in_area, check_for_players
 # AREA_POLYGON = [
@@ -998,7 +1007,7 @@ from modules.core.plugin_client import slayer_task_remaining, varbit_changes, ca
 #---#  
 # scripts/combat/slayer/slayer_master_edgeville.py
 # A script for navigating to the Slayer Master Vannaka in Edgeville Dungeon in Old School RuneScape via RuneLite plugin.
-from scripts.combat.slayer.walk_to.slayer_master_edgeville import full_navigation
+from scripts.combat.slayer.slayer_master_edgeville import full_navigation
 full_navigation()
 
 from modules.utils.monitor_clicks import get_recent_clicks
@@ -1033,3 +1042,25 @@ from modules.utils.check_players import check_for_players
 
 print(check_for_players(max_wait_ticks=1, radius=20))
 # if players in the given radius it returns true
+
+
+from modules.utils.alch import high_alch_items
+# this function checks for available runes and items and alchs the items in the list if possible, it returns a dictionary with the results of each item in the list, for example:
+items_to_alch = ['adamant 2h sword', 'adamant battleaxe', 'rune scimitar']
+high_alch_items(items_to_alch)
+
+from modules.utils.drop_item import drop_item
+# opens inventory and drops the specified item
+drop_item('grimy ranarr weed')
+
+
+from scripts.combat.slayer.utils.slayer_task_utils import auto_retaliate
+# enables or disabled auto retaliate if it's not already enabled or disabled
+auto_retaliate(enable=True)  # enables auto retaliate
+auto_retaliate(enable=False)  # disables auto retaliate
+
+
+
+from modules.utils.grand_exchange import grand_exchange
+print(grand_exchange())
+# returns: {'offers': [{'isCancelled': False, 'spent': 13190, 'isBuyOffer': True, 'isEmpty': False, 'slot': 0, 'itemId': 11980, 'itemName': 'Ring of wealth (5)', 'totalQuantity': 1, 'price': 19551, 'progressPercent': 100.0, 'state': 'BOUGHT', 'quantitySold': 1, 'isComplete': True}, {'isCancelled': False, 'spent': 0, 'isBuyOffer': True, 'isEmpty': False, 'slot': 1, 'itemId': 11980, 'itemName': 'Ring of wealth (5)', 'totalQuantity': 1, 'price': 11350, 'progressPercent': 0.0, 'state': 'BUYING', 'quantitySold': 0, 'isComplete': False}, {'isCancelled': False, 'spent': 13190, 'isBuyOffer': True, 'isEmpty': False, 'slot': 2, 'itemId': 11980, 'itemName': 'Ring of wealth (5)', 'totalQuantity': 1, 'price': 15883, 'progressPercent': 100.0, 'state': 'BOUGHT', 'quantitySold': 1, 'isComplete': True}, {'isCancelled': False, 'spent': 40000, 'isBuyOffer': True, 'isEmpty': False, 'slot': 3, 'itemId': 20254, 'itemName': 'Hosidius banner', 'totalQuantity': 7, 'price': 10557, 'progressPercent': 57.14, 'state': 'BUYING', 'quantitySold': 4, 'isComplete': False}, {'isCancelled': False, 'spent': 0, 'isBuyOffer': False, 'isEmpty': True, 'slot': 4, 'itemId': 0, 'itemName': 'Empty slot', 'totalQuantity': 0, 'price': 0, 'progressPercent': 0.0, 'state': 'EMPTY', 'quantitySold': 0, 'isComplete': False}, {'isCancelled': False, 'spent': 0, 'isBuyOffer': False, 'isEmpty': True, 'slot': 5, 'itemId': 0, 'itemName': 'Empty slot', 'totalQuantity': 0, 'price': 0, 'progressPercent': 0.0, 'state': 'EMPTY', 'quantitySold': 0, 'isComplete': False}, {'isCancelled': False, 'spent': 0, 'isBuyOffer': False, 'isEmpty': True, 'slot': 6, 'itemId': 0, 'itemName': 'Empty slot', 'totalQuantity': 0, 'price': 0, 'progressPercent': 0.0, 'state': 'EMPTY', 'quantitySold': 0, 'isComplete': False}, {'isCancelled': False, 'spent': 0, 'isBuyOffer': False, 'isEmpty': True, 'slot': 7, 'itemId': 0, 'itemName': 'Empty slot', 'totalQuantity': 0, 'price': 0, 'progressPercent': 0.0, 'state': 'EMPTY', 'quantitySold': 0, 'isComplete': False}], 'totalSlots': 8, 'activeOffers': 4}

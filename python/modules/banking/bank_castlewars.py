@@ -7,7 +7,8 @@ from typing import Union
 
 import keyboard
 
-from modules.widgets.widget import get_widget
+from modules.player_data.prayer.toggle_prayer import disable_all_prayer
+from modules.widgets.widget import check_widget_text, click_widget, get_widget
 from modules.core.plugin_client import gear, inventory, interact_options, bank_items
 from modules.core.mouse_control import move, scroll
 from modules.core.window_utils import runelite_window
@@ -140,6 +141,7 @@ def get_inventory_data() -> list[dict]:
 
     print("All widget attempts failed – falling back to plugin inventory() (may misread large stacks)")
     return inventory().get('data', [])
+
 
 
 def has_suitable_in_inventory(base_name: str) -> bool:
@@ -575,35 +577,68 @@ def is_wearing_ring_of_dueling() -> bool:
 
 def teleport_and_open_bank():
     print("Starting Castle Wars bank teleport...")
+    at_castle_wars = False
 
     if is_wearing_ring_of_dueling():
         print("Ring of Dueling equipped – teleporting directly")
         for i in range(5):
             if click_equipped_ring_of_dueling(action='Castle Wars'):
-                wait_for_tile_change()
+                wait_for_tile_change(timeout_ticks=6, max_retries=1)
                 wait_for_next_tick()
+                at_castle_wars = True
                 break
             wait_for_next_tick()
-            if i == 4:
-                sys.exit("Failed to click equipped Ring of Dueling (Castle Wars)")
+            # if i == 4:
+            #     sys.exit("Failed to click equipped Ring of Dueling (Castle Wars)")
     else:
         print("Ring of Dueling not equipped – rubbing lowest charge")
-        for i in range(5):
+        while not at_castle_wars:
             if click_lowest_ring_of_dueling(action='Rub'):
-                break
-            wait_for_next_tick()
-            if i == 4:
-                sys.exit("Failed to click lowest Ring of Dueling (Rub)")
+                print("Selecting Castle Wars from dialogue")
+                for i in range(3):
+                    if click_widget_child('14352385', sprite_id=None, hidden=False, child_index=2, right_click=False, action=None):
+                        if wait_for_tile_change(timeout_ticks=6, max_retries=1):
+                            wait_for_next_tick(2)
+                            at_castle_wars = True
+                            break
+                        wait_for_next_tick()
 
-        print("Selecting Castle Wars from dialogue")
-        for i in range(5):
-            if click_widget_child('14352385', sprite_id=None, hidden=False, child_index=2, right_click=False, action=None):
-                wait_for_tile_change()
-                wait_for_next_tick(2)
+                    wait_for_next_tick()
                 break
             wait_for_next_tick()
-            if i == 4:
-                sys.exit("Failed to click dialogue option (Castle Wars)")
+            # if i == 4:
+            #     sys.exit("Failed to click lowest Ring of Dueling (Rub)")
+
+
+
+    if not at_castle_wars:
+        for i in range(7):
+            click_widget('35913776', rand_x=10, rand_y=10)
+            time.sleep(0.3)
+            click_widget('46333957', rand_x=10, rand_y=10)
+            time.sleep(0.3)
+            click_widget('35913776')
+            time.sleep(0.3)
+            click_widget('4980746', rand_x=50, rand_y=5)
+            time.sleep(0.3)
+
+            # 4980758       
+            for child in range(8):
+                castle_wars = check_widget_text('4980758', child_index=child)
+                if castle_wars and 'castle wars' in castle_wars.lower():
+                    print('clicking castle wars widget')
+                    click_widget_child('4980758', child_index=child)
+                    break
+
+            time.sleep(0.3)
+            click_widget('4980768', rand_x=5, rand_y=5)
+
+            if wait_for_tile_change(timeout_ticks=40):
+                print("Successfully teleported to Castle Wars using widgets.")
+                break
+            print(f'unable to teleport to castle wars, sleeping for 3-4min and retrying {i}')
+            time.sleep(random.randint(3,4)*60)
+
 
     print("Teleported – setting camera and opening bank")
     for i in range(3):
@@ -730,6 +765,7 @@ def bank_castlewars(target_gear: list[str] | None = None, target_inventory: dict
         print("Bank interface already open – proceeding")
     else:
         camera(pitch=434, yaw=1710, zoom=300, speed=10)
+        disable_all_prayer()
         print("Bank not open – attempting to open locally first...")
         opened_locally = False
         for _ in range(2):

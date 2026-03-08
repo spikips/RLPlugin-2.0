@@ -53,7 +53,7 @@ def wait_till_character_stopped_moving(max_ticks: int = 100, required_idle_ticks
         
         if tile_unchanged:
             consecutive_idle += 1
-            if consecutive_idle >= required_idle_ticks:
+            if consecutive_idle >= required_idle_ticks and attempt != 0:
                 print(f"Character stopped moving (tile stable for {required_idle_ticks} ticks)")
                 return True
         else:

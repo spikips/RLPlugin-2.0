@@ -1,7 +1,7 @@
 import time
 import random
 from datetime import datetime, timedelta
-from modules.core.plugin_client import game_state
+from modules.core.plugin_client import game_state, inventory
 from modules.core.mouse_control import move as mouse
 from modules.core.window_utils import runelite_window
 from modules.widgets.widget import click_widget
@@ -22,9 +22,9 @@ def check_login_state_and_login():
             state = game_state().get('data')
             print(f"Main Menu Data: {{'data': '{state}'}}")
             if state == 'LOGGED_IN' and not first_logged_in:
-                time.sleep(0.4)  # Wait 0.4s before click
-                mouse(400 + rl_x, 343 + rl_y, button="left", fast=True, sleep=True)
-                time.sleep(0.6)  # Wait 0.6s after click
+                time.sleep(0.6)  # Wait 0.6s before click
+                mouse(400 + rl_x, 343 + rl_y, button="left")
+                time.sleep(0.65)  # Wait 0.65s after click
                 print("Clicked post-login button after first LOGGED_IN")
                 first_logged_in = True
                 return True  # Exit early after successful login and clicks
@@ -122,6 +122,7 @@ def logout():
         if not logged_out:
             tries += 1
             print(f"Logout not detected, retrying...", {tries})
+
 
 # logout_and_break(69)
 # check_login_state_and_login()

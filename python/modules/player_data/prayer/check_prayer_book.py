@@ -1,4 +1,5 @@
 import random
+import time
 from modules.widgets.widget_data import get_all_widget_data
 from modules.core.mouse_control import move as mouse_click
 from modules.core.window_utils import runelite_window
@@ -42,7 +43,7 @@ def check_prayer_spellbook():
                 # Convert to screen coordinates
                 screen_x, screen_y = runelite_window(random_x, random_y)
                 mouse_click(screen_x, screen_y, button='left', fast=True, sleep=True)
-                
+                time.sleep(0.1)
                 # Verify it opened
                 widgets = get_all_widget_data()
                 if any(w.get("id") == 35913797 and w.get("spriteId") == 1030 for w in widgets):

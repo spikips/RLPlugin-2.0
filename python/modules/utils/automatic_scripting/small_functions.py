@@ -3,7 +3,28 @@ from modules.utils.wait_for_tick import wait_for_next_tick
 from modules.utils.inventory import click_inventory
 from modules.widgets.widget import click_widget_by_name, click_widget
 from modules.core.plugin_client import inventory
+import random
+from datetime import datetime
+from datetime import timedelta
+from modules.utils.logout import logout_and_break
 
+
+def take_humanlike_break_if_needed(script_start_time: float, next_break_minutes: list) -> bool:
+    elapsed_minutes = (time.time() - script_start_time) / 60
+    if elapsed_minutes >= next_break_minutes[0]:
+        sleep_minutes = round(random.triangular(10, 60, 25))
+        wake_up_time = datetime.now() + timedelta(minutes=sleep_minutes)
+        next_cycle_minutes = round(random.triangular(25, 95, 55))
+        print("\n" + "="*65)
+        print("TAKING HUMANLIKE BREAK")
+        print(f"Sleep duration     : {sleep_minutes} minutes")
+        print(f"Will log back in at: {wake_up_time.strftime('%H:%M:%S')}")
+        print(f"Next cycle length  : ~{next_cycle_minutes} minutes")
+        print("="*65 + "\n")
+        logout_and_break(sleep_minutes)
+        next_break_minutes[0] = next_cycle_minutes
+        return True
+    return False
 
 def _click_lowest_tele_jewelry(base_name: str, max_charges: int, action: str = 'rub', retries: int = 5) -> bool:
     """

@@ -5,7 +5,7 @@ xcopy "C:\Users\asd\IdeaProjects\runelite\runelite-client\src\main\java\net\rune
 git add java/
 xcopy "C:\Users\asd\IdeaProjects\runelite\runelite-client\src\main\java\net\runelite\client\plugins\opponentinfo" opponentinfo /s /e /h /i /y
 git add opponentinfo/
-git commit -m "Update: 29.1"
+git commit -m "Update: 10.2"
 git push origin main
 
 
@@ -17,15 +17,4 @@ C:\Users\asd\IdeaProjects\runelite\runelite-api\build\libs
 cd C:\Users\asd\IdeaProjects\runelite
 gradlew.bat :client:shadowJar -x javadoc
 java -Xmx2G -ea -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -jar runelite-client\build\libs\client-1.12.17-SNAPSHOT-shaded.jar --developer-mode --debug
-
-OR 
-
-bat file:
-@echo off
-echo Rebuilding JAR...
-gradlew.bat clean :runelite-client:shadowJar -x javadoc
-echo Launching client...
-java -Xmx2G -ea -jar runelite-client\build\libs\client-1.12.15-SNAPSHOT-shaded.jar --developer-mode --debug -Djavax.sound.sampled.SourceDataLine=com.sun.media.sound.DirectAudioDeviceProvider -Djavax.sound.sampled.Clip=com.sun.media.sound.DirectAudioDeviceProvider
-pause
-
 

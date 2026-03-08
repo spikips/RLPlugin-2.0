@@ -311,7 +311,7 @@ def bank(
                             input_open = False
                             while current_tick - start_tick < max_ticks:
                                 widgets = get_all_widget_data()
-                                if any(w.get("id") == 10616874 for w in widgets):
+                                if any(w.get("id") == 10616876 for w in widgets):
                                     input_open = True
                                     break
                                 while gametick().get('data', 0) <= current_tick:
@@ -336,7 +336,7 @@ def bank(
     return True
 
 def find_items_bank(item_name, amount=None):
-    max_attempts = 5
+    max_attempts = 20
     attempt = 0
     total_scrolls_up = 0
     total_scrolls_down = 0
@@ -399,7 +399,7 @@ def find_items_bank(item_name, amount=None):
                         input_open = False
                         while current_tick - start_tick < max_ticks:
                             widgets = get_all_widget_data()
-                            if any(w.get("id") == 10616874 for w in widgets):
+                            if any(w.get("id") == 10616876 for w in widgets):
                                 input_open = True
                                 break
                             while gametick().get('data', 0) <= current_tick:

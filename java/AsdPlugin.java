@@ -388,7 +388,10 @@ public class AsdPlugin extends Plugin {
                     }
                 }
             }
-        } else {
+        }
+        if (tickCount % 25 == 0) {
+            npcLastAttackTicks.entrySet().removeIf(entry -> tickCount - entry.getValue() > 100);
+        }else {
             reachableUnderAttack = false;
         }
 
@@ -717,23 +720,32 @@ public class AsdPlugin extends Plugin {
         }
     }
 
+
     public Map<String, Object> getAggressiveNpcs(Map<String, Object> params) {
         String npcName = params != null ? (String) params.get("name") : null;
-        boolean found = false;
         Map<String, Object> result = new HashMap<>();
         List<Map<String, Object>> aggressiveNpcs = new ArrayList<>();
 
         Player localPlayer = client.getLocalPlayer();
+        if (localPlayer == null) {
+            result.put("aggressiveNpcs", aggressiveNpcs);
+            return result;
+        }
+
         WorldPoint playerPos = localPlayer.getWorldLocation();
         LocalPoint destLocal = client.getLocalDestinationLocation();
         WorldPoint dest = destLocal != null ? WorldPoint.fromLocal(client, destLocal) : playerPos;
         int playerSpeed = (client.getEnergy() > 0 && client.getVarbitValue(173) == 1) ? 2 : 1;
+
         CollisionData[] collisionMaps = client.getCollisionMaps();
         int plane = client.getPlane();
         CollisionData collisionData = collisionMaps != null ? collisionMaps[plane] : null;
+
         int[][] tempCollisionFlags = null;
         if (collisionData != null) {
             tempCollisionFlags = copyCollisionFlags(collisionData);
+
+            // Block all other NPCs on the temp collision map (same as before)
             for (NPC otherNpc : client.getNpcs()) {
                 if (otherNpc != null && otherNpc.isDead()) continue;
                 NPCComposition otherComp = otherNpc.getComposition();
@@ -743,7 +755,9 @@ public class AsdPlugin extends Plugin {
                 int oy = otherPos.getY() - client.getBaseY();
                 for (int dx = 0; dx < otherSize; dx++) {
                     for (int dy = 0; dy < otherSize; dy++) {
-                        if (ox + dx >= 0 && oy + dy >= 0 && ox + dx < tempCollisionFlags.length && oy + dy < tempCollisionFlags[0].length) {
+                        if (ox + dx >= 0 && oy + dy >= 0 &&
+                                ox + dx < tempCollisionFlags.length &&
+                                oy + dy < tempCollisionFlags[0].length) {
                             tempCollisionFlags[ox + dx][oy + dy] |= BLOCK_MOVEMENT_FULL;
                         }
                     }
@@ -756,79 +770,75 @@ public class AsdPlugin extends Plugin {
             predictedPlayerPos = predictNextPosition(playerPos, dest, playerSpeed, 1, 1, tempCollisionFlags);
         }
 
+        // === Main loop with strong filtering (this fixes the growing list) ===
         for (NPC npc : client.getNpcs()) {
-            if (npc != null && npc.getInteracting() == client.getLocalPlayer()) {
-                String name = npc.getName();
-                String lowerName = (name != null) ? name.toLowerCase() : "";
-                int cooldownTicks = cooldownByName.getOrDefault(lowerName, 4); // Default to 4 if not set
-                int lastAttack = npcLastAttackTicks.getOrDefault(npc.getIndex(), -100);
-                int ticksSince = tickCount - lastAttack;
-                boolean onCooldown = ticksSince < cooldownTicks;
-                int cooldownRemaining = onCooldown ? (cooldownTicks - ticksSince) : 0;
-
-                boolean canReach = false;
-                if (tempCollisionFlags != null) {
-                    WorldPoint npcPos = npc.getWorldLocation();
-                    NPCComposition comp = npc.getComposition();
-                    int size = (comp != null) ? comp.getSize() : 1;
-                    WorldArea npcArea = npc.getWorldArea();
-                    boolean currentlyInRange = npcArea.isInMeleeDistance(localPlayer.getWorldArea());
-
-                    WorldPoint predictedNpcPos;
-                    if (currentlyInRange) {
-                        predictedNpcPos = npcPos;
-                    } else {
-                        predictedNpcPos = predictNextPosition(npcPos, playerPos, 1, size, size, tempCollisionFlags);
-                    }
-
-                    WorldArea predictedNpcArea = new WorldArea(predictedNpcPos.getX(), predictedNpcPos.getY(), size, size, predictedNpcPos.getPlane());
-                    WorldArea predictedPlayerArea = new WorldArea(predictedPlayerPos, 1, 1);
-                    canReach = predictedNpcArea.isInMeleeDistance(predictedPlayerArea);
-                }
-
-                Map<String, Object> npcData = new HashMap<>();
-                npcData.put("name", name);
-                npcData.put("id", npc.getId());
-                npcData.put("health", npc.getHealthRatio());
-                npcData.put("location", npc.getWorldLocation().toString());
-                npcData.put("onCooldown", onCooldown);
-                npcData.put("cooldownRemaining", cooldownRemaining);
-                npcData.put("attackSpeed", cooldownTicks);
-                npcData.put("canReach", canReach);
-                aggressiveNpcs.add(npcData);
-
-                if (canReach) {
-                    log.info("Reachable {} ID: {}, Tile: {}", name, npc.getId(), npc.getWorldLocation().toString());
-                }
-
-                if (npcName != null && name != null && name.equalsIgnoreCase(npcName)) {
-                    found = true;
-                    result.put("aggressive", true);
-                    result.put("name", name);
-                    result.put("id", npc.getId());
-                    result.put("health", npc.getHealthRatio());
-                    result.put("location", npc.getWorldLocation().toString());
-                    result.put("onCooldown", onCooldown);
-                    result.put("cooldownRemaining", cooldownRemaining);
-                    result.put("attackSpeed", cooldownTicks);
-                    result.put("canReach", canReach);
-                    return result;
-                }
+            if (npc == null
+                    || npc.isDead()
+                    || npc.getHealthRatio() == 0
+                    || npc.getInteracting() != localPlayer) {
+                continue;
             }
-        }
 
-        if (npcName != null) {
-            result.put("aggressive", found);
-            if (found) {
-                Map<String, Object> firstMatch = aggressiveNpcs.get(0);
-                result.putAll(firstMatch);
+            // Extra safety: ignore stale far-away NPCs (common with shades)
+            if (npc.getWorldLocation().distanceTo(playerPos) > 25) {
+                continue;
+            }
+
+            String name = npc.getName();
+            String lowerName = (name != null) ? name.toLowerCase() : "";
+
+            int cooldownTicks = cooldownByName.getOrDefault(lowerName, 4);
+            int lastAttack = npcLastAttackTicks.getOrDefault(npc.getIndex(), -100);
+            int ticksSince = tickCount - lastAttack;
+            boolean onCooldown = ticksSince < cooldownTicks && ticksSince >= 0;
+            int cooldownRemaining = onCooldown ? (cooldownTicks - ticksSince) : 0;
+
+            // === Your original canReach calculation (unchanged) ===
+            boolean canReach = false;
+            if (tempCollisionFlags != null) {
+                WorldPoint npcPos = npc.getWorldLocation();
+                NPCComposition comp = npc.getComposition();
+                int size = (comp != null) ? comp.getSize() : 1;
+                WorldArea npcArea = npc.getWorldArea();
+                boolean currentlyInRange = npcArea.isInMeleeDistance(localPlayer.getWorldArea());
+
+                WorldPoint predictedNpcPos;
+                if (currentlyInRange) {
+                    predictedNpcPos = npcPos;
+                } else {
+                    predictedNpcPos = predictNextPosition(npcPos, playerPos, 1, size, size, tempCollisionFlags);
+                }
+
+                WorldArea predictedNpcArea = new WorldArea(predictedNpcPos.getX(), predictedNpcPos.getY(), size, size, predictedNpcPos.getPlane());
+                WorldArea predictedPlayerArea = new WorldArea(predictedPlayerPos, 1, 1);
+
+                canReach = predictedNpcArea.isInMeleeDistance(predictedPlayerArea);
+            }
+
+            Map<String, Object> npcData = new HashMap<>();
+            npcData.put("name", name);
+            npcData.put("id", npc.getId());
+            npcData.put("index", npc.getIndex());           // very useful for debugging
+            npcData.put("health", npc.getHealthRatio());
+            npcData.put("distance", npc.getWorldLocation().distanceTo(playerPos));
+            npcData.put("location", npc.getWorldLocation().toString());
+            npcData.put("onCooldown", onCooldown);
+            npcData.put("cooldownRemaining", cooldownRemaining);
+            npcData.put("attackSpeed", cooldownTicks);
+            npcData.put("canReach", canReach);
+
+            aggressiveNpcs.add(npcData);
+
+            // Single-name lookup mode (your original behaviour)
+            if (npcName != null && name != null && name.equalsIgnoreCase(npcName)) {
+                result.putAll(npcData);
                 result.put("aggressive", true);
+                return result;
             }
-            return result;
-        } else {
-            result.put("aggressiveNpcs", aggressiveNpcs);
-            return result;
         }
+
+        result.put("aggressiveNpcs", aggressiveNpcs);
+        return result;
     }
 
     public void setNpcConfig(Map<String, Object> params) {

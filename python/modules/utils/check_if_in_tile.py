@@ -1,3 +1,4 @@
+from asyncio import wait
 import math
 import random
 import time
@@ -5,6 +6,7 @@ import re
 from typing import Optional, Dict, Any
 from modules.core.plugin_client import player, walkable_tile, interact_options, tile
 from modules.player_data.tile_change import wait_for_tile_change
+from modules.player_data.wait_till_character_stops_moving import wait_till_character_stopped_moving
 from modules.utils.wait_for_tick import wait_for_tick
 from modules.utils.select_menu_option import select_menu_option
 from modules.core.window_utils import runelite_window
@@ -41,7 +43,7 @@ def is_player_idle():
     print(f"Player idle check: Tile unchanged: {current_tile == initial_tile}, Animation: {pl_data['data']['animation']}, Idle: {is_idle}")
     return is_idle
 
-def check_if_in_tile(x, y, plane=0, click=False, force_right_click=False, action="Walk here", tile_radius=1):
+def check_if_in_tile(x, y, plane=0, click=False, force_right_click=False, action="Walk here", tile_radius=10):
     """
     Check if the player is standing on the specific tile.
     
@@ -111,6 +113,7 @@ def check_if_in_tile(x, y, plane=0, click=False, force_right_click=False, action
         # Wait for tile change, short timeout
         print("Waiting for tile change")
         if not wait_for_tile_change(timeout_ticks=1):  # ~0.6 seconds
+            wait_till_character_stopped_moving()
             # print("Tile did not change after click")
             # print("Waiting for player to stop moving before retry")
             # while not is_player_idle():

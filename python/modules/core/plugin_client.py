@@ -634,8 +634,29 @@ class PluginClient:
         """Bulk Varbit query (backward compatible)."""
         params = {str(id): 0 for id in varbit_ids}
         return self.send_request('get_varbits', params)
+        
+    def grand_exchange(self) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve ALL Grand Exchange offers (8 slots) with full details.
+
+        Returns:
+            Optional[Dict[str, Any]]: {
+                'offers': list of dicts (one per slot),
+                'totalSlots': 8,
+                'activeOffers': int
+            }
+            Each offer dict contains:
+                slot, state, itemId, itemName, quantitySold, totalQuantity,
+                price, spent, isBuyOffer, isEmpty, isComplete, isCancelled, progressPercent
+        """
+        return self.send_request('grand_exchange', {})
 
 _default_client = PluginClient(auth_token='jQ8IHav3zA3HuH4')
+
+
+def grand_exchange() -> Optional[Dict[str, Any]]:
+    """Retrieve Grand Exchange offers (convenience wrapper)."""
+    return _default_client.grand_exchange()
 
 def get_var(var_id: int) -> Optional[Dict[str, Any]]:
     return _default_client.get_var(var_id)

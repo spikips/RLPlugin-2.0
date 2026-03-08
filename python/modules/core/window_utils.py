@@ -81,6 +81,8 @@ def runelite_window(rel_x: int, rel_y: int) -> Tuple[int, int]:
     screen_x, screen_y, _, _ = coords
     return (screen_x + rel_x, screen_y + rel_y)
 
+
+# print(get_runelite_window_coords())
 # Focus state
 _focused_runelite_once = False
 

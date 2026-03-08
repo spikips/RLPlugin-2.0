@@ -50,9 +50,9 @@ def click_equipment_item(item_name: str, action: str = None, right_click: bool =
             
             # Click with action or right-click
             if action:
-                success = click_widget(str(widget_id), action=action)
+                success = click_widget(str(widget_id), action=action, rand_x=2, rand_y=15)
             else:
-                success = click_widget(str(widget_id), right_click=right_click)
+                success = click_widget(str(widget_id), right_click=right_click, rand_x=5, rand_y=5)
             
             if success:
                 print(f"Successfully interacted with '{widget_name}' using action '{action}'.")

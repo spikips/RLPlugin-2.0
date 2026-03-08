@@ -85,6 +85,8 @@ public class SocketServer {
     @Inject
     private ClickHandler clickHandler;
 
+    @Inject
+    private GrandExchangeHandler grandExchangeHandler;
 
     private final List<BufferedWriter> subscribedClients = new CopyOnWriteArrayList<>();
 
@@ -257,6 +259,11 @@ public class SocketServer {
                         } else {
                             responseData.setError("Missing 'function' parameter for click handler");
                         }
+                        break;
+                    case "grand_exchange":
+                    case "ge":
+                    case "ge_offers":
+                        responseData.setData(grandExchangeHandler.getOffers());
                         break;
                     default:
                         responseData.setError("Unknown function: " + function);

@@ -1,168 +1,169 @@
-import time
+import sys
 import random
+import time
+import re
 import keyboard
+from collections import Counter
 
-from modules.core.plugin_client import npc, inventory, stats as plugin_stats
-from modules.core.mouse_control import move as mouse
-from modules.core.window_utils import runelite_window
+from modules.core.plugin_client import bank_items, inventory, stats as plugin_stats
 from modules.npc_data.click_npc import click_closest_npc
+from modules.player_data.wait_till_character_stops_moving import wait_till_character_stopped_moving
 from modules.utils.banking import bank
+from modules.utils.wait_for_tick import wait_for_next_tick, wait_for_tick
+from modules.core.window_utils import focus_runelite_window
+from modules.utils.inventory import click_inventory
 from modules.utils.logout import logout_and_break
-from modules.utils.wait_for_tick import wait_for_next_tick
+from modules.widgets.widget import check_widget
 
-def crafting(allow_break=True):
-    """
-    Automate crafting sapphires: withdraw chisel and uncut sapphires, craft them, deposit products,
-    and repeat until no uncut sapphires remain in the bank.
 
-    - Checks if bank is open; if not, opens it via Banker NPC (ID: 1634).
-    - Withdraws 1 chisel and 27 uncut sapphires; exits if either has quantity 0.
-    - Crafts sapphires until none remain in inventory.
-    - Repeats the process.
-    """
-    rl_x, rl_y = runelite_window(0, 0)
-    crafting_level = plugin_stats().get('data', {}).get('Crafting', {}).get('level', 0)
-    print(f"Debug: Initial Crafting level: {crafting_level}")
-    while True:
-        # Check if bank is open
-        if not bank(deposit_inventory=True):
-            print("Bank interface not open, finding Banker NPC")
-            banker_data = npc(id="1634", name="Banker", middle_point=True)
-            if not banker_data or 'data' not in banker_data or not banker_data['data']:
-                print("No Banker NPC (ID: 1634) found, exiting")
-                exit()
-            banker = banker_data['data'][0]
-            middle_point = banker.get('middle_point')
-            if middle_point:
-                x, y = middle_point['x'], middle_point['y']
-                mouse(x + rl_x, y + rl_y, button="left", fast=True, sleep=True)
-                print(f"Clicked Banker at x={x + rl_x}, y={y + rl_y}")
-                for a in range(12):
-                    if bank(withdraw="chisel", deposit_inventory=True, placeholder=True, amount="1", unnoted=True):
-                        if not bank(withdraw="uncut sapphire", placeholder=True, amount="all", unnoted=True):
-                            print("Failed to withdraw uncut sapphires, likely quantity 0, exiting")
-                            exit()
-                        break
-                    elif a == 11:
-                        exit('failed to open bank')
-                    time.sleep(0.1)
+def clean_item_name(name: str) -> str:
+    return re.sub(r'\s*\(\d+\)$', '', name or '').strip().lower()
+
+
+def is_bank_open() -> bool:
+    return len(bank_items().get('data', [])) > 0
+
+
+def close_bank():
+    keyboard.press('esc')
+    time.sleep(random.uniform(0.05, 0.1))
+    keyboard.release('esc')
+    wait_for_next_tick()
+
+
+def get_current_inventory_dict() -> dict:
+    inv = inventory().get('data', [])
+    counter = Counter()
+    for item in inv:
+        raw = item.get('name', '')
+        if raw:
+            base = clean_item_name(raw)
+            counter[base] += item.get('quantity', 1)
+    return dict(counter)
+
+
+def bank_sapphire():
+    focus_runelite_window()
+    target_inventory = {
+        "chisel": 1,
+        "uncut sapphire": "all"
+    }
+    current = get_current_inventory_dict()
+    target_bases = {clean_item_name(k) for k in target_inventory}
+
+    is_perfect = True
+    for k, v in target_inventory.items():
+        base = clean_item_name(k)
+        qty = current.get(base, 0)
+        if isinstance(v, int):
+            if qty < v:
+                is_perfect = False
+                break
+        else:
+            if qty == 0:
+                is_perfect = False
+                break
+    if is_perfect and not any(b not in target_bases for b in current):
+        print("Inventory already perfect for sapphire cutting - skipping bank")
+        if is_bank_open():
+            close_bank()
+        return
+
+    if not is_bank_open():
+        print("Opening bank via closest Banker NPC...")
+        for i in range(10):
+            if not click_closest_npc('banker', option='bank', max_attempts=5):
+                wait_for_next_tick()
             else:
-                print("No middle_point for Banker, exiting")
-                exit()
-
-        # Open inventory
-        keyboard.press_and_release("esc")
-        print("Pressed Esc")
-        time.sleep(random.uniform(0.32, 0.42))
-        keyboard.press_and_release("f1")
-        print("Pressed F1")
-        time.sleep(random.uniform(0.32, 0.42))
-
-        # Crafting loop with retry for inventory detection
-        attempts = 0
-        max_attempts = 3
-        while attempts < max_attempts:
-            # Check for uncut sapphires
-            sapphire_data = inventory(item="uncut sapphire", middle_point=True)
-            if not sapphire_data or 'data' not in sapphire_data or not sapphire_data['data']:
-                print("No uncut sapphires in inventory, retrying detection")
-                time.sleep(0.5)  # Wait for inventory to update
-                attempts += 1
-                if attempts == max_attempts:
-                    print("No uncut sapphires found after retries, proceeding to bank")
+                if wait_till_character_stopped_moving(required_idle_ticks=1):
                     break
-                continue
-            attempts = 0  # Reset on successful detection
+            if i == 9:
+                sys.exit("Failed to click npc (banker)")
+        wait_for_next_tick(1)
 
-            # Get chisel and sapphire coordinates
-            chisel_data = inventory(item="chisel", middle_point=True)
-            if not chisel_data or 'data' not in chisel_data or not chisel_data['data']:
-                print("No chisel in inventory, exiting")
-                exit()
-            chisel = chisel_data['data'][0]
-            chisel_middle = chisel.get('middle_point')
-            if not chisel_middle:
-                print("No middle_point for chisel, exiting")
-                exit()
+    print("Depositing only junk items...")
+    for base in list(current.keys()):
+        if base not in target_bases:
+            print("  -> Depositing all " + base)
+            bank(deposit=base, quantity="all")
+            wait_for_next_tick()
 
-            sapphire = sapphire_data['data'][0]
-            sapphire_middle = sapphire.get('middle_point')
-            if not sapphire_middle:
-                print("No middle_point for uncut sapphire, exiting")
-                exit()
+    print("Topping up missing items...")
+    for name, qty in target_inventory.items():
+        base = clean_item_name(name)
+        curr = get_current_inventory_dict().get(base, 0)
+        if isinstance(qty, int) and curr < qty:
+            need = qty - curr
+            print("  -> Withdrawing " + str(need) + " " + name)
+            bank(withdraw=name, quantity=str(need))
+        elif qty == "all" and curr == 0:
+            print("  -> Withdrawing all " + name)
+            if not bank(withdraw=name, quantity="all"):
+                sys.exit(f"Failed to withdraw {name} from bank")
+        wait_for_next_tick(1)
 
-            while True:
-                # Click chisel then sapphire
-                x, y = chisel_middle['x'], chisel_middle['y']
-                mouse(x + rl_x, y + rl_y, button="left", fast=True, sleep=True)
-                print(f"Clicked chisel at x={x + rl_x}, y={y + rl_y}")
-                time.sleep(random.uniform(0.05, 0.1))
-                x, y = sapphire_middle['x'], sapphire_middle['y']
-                mouse(x + rl_x, y + rl_y, button="left", fast=True, sleep=True)
-                print(f"Clicked uncut sapphire at x={x + rl_x}, y={y + rl_y}")
-                time.sleep(random.uniform(0.05, 0.1))
+    close_bank()
+    print("Banking complete - ready to cut sapphires!")
 
-                # Space press loop
-                for i in range(10):
-                    if i == 9 or random.random() < 0.5:  # 100% on last, 50% otherwise
-                        keyboard.press_and_release("space")
-                        print("Pressed Space")
-                    time.sleep(0.1)
 
-                while True:
-                    # Recheck sapphires to continue or break
-                    sapphire_data = inventory(item="uncut sapphire", middle_point=True)
-                    if not sapphire_data or 'data' not in sapphire_data or not sapphire_data['data']:
-                        print("No uncut sapphires remaining, proceeding to bank")
-                        break
-                    time.sleep(1)
+def cut_sapphires(allow_break=True):
+    focus_runelite_window()
+    time.sleep(2)
 
-                # Check for level up after crafting batch
-                new_crafting_level = plugin_stats().get('data', {}).get('Crafting', {}).get('level', 0)
-                if new_crafting_level != crafting_level:
-                    crafting_level = new_crafting_level
-                    print(f"Debug: Updated Crafting level to {crafting_level}")
+    crafting_level = plugin_stats().get('data', {}).get('Crafting', {}).get('level', 0)
+    print(f"Starting sapphire cutting at level {crafting_level}")
 
-                if allow_break:
-                    # Add sleep timers after every inventory
-                    if random.random() < 0.15:
-                        sleep_time = random.uniform(15, 180)
-                        print(f"Debug: Short AFK sleep for {sleep_time:.1f} seconds")
-                        time.sleep(sleep_time)
-                    if random.random() < 0.01:
-                        break_time = random.uniform(30 * 60, 90 * 60)  # 30-90 minutes in seconds
-                        print(f"Debug: Long break for {break_time / 60:.1f} minutes")
-                        logout_and_break(break_time)
+    while True:
+        current = get_current_inventory_dict()
+        uncut_left = current.get("uncut sapphire", 0)
+        if uncut_left == 0:
+            print("No uncut sapphires left - re-banking...")
+            bank_sapphire()
+            continue
 
-                for i in range(10):
-                    if not click_closest_npc('banker', option='bank', max_attempts=5):
-                        wait_for_next_tick()
-                    else:
-                        wait_for_next_tick()
-                        break
-                    if i == 9:
-                        exit("Failed to click npc (banker)")
+        print(f"Crafting sapphires... ({uncut_left} uncut left)")
 
-                # Deposit sapphires and withdraw more
-                sapphire_deposited = None
-                for _ in range(10):
-                    sapphire_deposited = bank(deposit="sapphire", placeholder=True, amount="all", unnoted=True)
-                    if sapphire_deposited:
-                        print("Successfully deposited sapphires")
-                        break
-                    print("Failed to deposit sapphires, retrying")
-                    time.sleep(0.1)
-                if sapphire_deposited:
-                    if not bank(withdraw="uncut sapphire", placeholder=True, amount="all", unnoted=True):
-                        print("Failed to withdraw uncut sapphires, likely quantity 0, exiting")
-                        exit()
-                else:
-                    print("Failed to deposit sapphires after 10 attempts, exiting")
-                    exit()
+        for i in range(5):
+            if click_inventory('chisel', action='use', hover_only=False):
+                break
+            wait_for_next_tick()
+            if i == 4:
+                sys.exit("Failed to click chisel")
+        for i in range(5):
+            if click_inventory('uncut sapphire', action='use', hover_only=False):
+                break
+            wait_for_next_tick()
+            if i == 4:
+                sys.exit("Failed to click uncut sapphire")
 
-                # Close bank and restart
-                keyboard.press_and_release("esc")
-                print("Pressed Esc")
-                time.sleep(random.uniform(0.62, 0.75))
+        for i in range(5):
+            if check_widget('17694735'):
+                break
+            wait_for_next_tick()
+            if i == 4:
+                exit("Failed to click inventory item (Uncut sapphire, Cut)")
 
-crafting(allow_break=False)
+        keyboard.press_and_release("space")
+        print("Pressed Space - Make All started")
+
+        print("  -> Waiting for batch to finish...")
+        while True:
+            wait_for_next_tick()
+            new_uncut = get_current_inventory_dict().get("uncut sapphire", 0)
+            if new_uncut == 0:
+                print(f"  -> Batch complete! Crafted {uncut_left - new_uncut} sapphires.")
+                break
+
+        if allow_break:
+            if random.random() < 0.13:
+                sleep_time = random.uniform(12, 90)
+                print(f"Short break ({sleep_time:.1f}s)")
+                time.sleep(sleep_time)
+            if random.random() < 0.009:
+                break_time = random.uniform(1800, 5400)
+                print(f"Long break ({break_time/60:.1f} min)")
+                logout_and_break(int(break_time))
+
+
+if __name__ == "__main__":
+    cut_sapphires(allow_break=False)

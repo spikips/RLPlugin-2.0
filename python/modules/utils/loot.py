@@ -170,20 +170,19 @@ def has_ground_items(item_list: List[str], tile_radius: int = 15) -> bool:
     if player_x is None or player_y is None:
         return False
 
-    # Normalize the search list once
-    normalized_list = [normalize_item_name(name) for name in item_list]
+    # Normalize once + use set for O(1) lookup
+    normalized_set = {normalize_item_name(name) for name in item_list}
 
-    # Loop through each item name and query the plugin (efficient for small lists like rare drops)
-    for item_name in item_list:
-        ground_data = pick(player_x, player_y, size=tile_radius, item=item_name)
-        if not ground_data or 'data' not in ground_data:
-            continue
-        items = ground_data['data'].get('items', [])
-        if items:
-            # Double-check normalization on found items (in case plugin filtering is loose)
-            for ground_item in items:
-                ground_name = ground_item.get('name', '')
-                if normalize_item_name(ground_name) in normalized_list:
-                    print(f"Found ground item matching '{item_name}' ({ground_name})")
-                    return True
+    # Fetch ALL ground items in the area ONCE (no item filter)
+    ground_data = pick(player_x, player_y, size=tile_radius)
+    if not ground_data or 'data' not in ground_data:
+        return False
+
+    items = ground_data['data'].get('items', [])
+    for ground_item in items:
+        ground_name = ground_item.get('name', '')
+        if normalize_item_name(ground_name) in normalized_set:
+            print(f"Found ground item matching '{ground_name}'")
+            return True
+
     return False

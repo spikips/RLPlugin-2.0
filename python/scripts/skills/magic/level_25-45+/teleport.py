@@ -1,8 +1,10 @@
 import time, random
-from modules.utils.wait_for_tick import wait_for_tick
+from modules.core.mouse_control import move
+from modules.utils.humanlike_interact import perform_humanlike_interaction
+from modules.utils.wait_for_tick import wait_for_next_tick, wait_for_tick
 from modules.widgets.widget import check_widget, click_widget
-from modules.core.plugin_client import stats, game_state
-from modules.core.window_utils import focus_runelite_window
+from modules.core.plugin_client import gametick, stats, game_state
+from modules.core.window_utils import focus_runelite_window, runelite_window
 from modules.utils.logout import check_login_state_and_login, logout
 
 
@@ -88,13 +90,54 @@ def choose_and_cast_teleport(ensure_tab=True):
                 break
             time.sleep(0.05)
 
-    # perform the click (left-click by default)
-    click_widget(widget)
-    wait_for_tick(4)
+    click_widget(widget, rand_x=2, rand_y=2, clicks=random.randint(1, 6))
+
+    if random.randint(1, 100) <= 5:  # 5% chance
+        print('[TELEPORT] Performing humanlike interaction during wait...')
+        perform_humanlike_interaction(return_to_tab="magic")
+        wait_for_next_tick(2)
+    else:
+        if random.randint(1, 100) <= 20:  # 20% chance
+            wait_tick = 3
+        else:
+            wait_tick = 4
+        wait_for_next_tick(wait_tick)
+
     if random.randint(0, 100) == 0:
-        wait_ticks = random.randint(1, 50)
-        print('Random extra wait for', wait_ticks, 'ticks')
-        wait_for_tick(wait_ticks)
+        wait_ticks = random.randint(2, 50)
+        tick_1 = int(wait_ticks / 2)
+        tick_2 = 2 if random.randint(1, 100) <= 5 else 0
+        tick_3 = random.randint(1, 25)
+        total_ticks = tick_1 + tick_2 + tick_3
+        
+        if random.randint(1, 100) <= 5:  # 5% chance
+            humanlike_interaction = True
+        else:
+            humanlike_interaction = False
+
+        if not humanlike_interaction:
+            move(runelite_window(0, 0)[0] + random.randint(1000, 1500), runelite_window(0, 0)[1] + random.randint(-200, 500), button=None, fast=False, sleep=True)
+
+        # fetch current game tick for absolute finish calculation
+        try:
+            current_tick = gametick()['data']
+        except Exception:
+            current_tick = None
+
+        if current_tick is not None:
+            finish_tick = current_tick + total_ticks
+            print(f'[TELEPORT] Starting wait sequence at tick {current_tick}: {tick_1} + {tick_2} + {tick_3} = {total_ticks} total ticks (will finish at tick {finish_tick})')
+        else:
+            print(f'[TELEPORT] Starting wait sequence: {tick_1} + {tick_2} + {tick_3} = {total_ticks} total ticks (will finish in +{total_ticks} ticks)')
+        
+        wait_for_next_tick(int(wait_ticks / 2))
+        if humanlike_interaction:
+            print('[TELEPORT] Performing humanlike interaction during wait...')
+            perform_humanlike_interaction(return_to_tab="magic")
+            move(runelite_window(0, 0)[0] + random.randint(1000, 1500), runelite_window(0, 0)[1] + random.randint(-200, 500), button=None, fast=False, sleep=True)
+
+
+        wait_for_next_tick(random.randint(1, 25))
     
     return level
 
@@ -110,10 +153,43 @@ def start_teleporting(target_level=None):
     
     print(f'Starting teleport script. Target level: {target_level if target_level else "No limit"}')
     
+    # Logout timer: random interval between 45-90 minutes
+    logout_interval_seconds = random.randint(45 * 60, 90 * 60)
+    next_logout_time = time.time() + logout_interval_seconds
+    print(f'[TIMER] Next scheduled logout in {logout_interval_seconds // 60} minutes at {time.strftime("%H:%M:%S", time.localtime(next_logout_time))}')
+    
     try:
         while True:
+            # Check if it's time for a scheduled logout break
+            if time.time() >= next_logout_time:
+                sleep_minutes = random.randint(15, 20)
+                print(f'[TIMER] Scheduled logout break! Logging out and sleeping for {sleep_minutes} minutes...')
+                try:
+                    logout()
+                except Exception as e:
+                    print(f'[TIMER] Logout failed: {e}')
+                
+                sleep_seconds = sleep_minutes * 60
+                time.sleep(sleep_seconds)
+                print(f'[TIMER] Logout break complete. Coming back online now!')
+                
+                # Attempt to log back in
+                if check_login_state_and_login():
+                    print('[TIMER] Re-login successful.')
+                    time.sleep(2)
+                    focus_runelite_window()
+                else:
+                    print('[TIMER] Re-login failed; will retry in 30s.')
+                    time.sleep(30)
+                    continue
+                
+                # Schedule next logout
+                logout_interval_seconds = random.randint(45 * 60, 90 * 60)
+                next_logout_time = time.time() + logout_interval_seconds
+                print(f'[TIMER] Next scheduled logout in {logout_interval_seconds // 60} minutes at {time.strftime("%H:%M:%S", time.localtime(next_logout_time))}')
+            
             if not check_login_status():
-                # logged out -> wait 45-90 minutes then attempt to login
+                # Unscheduled logout detected -> wait and attempt re-login
                 wait_minutes = random.randint(45, 90)
                 print(f'Logged out detected. Waiting {wait_minutes} minutes before attempting re-login.')
                 time.sleep(wait_minutes * 60)
@@ -138,13 +214,12 @@ def start_teleporting(target_level=None):
                     print('Logout failed:', e)
                 break
 
-            # short randomized pause between casts
-            time.sleep(random.uniform(0.5, 1.5))
     except KeyboardInterrupt:
         print('Script stopped by user.')
 
 # Example usage:
 # start_teleporting(target_level=45)  # Stop at level 45
 # start_teleporting()  # Run indefinitely
+
 if __name__ == '__main__':
     start_teleporting(target_level=75)

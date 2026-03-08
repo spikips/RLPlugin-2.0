@@ -17,6 +17,17 @@ HUMANLIKE_WIDGET_IDS = [
     35913785,  # Equipment tab
 ]
 
+# Mapping of tab names to their widget IDs
+TAB_MAP = {
+    "inventory": 35913802,
+    "combat": 35913792,
+    "stats": 35913793,
+    "quest": 35913794,
+    "prayer": 35913796,
+    "magic": 35913797,
+    "equipment": 35913785,
+}
+
 # The inventory tab we want to click after selecting another tab
 INVENTORY_WIDGET_ID = 35913802
 
@@ -44,7 +55,25 @@ def get_widget_bounds(widget_id: int) -> tuple[int, int, int, int] | None:
     return None
 
 
-def random_tab_click() -> bool:
+def random_tab_click(
+    return_to_tab: str = "inventory",
+    low: float = 1.0,
+    peak: float = 3.0,
+    high: float = 30.0
+) -> bool:
+    """Click a random tab, wait, then return to specified tab.
+    
+    Args:
+        return_to_tab: Which tab to return to. Options: "inventory", "combat",
+                       "stats", "quest", "prayer", "magic", "equipment".
+                       Defaults to "inventory".
+        low: Minimum wait time in seconds (default 1.0).
+        peak: Most common wait time in seconds (peak probability, default 3.0).
+        high: Maximum wait time in seconds (default 30.0, very rare).
+    
+    Returns:
+        True if interaction completed, False if skipped by randomness.
+    """
     if random.random() > 0.2:
         return False
 
@@ -64,29 +93,33 @@ def random_tab_click() -> bool:
     print(f"[HUMANLIKE] Clicking tab {target_id} at ({click_x}, {click_y})")
     move(screen_x, screen_y, button='left', fast=False, sleep=True)
 
-    # === CHANGED: Weighted random wait time (favors short durations) ===
-    # Triangular distribution: peak at ~1–5s, tail to 30s
-    # We use random.triangular(low, mode, high)
-    # - low = 1s
-    # - mode = 3s (peak probability)
-    # - high = 30s (very rare)
-    time_to_sleep = random.triangular(1, 3, 30)  # mode at 3 seconds
+    # === Weighted random wait time (triangular distribution) ===
+    # Defaults: low=1s, peak=3s (peak), high=30s (rare)
+    # Call like: perform_humanlike_interaction(low=1, peak=2, high=10)
+    time_to_sleep = random.triangular(low, peak, high)
 
-    print(f"[HUMANLIKE] Waiting {time_to_sleep:.2f}s before returning to inventory...")
+    # Determine return tab widget ID
+    return_tab_lower = return_to_tab.lower()
+    if return_tab_lower not in TAB_MAP:
+        print(f"[HUMANLIKE] Unknown tab '{return_to_tab}'. Defaulting to inventory.")
+        return_tab_lower = "inventory"
+    
+    return_widget_id = TAB_MAP[return_tab_lower]
+    print(f"[HUMANLIKE] Waiting {time_to_sleep:.2f}s before returning to {return_tab_lower} tab...")
     time.sleep(time_to_sleep)
 
-    inv_bounds = get_widget_bounds(INVENTORY_WIDGET_ID)
-    if not inv_bounds:
-        print("[HUMANLIKE] Inventory tab (35913802) not found.")
+    return_bounds = get_widget_bounds(return_widget_id)
+    if not return_bounds:
+        print(f"[HUMANLIKE] {return_tab_lower.capitalize()} tab ({return_widget_id}) not found.")
         return True
 
-    inv_x, inv_y, inv_w, inv_h = inv_bounds
-    inv_click_x = inv_x + random.randint(5, max(5, inv_w - 5))
-    inv_click_y = inv_y + random.randint(5, max(5, inv_h - 5))
+    return_x, return_y, return_w, return_h = return_bounds
+    return_click_x = return_x + random.randint(5, max(5, return_w - 5))
+    return_click_y = return_y + random.randint(5, max(5, return_h - 5))
 
-    inv_screen_x, inv_screen_y = runelite_window(inv_click_x, inv_click_y)
-    print(f"[HUMANLIKE] Returning to inventory at ({inv_click_x}, {inv_click_y})")
-    move(inv_screen_x, inv_screen_y, button='left', fast=False, sleep=True)
+    return_screen_x, return_screen_y = runelite_window(return_click_x, return_click_y)
+    print(f"[HUMANLIKE] Returning to {return_tab_lower} tab at ({return_click_x}, {return_click_y})")
+    move(return_screen_x, return_screen_y, button='left', fast=False, sleep=True)
 
     return True
 
@@ -124,10 +157,25 @@ def random_right_click_area() -> bool:
     return True
 
 
-def perform_humanlike_interaction() -> None:
+def perform_humanlike_interaction(
+    return_to_tab: str = "inventory",
+    low: float = 1.0,
+    peak: float = 3.0,
+    high: float = 30.0
+) -> None:
+    """Perform a random humanlike interaction.
+    
+    Args:
+        return_to_tab: Which tab to return to during tab interactions.
+                      Options: "inventory", "combat", "stats", "quest", 
+                              "prayer", "magic", "equipment".
+                      Defaults to "inventory".
+        low/peak/high: Control triangular wait (see random_tab_click docs).
+                      Example: perform_humanlike_interaction(low=1, peak=2, high=10)
+    """
     print("[HUMANLIKE] Deciding interaction...")
 
-    if random_tab_click():
+    if random_tab_click(return_to_tab, low, peak, high):
         print("[HUMANLIKE] Tab interaction completed.")
         return
 

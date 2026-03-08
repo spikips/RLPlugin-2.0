@@ -11,7 +11,7 @@ _quick_hop = False
 
 def quickhop_widget():
     global _quick_hop
-    print(_quick_hop)
+    print(_quick_hop, 'quick hop')
     # checks the logout tab
     if not _quick_hop:
         if check_widget('35913779', sprite_id=-1):
@@ -19,9 +19,12 @@ def quickhop_widget():
             # opens the logout tab
             click_widget('35913779', rand_x=10, rand_y=10)
             # opens the hop widget
-            click_widget('11927559')
-            while not check_widget('4522004'):
-                time.sleep(0.1)
+            for _ in range(3):
+                if click_widget('11927559'):
+                    while not check_widget('4522004'):
+                        time.sleep(0.1)
+                    break
+
             _quick_hop = True
             return True
         elif check_widget('11927559'):
@@ -48,54 +51,74 @@ def extract_world_number(text):
         return int(match.group())
     return None
 
-def get_hop_worlds(membership='p2p'):
-    current_world_text = check_widget_text("4521987")
-    print(current_world_text, "current world")
-    current_world = extract_world_number(current_world_text)
-    min_y = 242
-    max_y = 432
-    color = 15790080 if membership == 'p2p' else 14737632
-    sprite_id = 1131 if membership == 'p2p' else 1130
-    widgets = get_all_widget_data()
-    try:
-        parent = next(w for w in widgets if w['id'] == 4522003)
-    except StopIteration:
-        return None
-    children = parent['children']
-    results = []
-    index = 2
-    while index < len(children):
-        name_child = children[index]
-        sprite_index = index - 1
-        text_index = index + 3
-        if sprite_index < 0 or sprite_index >= len(children) or text_index >= len(children):
-            index += 6
-            continue
-        sprite_child = children[sprite_index]
-        text_child = children[text_index]
-        if name_child['textColor'] == color and sprite_child['spriteId'] == sprite_id:
-            text_lower = text_child['text'].lower()
-            # Exclude if text contains "pvp" or "high risk"
-            if "pvp" in text_lower or "high risk" in text_lower or "grid master" in text_lower or "bounty" in text_lower:
+def get_hop_worlds(membership='p2p', max_retries: int = 5):
+    """Return a random world to hop to, with a scrollbar retry failsafe.
+
+    If the world list is empty, the function will attempt to click the
+    scrollbar (via :func:`click_scrollbar`) and try again.  After
+    ``max_retries`` attempts the search gives up and returns ``None``.
+
+    :param membership: membership type for the world list ('p2p' or 'f2p')
+    :param max_retries: how many times to scroll and retry before bailing
+    :returns: chosen world dict or ``None`` if no world could be found
+    """
+    for attempt in range(max_retries):
+        current_world_text = check_widget_text("4521987")
+        print(current_world_text, "current world")
+        current_world = extract_world_number(current_world_text)
+        min_y = 242
+        max_y = 432
+        color = 15790080 if membership == 'p2p' else 14737632
+        sprite_id = 1131 if membership == 'p2p' else 1130
+        widgets = get_all_widget_data()
+        try:
+            parent = next(w for w in widgets if w['id'] == 4522003)
+        except StopIteration:
+            return None
+        children = parent['children']
+        results = []
+        index = 2
+        while index < len(children):
+            name_child = children[index]
+            sprite_index = index - 1
+            text_index = index + 3
+            if sprite_index < 0 or sprite_index >= len(children) or text_index >= len(children):
                 index += 6
                 continue
-            # Extract world number from name text
-            world_num = int(name_child['text']) if name_child['text'].isdigit() else None
-            if world_num != current_world and min_y <= name_child['random_clickpoint']['y'] <= max_y:
-                results.append({
-                    'random_clickpoint': name_child['random_clickpoint'],
-                    'name': name_child['name'],
-                    'text': text_child['text'],
-                    'world': name_child['text']
-                })
-        index += 6
-    if results:
-        chosen = random.choice(results)
-        screen_x, screen_y = runelite_window(chosen['random_clickpoint']['x'], chosen['random_clickpoint']['y'])
-        chosen['screen_x'] = screen_x
-        chosen['screen_y'] = screen_y
-        print(f"Chosen world: {chosen['world']} at screen ({screen_x}, {screen_y})")
-        return chosen
+            sprite_child = children[sprite_index]
+            text_child = children[text_index]
+            if name_child['textColor'] == color and sprite_child['spriteId'] == sprite_id:
+                text_lower = text_child['text'].lower()
+                # Exclude if text contains "pvp" or "high risk"
+                if "pvp" in text_lower or "high risk" in text_lower or "grid master" in text_lower or "bounty" in text_lower:
+                    index += 6
+                    continue
+                # Extract world number from name text
+                world_num = int(name_child['text']) if name_child['text'].isdigit() else None
+                if world_num != current_world and min_y <= name_child['random_clickpoint']['y'] <= max_y:
+                    results.append({
+                        'random_clickpoint': name_child['random_clickpoint'],
+                        'name': name_child['name'],
+                        'text': text_child['text'],
+                        'world': name_child['text']
+                    })
+            index += 6
+        if results:
+            chosen = random.choice(results)
+            screen_x, screen_y = runelite_window(chosen['random_clickpoint']['x'], chosen['random_clickpoint']['y'])
+            chosen['screen_x'] = screen_x
+            chosen['screen_y'] = screen_y
+            print(f"Chosen world: {chosen['world']} at screen ({screen_x}, {screen_y})")
+            return chosen
+
+        # if we got here, there were no results
+        if attempt < max_retries - 1:
+            print(f"get_hop_worlds attempt {attempt+1}/{max_retries} found no worlds, scrolling and retrying")
+            # try to scroll and let the UI update
+            click_scrollbar(membership)
+            time.sleep(0.05)
+        else:
+            print(f"get_hop_worlds exhausted {max_retries} retries without finding a world")
     return None
 
 def hop_to_random_world(membership='p2p'):
@@ -106,9 +129,15 @@ def hop_to_random_world(membership='p2p'):
     else:
         # opens the logout tab
         click_widget('35913779', rand_x=10, rand_y=10)
-        while not get_hop_worlds(membership):
-            time.sleep(0.01)
-    
+        for i in range(10):
+            if get_hop_worlds(membership):
+                break
+            if i == 5:
+                quickhop_widget()
+                while not check_widget('4522004'):
+                    time.sleep(0.05)
+            wait_for_tick()
+                
     max_scroll_attempts = 10
     scroll_attempts = 0
     world = get_hop_worlds(membership)
@@ -131,14 +160,16 @@ def hop_to_random_world(membership='p2p'):
     screen_y = world['screen_y']
     print(f"Hopping to world: {world['world']}")
     focus_runelite_window()
-    move(screen_x, screen_y, button='left', fast=True, sleep=True)
-    wait_for_tick(3)
-    while True:
-        state = game_state()
-        if state['data'] == 'LOGGED_IN':
-            time.sleep(0.1)
-            click_scrollbar(membership)
-            break
+    for _ in range(20):
+        move(screen_x, screen_y, button='left', fast=True, sleep=True)
+        wait_for_tick(3)
+        for _ in range(10):
+            state = game_state()
+            if state['data'] == 'LOGGED_IN':
+                time.sleep(0.1)
+                click_scrollbar(membership)
+                return True
+    return False
 
 def click_scrollbar(membership='p2p', parent_id='4522004', max_attempts=10):
     """
@@ -186,6 +217,11 @@ def click_scrollbar(membership='p2p', parent_id='4522004', max_attempts=10):
     
     print(f"Failed to find a world after {max_attempts} scroll attempts. Forbidden y: {forbidden_y} ± ({lower_tolerance}, {upper_tolerance})")
     return False
+
+def reset_quickhop():
+    """Reset the quickhop state flag."""
+    global _quick_hop
+    _quick_hop = False
 
 # print(runelite_window(0, 0))
 # hop_to_random_world()

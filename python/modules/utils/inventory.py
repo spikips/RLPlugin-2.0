@@ -345,6 +345,48 @@ def click_inventory_sequence(items: List[str], action: Optional[str] = None, del
     
     return success
 
+def check_inventory_space():
+    inv_data = inventory()
+    return(len(inv_data['data']))
+
+
+def is_inventory_full() -> bool:
+    """
+    Returns True if the inventory is completely full (28 occupied slots).
+    Based on how the inventory() plugin works in your framework:
+    - 'data' contains only occupied slots (items with quantity > 0).
+    - Empty slots are not included in the list.
+    - OSRS inventory has exactly 28 slots, so len == 28 means full.
+    """
+    inv_data = inventory()
+    if not inv_data or 'data' not in inv_data:
+        print("Failed to retrieve inventory data")
+        return False  # Or True if you prefer to assume full on error
+    
+    occupied_slots = len(inv_data['data'])
+    print(f"Inventory slots used: {occupied_slots}/28")
+    
+    return occupied_slots == 28
+
+
+def free_inventory_slots() -> int:
+    """
+    Returns the number of free inventory slots (28 minus occupied).
+    Useful for checking if there's room for specific loot.
+    """
+    inv_data = inventory()
+    if not inv_data or 'data' not in inv_data:
+        return 0
+    
+    occupied = len(inv_data['data'])
+    return max(0, 28 - occupied)
+
+
+# print(is_inventory_full())
+# prints something like Inventory slots used: 16/28
+# returns False when not full, True when full
+
+
 # click_inventory_sequence(['short vine', 'short vine'])
 # click_inventory_sequence(['iron axe', 'hammer', 'knife'])
 # click_inventory('wild pie', 'eat')
