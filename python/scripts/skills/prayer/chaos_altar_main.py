@@ -5,7 +5,7 @@ import random
 from modules.utils.inventory import click_inventory, get_inventory_count
 from modules.utils.wait_for_tick import wait_for_tick
 from modules.object_data.game_object import click_gameobject
-from modules.core.plugin_client import players, game_state, pick, player, game_object, interact_options, bank_items, gear, inventory
+from modules.core.plugin_client import players, game_state, pick, player, game_object, interact_options, bank_items, gear, inventory, walkable_tile
 from modules.widgets.widget import click_widget, click_widget_child, check_widget_text
 from modules.core.window_utils import focus_runelite_window, runelite_window
 from modules.utils.check_if_in_area import check_if_in_area
@@ -610,7 +610,6 @@ def navigate_from_lava_maze():
             return True
     return False
 
-
 while True:
     check_prayer_level_and_stop()
     if check_if_in_area(lumbridge_area):
@@ -644,6 +643,30 @@ while True:
                 exit()
         else:
             print("No ring of dueling in inventory, attempting widget teleport to Castle Wars.")
+
+            player_pos = get_player_tile()          # e.g. (3227, 3214)
+            tile_data = walkable_tile(tile_radius=1)
+
+            print("Player at:", player_pos)
+            print(tile_data)
+
+            if tile_data and tile_data.get('data'):
+                # Remove the current player tile (the one that causes the useless click)
+                valid_tiles = [
+                    tile for tile in tile_data['data']
+                    if (tile['x'], tile['y']) != player_pos
+                ]
+                
+                if valid_tiles:
+                    tile_info = valid_tiles[0]          # take the first *other* tile (closest/useful one)
+                    screen_x = tile_info['middle_point']['x']
+                    screen_y = tile_info['middle_point']['y']
+                    
+                    print(f"Walking to tile: ({tile_info['x']}, {tile_info['y']})")
+                    select_menu_option(screen_x, screen_y, "walk here")
+                else:
+                    print("No other walkable tiles found nearby")
+
             for i in range(7):
                 click_widget('35913776', rand_x=10, rand_y=10)
                 wait_for_tick(1)

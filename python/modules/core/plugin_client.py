@@ -488,6 +488,24 @@ class PluginClient:
         """
         return self.send_request('prayers', {})
 
+    def attack_style(self) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve the player's CURRENT ATTACK STYLE with full details.
+        
+        Returns:
+            Optional[Dict[str, Any]]: {
+                'data': {
+                    'style': 'AGGRESSIVE' | 'ACCURATE' | 'RAPID' | 'LONGRANGE' | 
+                             'CASTING' | 'DEFENSIVE_CASTING' | 'OTHER',
+                    'name': 'Aggressive' | 'Accurate' | ... (human readable),
+                    'styleIndex': int,
+                    'weaponCategory': int,
+                    'defensiveCasting': bool
+                }
+            }
+        """
+        return self.send_request('attack_style', {})
+
     def npc_agro(self, name: str = "") -> Optional[Dict[str, Any]]:
         """
         Retrieve data about aggressive NPCs from the plugin server.
@@ -650,9 +668,39 @@ class PluginClient:
                 price, spent, isBuyOffer, isEmpty, isComplete, isCancelled, progressPercent
         """
         return self.send_request('grand_exchange', {})
+    def combat_style(self) -> Optional[Dict[str, Any]]:
+        """Deprecated alias — use attack_style() instead."""
+        return self.attack_style()
 
 _default_client = PluginClient(auth_token='jQ8IHav3zA3HuH4')
 
+# ==================== NEW ATTACK STYLE WRAPPERS ====================
+
+def attack_style() -> Optional[Dict[str, Any]]:
+    """
+    Get current attack style (Accurate, Aggressive, Rapid, Longrange, Casting, Defensive Casting, etc.)
+    Returns the full rich dict or None.
+    """
+    return _default_client.attack_style()
+
+def get_attack_style_name() -> str:
+    """Quick way to get just the readable name (e.g. "Aggressive")."""
+    response = attack_style()
+    if response and 'data' in response and 'name' in response['data']:
+        return response['data']['name']
+    return "Unknown"
+
+def get_attack_style_enum() -> str:
+    """Quick way to get the enum style (e.g. "AGGRESSIVE")."""
+    response = attack_style()
+    if response and 'data' in response and 'style' in response['data']:
+        return response['data']['style']
+    return "OTHER"
+
+# Keep your old combat_style wrapper for backward compatibility
+def combat_style() -> Optional[Dict[str, Any]]:
+    """Old simple combat style (kept for backward compatibility) — calls WeaponHandler."""
+    return _default_client.send_request('combat_style', {})
 
 def grand_exchange() -> Optional[Dict[str, Any]]:
     """Retrieve Grand Exchange offers (convenience wrapper)."""
@@ -738,10 +786,6 @@ def inventory(item: str = "", middle_point: bool = True) -> Optional[Dict[str, A
     """Retrieve inventory item data with a random click point offset."""
     return _default_client.inventory(item, middle_point)
 
-def combat_style() -> Optional[Dict[str, Any]]:
-    """Retrieve current combat style without opening tab (e.g., 'Attack', 'Strength', 'Shared', 'Defence')."""
-    return _default_client.send_request('combat_style', {})
-
 def inventory_random_clickpoint(item: str = "") -> Optional[Dict[str, Any]]:
     """Retrieve inventory item data with a random click point offset from the middle point."""
     return _default_client.inventory_random_clickpoint(item)
@@ -778,7 +822,7 @@ def pick(x: int, y: int, size: int = 0, item: str = "") -> Optional[Dict[str, An
     """Retrieve ground item data for picking up."""
     return _default_client.pick(x, y, size, item)
 
-def  minimap_tiles(tilex: Optional[int] = None, tiley: Optional[int] = None) -> Optional[Dict[str, Any]]:
+def minimap_tiles(tilex: Optional[int] = None, tiley: Optional[int] = None) -> Optional[Dict[str, Any]]:
     """Retrieve minimap tile data."""
     return _default_client.minimap_tiles(tilex, tiley)
 

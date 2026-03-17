@@ -157,7 +157,7 @@ def pickup_closest_ground_item(item_name: str, tile_radius: int = 12) -> bool:
 
     mp = target_item['middle_point']
     screen_x, screen_y = runelite_window(mp['x'], mp['y'])
-    move(screen_x, screen_y, fast=True, sleep=True)
+    move(screen_x, screen_y, fast=False, sleep=False)
     time.sleep(random.uniform(0.15, 0.35))
 
     hover_data = interact_options().get('data', [])
@@ -170,9 +170,9 @@ def pickup_closest_ground_item(item_name: str, tile_radius: int = 12) -> bool:
             can_left_click = True
 
     if can_left_click:
-        move(button='left', fast=True, sleep=True)
+        move(button='left', fast=False, sleep=False)
     else:
-        move(button='right', fast=True, sleep=False)
+        move(button='right', fast=False, sleep=False)
         time.sleep(random.uniform(0.1, 0.25))
         menu_data = interact_options().get('data', [])
         take_entry = None
@@ -185,7 +185,7 @@ def pickup_closest_ground_item(item_name: str, tile_radius: int = 12) -> bool:
         if take_entry:
             menu_mp = take_entry['middle_point']
             mx, my = runelite_window(menu_mp['x'], menu_mp['y'])
-            move(mx + random.randint(-12, 12), my + random.randint(-4, 4), fast=True, button='left', sleep=True)
+            move(mx + random.randint(-12, 12), my + random.randint(-4, 4), fast=False, button='left', sleep=False)
 
     wait_for_next_tick(3)
     return True
@@ -229,7 +229,7 @@ def drink_prayer_potion():
     if first_potion and 'middle_point' in first_potion:
         bounds = first_potion['middle_point']
         screen_x, screen_y = runelite_window(bounds['x'], bounds['y'])
-        move(screen_x, screen_y, button='left', fast=True)
+        move(screen_x, screen_y, button='left', fast=False)
         print(f"Drank {first_potion.get('name', 'Prayer potion')}")
         wait_for_tick(1)
         return True
@@ -251,9 +251,9 @@ def handle_login_screen(sleep=True):
             print(f"At login screen, sleeping {sleep_time / 60:.2f} minutes")
             time.sleep(sleep_time)
         rl_x, rl_y = runelite_window(0, 0)
-        move(391 + rl_x, 303 + rl_y, button="left", fast=True)
+        move(391 + rl_x, 303 + rl_y, button="left", fast=False)
         time.sleep(random.uniform(0.22, 0.3))
-        move(391 + rl_x, 263 + rl_y, button="left", fast=True)
+        move(391 + rl_x, 263 + rl_y, button="left", fast=False)
         time.sleep(1)
         print("Logged back in")
         return

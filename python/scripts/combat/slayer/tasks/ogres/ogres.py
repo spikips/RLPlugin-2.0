@@ -35,7 +35,7 @@ LOOT_ITEMS = [
     "dragon spear", "long bone", "Curved Bone", "snapdragon seed",
     "torstol seed", "ranarr seed", "snape grass seed"
 ]
-LOOT_RADIUS = 10
+LOOT_RADIUS = 12
 
 def main():
     if not focus_runelite_window():
@@ -51,7 +51,6 @@ def main():
         prayer_threshold, cannon_threshold))
 
     print("Ogre cannon task started (prayer only during loot).")
-
     while True:
         if get_slayer_task_remaining() == 0:
             remove_cannon(CANNON_TILE)
@@ -64,6 +63,7 @@ def main():
         new_c = reload_cannon(cannon_threshold, CANNON_TILE)
         if new_c is not None:
             cannon_threshold = new_c
+            wait_for_next_tick(1)
 
         if random.randint(1, 100) <= 1:  # 1% chance to perform humanlike interaction each loop
             perform_humanlike_interaction(low=1, peak=2, high=10)
@@ -95,6 +95,7 @@ def main():
                 print("No rare drops - prayer remains OFF")
 
             wait_for_next_tick(1)
+        wait_for_next_tick(1)
     
 def run():
     main()

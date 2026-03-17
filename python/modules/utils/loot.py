@@ -40,82 +40,69 @@ def can_pick_item(item_name: str) -> bool:
     return occupied_slots < 28 or has_stackable
 
 def pickup_closest_ground_item(item_name: str, tile_radius: int = 10) -> bool:
-    """
-    Generalized function to pick up the closest ground item matching the given name.
-    """
-    from modules.core.window_utils import runelite_window  # Lazy import - only when needed
+    from modules.core.window_utils import runelite_window
 
-    normalized_search = normalize_item_name(item_name)
-
+    normalized = normalize_item_name(item_name)
     p_data = player(location=True)
     if not p_data or 'data' not in p_data:
         return False
     loc = p_data['data'].get('location', {})
-    player_x, player_y = loc.get('x'), loc.get('y')
-    if player_x is None or player_y is None:
+    px, py = loc.get('x'), loc.get('y')
+    if px is None or py is None:
         return False
 
-    ground_data = pick(player_x, player_y, size=tile_radius, item=item_name)
-    if not ground_data or 'data' not in ground_data or not ground_data['data'].get('items'):
+    ground_data = pick(px, py, size=tile_radius, item=item_name)
+    items = ground_data.get('data', {}).get('items', []) if ground_data else []
+    if not items:
         return False
 
-    items = ground_data['data']['items']
-
-    def dist(item_dict):
-        tx = item_dict.get('tile', {}).get('x', 0)
-        ty = item_dict.get('tile', {}).get('y', 0)
-        return abs(tx - player_x) + abs(ty - player_y)
-
-    items.sort(key=dist)
-    target_item = items[0]
+    # sort by Manhattan distance
+    items.sort(key=lambda i: abs(i['tile']['x'] - px) + abs(i['tile']['y'] - py))
+    target = items[0]
 
     if not can_pick_item(item_name):
         return False
 
-    current_qty = 0
-    inv_data = inventory()
-    if inv_data and 'data' in inv_data:
-        for inv_item in inv_data['data']:
-            if normalize_item_name(inv_item.get('name', '')) == normalized_search:
-                current_qty = inv_item.get('quantity', 0)
-                break
-
     print(f"Attempting to pick up closest {item_name}")
 
-    mp = target_item['middle_point']
-    screen_x, screen_y = runelite_window(mp['x'], mp['y'])
-    move(screen_x, screen_y, fast=True, sleep=True)
+    # === mouse move + click logic (with safety) ===
+    mp = target.get('middle_point')
+    if not mp:
+        return False
+    sx, sy = runelite_window(mp['x'], mp['y'])
+    move(sx, sy, fast=True, sleep=True)
     time.sleep(random.uniform(0.15, 0.35))
 
-    hover_data = interact_options().get('data', [])
-    can_left_click = False
-    if hover_data:
-        top = hover_data[0]
-        option = top.get('option', '').lower()
-        target_name = clean_target_name(top.get('target', ''))
-        if option.startswith('take') and normalized_search in normalize_item_name(target_name):
-            can_left_click = True
+    # hover check
+    hover = interact_options().get('data', [])
+    can_left = False
+    if hover:
+        top = hover[0]
+        opt = top.get('option', '').lower()
+        tgt = clean_target_name(top.get('target', ''))
+        if opt.startswith('take') and normalize_item_name(tgt) == normalized:
+            can_left = True
 
-    if can_left_click:
+    if can_left:
         move(button='left', fast=True, sleep=True)
     else:
         move(button='right', fast=True, sleep=False)
         time.sleep(random.uniform(0.1, 0.25))
-        menu_data = interact_options().get('data', [])
-        take_entry = None
-        for entry in menu_data:
-            option = entry.get('option', '').lower()
-            target_name = clean_target_name(entry.get('target', ''))
-            if option.startswith('take') and normalized_search in normalize_item_name(target_name):
-                take_entry = entry
+        menu = interact_options().get('data', [])
+        for entry in menu:
+            if (entry.get('option', '').lower().startswith('take') and
+                normalize_item_name(clean_target_name(entry.get('target', ''))) == normalized):
+                mx, my = runelite_window(entry['middle_point']['x'], entry['middle_point']['y'])
+                move(mx + random.randint(-12, 12), my + random.randint(-4, 4),
+                     fast=True, button='left', sleep=True)
                 break
-        if take_entry:
-            menu_mp = take_entry['middle_point']
-            mx, my = runelite_window(menu_mp['x'], menu_mp['y'])
-            move(mx + random.randint(-12, 12), my + random.randint(-4, 4), fast=True, button='left', sleep=True)
+        else:
+            return False  # no take option found
 
     wait_for_next_tick(3)
-    return True
+
+    # === NEW: verify it actually disappeared ===
+    return not has_ground_items([item_name], tile_radius=3)
 
 def loot_all_ground_items(item_name: str, tile_radius: int = 10, delay_range: tuple = (0.2, 0.5)) -> int:
     """
@@ -186,3 +173,6 @@ def has_ground_items(item_list: List[str], tile_radius: int = 15) -> bool:
             return True
 
     return False
+
+
+# loot_all_ground_items()

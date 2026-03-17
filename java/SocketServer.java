@@ -88,6 +88,9 @@ public class SocketServer {
     @Inject
     private GrandExchangeHandler grandExchangeHandler;
 
+    @Inject
+    private AttackStyleHandler attackStyleHandler;
+
     private final List<BufferedWriter> subscribedClients = new CopyOnWriteArrayList<>();
 
     public void setCustomOpponentInfoPlugin(CustomOpponentInfoPlugin customOpponentInfoPlugin) {
@@ -264,6 +267,9 @@ public class SocketServer {
                     case "ge":
                     case "ge_offers":
                         responseData.setData(grandExchangeHandler.getOffers());
+                        break;
+                    case "attack_style":
+                        responseData.setData(attackStyleHandler.getCurrentAttackStyle());  // ← new rich attack style
                         break;
                     default:
                         responseData.setError("Unknown function: " + function);

@@ -62,13 +62,6 @@ def walk_to_crocodiles():
             exit("Failed to click equipped amulet of glory (Al Kharid)")
 
     # 2
-    for i in range(2):
-        if click_object("1511", 'open', tile=(3292, 3167), radius=20):
-            wait_till_character_stopped_moving()
-            break
-        wait_for_next_tick()
-
-    # 3
     for i in range(5):
         if click_widget_child('35913752', sprite_id=None, hidden=False, child_index=1, right_click=False, action=None):
             break
@@ -76,12 +69,19 @@ def walk_to_crocodiles():
         if i == 4:
             exit("Failed to click dialogue option (look north) via child")
 
-    # 4
+    # 3
     for i in range(3):
         if camera(pitch=319, yaw=0, zoom=306, speed=10):
             break
         if i == 2:
             exit("Failed to set camera")
+
+    # 4
+    for i in range(2):
+        if click_object("1511", 'open', tile=(3292, 3167), radius=20):
+            wait_till_character_stopped_moving()
+            break
+        wait_for_next_tick()
 
     # 5
     if not click_minimap_tile(3276, 3148, rand_x=2, rand_y=2, target_zoom=2.0):

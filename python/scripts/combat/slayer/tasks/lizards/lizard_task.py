@@ -75,7 +75,7 @@ def drink_prayer_potion():
         if name.startswith('Prayer potion('):
             mp = inv_item['middle_point']
             sx, sy = runelite_window(mp['x'], mp['y'])
-            move(sx, sy, fast=True, sleep=True, button='left')
+            move(sx, sy, fast=False, sleep=False, button='left')
             print(f"Drank {name}")
             wait_for_tick(1)
             return True
@@ -125,7 +125,7 @@ def use_ice_cooler_on_target(target_data: dict):
             if 'ice cooler' in name:
                 mp = item['middle_point']
                 sx, sy = runelite_window(mp['x'], mp['y'])
-                move(sx, sy, fast=True, sleep=True, button='left')
+                move(sx, sy, fast=False, sleep=False, button='left')
                 print(f"Clicked Ice Cooler: {item.get('name')}")
                 cooler_found = True
                 break
@@ -149,7 +149,7 @@ def use_ice_cooler_on_target(target_data: dict):
         else:
             print("Menu selection failed - fallback direct click")
             sx, sy = runelite_window(mp['x'], mp['y'])
-            move(sx, sy, fast=True, sleep=True, button='left')
+            move(sx, sy, fast=False, sleep=False, button='left')
             wait_for_tick(1)
             return True
 
@@ -163,7 +163,7 @@ def click_target_by_index(target_index: int):
         if current.get('index') == target_index and 'middle_point' in current:
             mp = current['middle_point']
             sx, sy = runelite_window(mp['x'], mp['y'])
-            move(sx, sy, fast=True, sleep=True, button='left')
+            move(sx, sy, fast=False, sleep=False, button='left')
             print(f"Re-clicked original target (index {target_index})")
             wait_for_tick(2)
             return True
@@ -178,9 +178,9 @@ def handle_login_screen(sleep=True):
             print(f"At login screen, sleeping {sleep_time / 60:.2f} minutes")
             time.sleep(sleep_time)
         rl_x, rl_y = runelite_window(0, 0)
-        move(391 + rl_x, 303 + rl_y, fast=True, sleep=True, button="left")
+        move(391 + rl_x, 303 + rl_y, fast=False, sleep=False, button="left")
         time.sleep(random.uniform(0.22, 0.3))
-        move(391 + rl_x, 263 + rl_y, fast=True, sleep=True, button="left")
+        move(391 + rl_x, 263 + rl_y, fast=False, sleep=False, button="left")
         time.sleep(1)
         print("Logged back in")
         return

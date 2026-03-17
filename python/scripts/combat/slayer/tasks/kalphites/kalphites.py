@@ -57,7 +57,7 @@ def drink_antidote():
                 mp = item.get('middle_point')
                 if mp:
                     sx, sy = runelite_window(mp['x'], mp['y'])
-                    move(sx, sy, fast=True, sleep=True, button='left')
+                    move(sx, sy, fast=False, sleep=False, button='left')
                     print("Drank {}".format(target))
                     wait_for_tick(1)
                     return True

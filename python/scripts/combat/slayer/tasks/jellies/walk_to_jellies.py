@@ -42,7 +42,7 @@ def go_to_bank():
     target_inventory = {
     "Amulet of glory": 1,
     "Games necklace": 1,
-    "Prayer potion": 7,
+    "Prayer potion": 8,
     "Ring of dueling": 2,
     "Coins": 20,
     }

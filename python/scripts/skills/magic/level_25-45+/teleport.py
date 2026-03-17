@@ -30,13 +30,13 @@ def magic_spell_widget_for_level(level):
     if level is None:
         return None
     if 25 <= level <= 30:
-        return '14286871'
+        return '14286872'
     if 31 <= level <= 36:
-        return '14286874'
+        return '14286875'
     if 37 <= level <= 44:
-        return '14286877'
+        return '14286878'
     if level >= 45:
-        return '14286882'
+        return '14286883'
     return None
 
 

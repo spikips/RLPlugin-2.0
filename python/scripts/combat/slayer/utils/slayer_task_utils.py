@@ -169,7 +169,7 @@ def drink_prayer_potion() -> bool:
             mp = item.get('middle_point')
             if mp:
                 sx, sy = runelite_window(mp['x'], mp['y'])
-                move(sx, sy, fast=True, sleep=True, button='left')
+                move(sx, sy, fast=False, sleep=False, button='left')
                 print(f"Drank {name}")
                 wait_for_next_tick(1)
                 return True

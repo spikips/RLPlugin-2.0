@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any
 import re
 
 
-def select_menu_option(x: int, y: int, action: str, hover_only: bool = False) -> Optional[Dict[str, Any]]:
+def select_menu_option(x: int, y: int, action: str, hover_only: bool = False, fast: bool = False) -> Optional[Dict[str, Any]]:
     """
     Hovers over a given location, checks for an action in the context menu, and optionally clicks.
     Matches both exact 'option' or combined 'option' and 'target' (e.g., 'Climb' or 'Climb ladder').
@@ -28,7 +28,7 @@ def select_menu_option(x: int, y: int, action: str, hover_only: bool = False) ->
     screen_y = rl_y + y
     
     # Hover to load interaction options
-    move(screen_x, screen_y, fast=True, sleep=True)
+    move(screen_x, screen_y, fast=fast, sleep=True)
     time.sleep(random.uniform(0.03, 0.05))
     
     # Get available interaction options
