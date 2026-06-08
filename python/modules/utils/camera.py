@@ -103,9 +103,36 @@ def camera(pitch, yaw, zoom, speed=10):
         print("Not logged in")
         return False
 
-    scroll_to_zoom(380, speed=speed)
+    # ←←← NEW: Check current state FIRST (before touching anything)
+    cam = player(camera=True)['data']['camera']
+    curr_p = cam['pitch']
+    curr_y = cam['yaw']
+    curr_z = cam['zoom']
 
-    print("=== Starting pitch/yaw adjustment ===")
+    p_diff = pitch - curr_p
+    y_diff = yaw - curr_y
+    if y_diff > 1024: y_diff -= 2048
+    elif y_diff < -1024: y_diff += 2048
+
+    p_close = abs(p_diff) <= 48
+    y_close = abs(y_diff) <= 48
+    z_close = abs(curr_z - zoom) <= 75
+
+    # If everything is already perfect → do absolutely nothing
+    if p_close and y_close and z_close:
+        print("Camera already at target (pitch, yaw, zoom). Skipping.")
+        return True
+
+    # Only zoom needs changing → just do the zoom (fast & clean)
+    if p_close and y_close:
+        print("Pitch & Yaw already correct. Only adjusting zoom.")
+        return scroll_to_zoom(zoom, speed=speed)
+
+    # Pitch or Yaw needs work → do the original full procedure
+    print("=== Pitch/Yaw needs adjustment. Starting full camera fix ===")
+
+    scroll_to_zoom(380, speed=speed)          # still required for accurate dragging
+
     center_x = get_rl_bounds()[0] + 382
     center_y = get_rl_bounds()[1] + 251
     move(center_x, center_y, fast=True, sleep=True)
@@ -122,7 +149,7 @@ def camera(pitch, yaw, zoom, speed=10):
         elif y_diff < -1024: y_diff += 2048
 
         if abs(p_diff) <= 48 and abs(y_diff) <= 48:
-            print("Camera reached target after " + str(attempt) + " attempts")
+            print(f"Camera reached target after {attempt} attempts")
             break
 
         mult = 1.08 if attempt <= 3 else max(0.55, 0.92 - (attempt * 0.04))
@@ -137,7 +164,7 @@ def camera(pitch, yaw, zoom, speed=10):
         if 0 < abs(y_px) < 15: y_px = 15 * (1 if y_px > 0 else -1)
         if 0 < abs(p_px) < 15: p_px = 15 * (1 if p_px > 0 else -1)
 
-        print("Attempt " + str(attempt) + ": dragging yaw_px=" + str(-y_px) + " pitch_px=" + str(p_px))
+        print(f"Attempt {attempt}: dragging yaw_px={-y_px} pitch_px={p_px}")
         drag_camera(-y_px, p_px, speed=0.068 + random.random()*0.028)
 
         time.sleep(0.07)
@@ -146,6 +173,7 @@ def camera(pitch, yaw, zoom, speed=10):
             print("Recovery drag...")
             drag_camera(-y_diff * 0.4, p_diff * 0.4, speed=0.11)
 
+    # Final zoom to target
     final_success = scroll_to_zoom(zoom, speed=speed)
     
     print("Camera function completed.")

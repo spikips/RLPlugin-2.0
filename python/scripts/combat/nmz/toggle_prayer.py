@@ -1,7 +1,7 @@
 import time
 import keyboard
 from modules.core.plugin_client import get_active_prayers 
-from check_prayer_book import check_prayer_spellbook 
+from scripts.combat.nmz.check_prayer_book import check_prayer_spellbook 
 from modules.widgets.widget_data import get_all_widget_data 
 from modules.core.mouse_control import move 
 from modules.core.window_utils import runelite_window 
@@ -83,7 +83,7 @@ def toggle_prayer(prayer_name: str, activate: bool = True):
                 canvas_x = bounds['x'] + bounds['width'] // 2
                 canvas_y = bounds['y'] + bounds['height'] // 2
                 screen_x, screen_y = runelite_window(canvas_x, canvas_y)
-                move(screen_x, screen_y, button='left', fast=True)
+                move(screen_x, screen_y, button='left')
                 time.sleep(0.1)  # Delay for toggle
                 # print(f"Toggled {prayer_name} to {'active' if activate else 'inactive'}.")
                 keyboard.press_and_release("f1")

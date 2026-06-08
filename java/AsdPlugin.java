@@ -88,6 +88,9 @@ public class AsdPlugin extends Plugin {
     private PlayerOverlay playerOverlay;
 
     @Inject
+    private ProjectileGfxOverlay projectileGfxOverlay;
+
+    @Inject
     private CannonHandler cannonHandler;
 
     @Inject
@@ -148,6 +151,7 @@ public class AsdPlugin extends Plugin {
         cooldownByName.clear();
         overlayManager.add(minimapHoverOverlay);
         overlayManager.add(playerOverlay);
+        overlayManager.add(projectileGfxOverlay);
         eventBus.register(cannonHandler);
         eventBus.register(clickHandler);
     }
@@ -178,6 +182,7 @@ public class AsdPlugin extends Plugin {
         cooldownByName.clear();
         overlayManager.remove(minimapHoverOverlay);
         overlayManager.remove(playerOverlay);
+        overlayManager.remove(projectileGfxOverlay);
         eventBus.unregister(cannonHandler);
         eventBus.unregister(clickHandler);
     }

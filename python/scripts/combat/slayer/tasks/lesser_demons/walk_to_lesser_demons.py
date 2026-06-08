@@ -1,6 +1,7 @@
 import time
 from modules.object_data.game_object import click_gameobject
 from modules.object_data.object import click_object
+from modules.player_data.ensure_correct_attack_style import ensure_correct_combat_style
 from modules.player_data.prayer.toggle_prayer import toggle_prayer
 from modules.player_data.tile_change import wait_for_tile_change, wait_until_at_tile
 from modules.player_data.wait_till_character_stops_moving import wait_till_character_stopped_moving
@@ -35,7 +36,7 @@ def go_to_bank():
     }
 
     bank_castlewars(target_gear=target_gear, target_inventory=target_inventory)
-
+    ensure_correct_combat_style()
 
 def walk_to_lesser_demons():
     """Walk to the lesser_demons location."""

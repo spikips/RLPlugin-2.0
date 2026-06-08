@@ -193,27 +193,35 @@ public class SocketServer {
                     case "pick":
                         responseData.setData(entityHandler.handle(function, params));
                         break;
+
+                    // === NEW FUNCTIONS ===
                     case "gameObject":
-                    case "tile":
-                    case "walkable_tile":
-                    case "findArea":
+                    case "projectiles":
+                    case "graphics_objects":
+                    case "gfx":
                         responseData.setData(worldHandler.handle(function, params));
                         break;
-                    case "local_object":
-                        responseData.setData(mainOverlay.findLocalObjects(params));
+
+                    case "tile":
+                    case "walkable_tile":
+                    case "minimapTiles":
+                        responseData.setData(worldHandler.handle(function, params));
                         break;
+
                     case "gametick":
                     case "zoom":
                     case "mainMenu":
                     case "gameState":
                         responseData.setData(gameStateHandler.handle(function, params));
                         break;
+
                     case "inventory":
                     case "bankItems":
                     case "clickWidget":
                     case "interactOptions":
                         responseData.setData(interfaceHandler.handle(function, params));
                         break;
+
                     case "combat_style":
                         responseData.setData(weaponHandler.getCurrentCombatInfo());
                         break;
@@ -221,6 +229,7 @@ public class SocketServer {
                         responseData.setData(prayerHandler.getActivePrayers());
                         break;
                     case "varbits":
+                    case "get_varbits":
                         responseData.setData(getVarbits.getVarbitValues(params));
                         break;
                     case "npc_agro":
@@ -247,13 +256,10 @@ public class SocketServer {
                         responseData.setData(cannonHandler.getCannonData());
                         break;
                     case "varbit_changes":
-                        responseData.setData(plugin.getVariableChanges()); // Change from getVarbitChanges()
+                        responseData.setData(plugin.getVariableChanges());
                         break;
                     case "slayer_task_remaining":
                         responseData.setData(getSlayerTaskRemaining());
-                        break;
-                    case "get_varbits":
-                        responseData.setData(getVarbits.getVarbitValues(params));
                         break;
                     case "click":
                         if (params.containsKey("function")) {
@@ -269,11 +275,11 @@ public class SocketServer {
                         responseData.setData(grandExchangeHandler.getOffers());
                         break;
                     case "attack_style":
-                        responseData.setData(attackStyleHandler.getCurrentAttackStyle());  // ← new rich attack style
+                        responseData.setData(attackStyleHandler.getCurrentAttackStyle());
                         break;
+
                     default:
                         responseData.setError("Unknown function: " + function);
-
                 }
                 resultHolder[0] = gson.toJson(responseData);
                 log.info("Response data: {}", resultHolder[0]);

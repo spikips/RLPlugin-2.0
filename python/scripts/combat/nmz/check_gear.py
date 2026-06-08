@@ -2,81 +2,101 @@ from modules.core.plugin_client import gear, stats, inventory
 import json
 import os
 
-def get_required_gear(level, style):
-    """Return the required gear list based on the player's level and style (range or magic)."""
-    # Load config.json
+
+def get_required_gear(attack_level, defence_level, style, prayer_fallback=False):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     json_path = os.path.join(script_dir, 'config.json')
     try:
         with open(json_path, 'r') as f:
             config = json.load(f)
             gear_data = config.get('gear', {}).get(style, {})
-    except FileNotFoundError:
-        print(f"{json_path} not found.")
-        return None
-    except json.JSONDecodeError:
-        print("Invalid JSON in config.json.")
+    except Exception:
         return None
 
-    for level_range, gear_list in gear_data.items():
-        try:
-            min_level, max_level = map(int, level_range.split('-'))
-            if min_level <= level <= max_level:
-                return gear_list
-        except ValueError:
-            print(f"Invalid level range format: {level_range}")
-            continue
-    return None  # If no gear set is defined for the level
+    if style == 'melee':
+        full_gear = []
 
-def check_gear():
-    """
-    Check if the player is wearing the required gear based on their level and style.
-    Performs case-insensitive comparison for gear names.
-    Returns a tuple: (message, missing_items, inventory_items).
-    - message: String indicating the gear check result.
-    - missing_items: List of gear items not equipped.
-    - inventory_items: Dictionary mapping gear items to their inventory coordinates (x, y) if present.
-    """
-    # Load config for style
+        if prayer_fallback:
+            # === PRAYER FALLBACK MODE → Force Monk's prayer gear ===
+            prayer_armour = ["holy sandals", "Monk's robe", "Monk's robe top"]
+            full_gear.extend(prayer_armour)
+            print("Prayer Fallback Mode → forcing Monk's robe prayer bonus gear")
+        else:
+            # Normal defence-based armour
+            defence_ranges = gear_data.get('defence_based', {})
+            for level_range, items in defence_ranges.items():
+                try:
+                    min_l, max_l = map(int, level_range.split('-'))
+                    if min_l <= defence_level <= max_l:
+                        full_gear.extend(items)
+                        break
+                except ValueError:
+                    continue
+
+        # Common items (always included)
+        full_gear.extend(gear_data.get('common', []))
+
+        # Weapon based on Attack level (unchanged)
+        weapon_ranges = gear_data.get('weapons', {})
+        for level_range, items in weapon_ranges.items():
+            try:
+                min_l, max_l = map(int, level_range.split('-'))
+                if min_l <= attack_level <= max_l:
+                    full_gear.extend(items)
+                    break
+            except ValueError:
+                continue
+
+        return full_gear
+
+    else:
+        # Range / Magic unchanged
+        for level_range, gear_list in gear_data.items():
+            try:
+                min_level, max_level = map(int, level_range.split('-'))
+                if min_level <= attack_level <= max_level:
+                    return gear_list
+            except ValueError:
+                continue
+    return None
+
+
+def check_gear(prayer_fallback=False):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     json_path = os.path.join(script_dir, 'config.json')
     try:
         with open(json_path, 'r') as f:
             config = json.load(f)
             style = config.get('style', 'range')
-    except FileNotFoundError:
-        print(f"{json_path} not found.")
+    except Exception:
         return "Config not found.", [], {}
-    except json.JSONDecodeError:
-        print("Invalid JSON in config.json.")
-        return "Invalid config.", [], {}
 
-    # Get player's relevant level
     player_stats = stats()['data']
-    if style == 'range':
-        level = player_stats['Ranged']['level']
+
+    if style == 'melee':
+        attack_level = player_stats.get('Attack', {}).get('level', 0)
+        defence_level = player_stats.get('Defence', {}).get('level', 0)
+        level_type = f"Attack {attack_level} / Defence {defence_level} (Prayer Fallback: {prayer_fallback})"
+        required_gear = get_required_gear(attack_level, defence_level, style, prayer_fallback=prayer_fallback)
+    elif style == 'range':
+        level = player_stats.get('Ranged', {}).get('level', 0)
         level_type = 'Ranged'
+        required_gear = get_required_gear(level, None, style)
     elif style == 'magic':
-        level = player_stats['Magic']['level']
+        level = player_stats.get('Magic', {}).get('level', 0)
         level_type = 'Magic'
+        required_gear = get_required_gear(level, None, style)
     else:
         return f"Invalid style: {style}.", [], {}
-    
-    # Get the required gear for the player's level and style
-    required_gear = get_required_gear(level, style)
-    
+
     if not required_gear:
-        return f"No gear requirements defined for {level_type} level {level}.", [], {}
-    
-    # Get current gear data
+        return f"No gear requirements defined for {level_type}.", [], {}
+
     gear_data = gear()['data']
-    # Convert gear_data keys to lowercase for case-insensitive comparison
     gear_data_lower = [item.lower() for item in gear_data]
-    
-    # Check each required item (case-insensitive)
+
     missing_items = [item for item in required_gear if item.lower() not in gear_data_lower]
-    
-    # Get inventory data to find coordinates of gear items
+
     inventory_data = inventory(middle_point=True)['data']
     inventory_items = {}
     for item in required_gear:
@@ -84,20 +104,15 @@ def check_gear():
             if inv_item.get('name', '').lower() == item.lower() and 'middle_point' in inv_item:
                 inventory_items[item] = (inv_item['middle_point']['x'], inv_item['middle_point']['y'])
                 break
-    
+
     if not missing_items:
-        return f"All required gear items for {level_type} level {level} are equipped.", [], inventory_items
+        return f"All required gear items for {level_type} are equipped.", [], inventory_items
     else:
-        return (
-            f"Missing gear items for {level_type} level {level}: {', '.join(missing_items)}",
-            missing_items,
-            inventory_items
-        )
+        return f"Missing gear items for {level_type}: {', '.join(missing_items)}", missing_items, inventory_items
+    
 
 if __name__ == "__main__":
     message, missing, inv_items = check_gear()
     print(message)
     if missing:
         print(f"Missing items: {missing}")
-    if inv_items:
-        print(f"Inventory items with coordinates: {inv_items}")

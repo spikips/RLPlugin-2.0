@@ -1,5 +1,6 @@
 import time, re, random, math
 from modules.core.plugin_client import player, minimap_tiles, walkable_tile, gear, players, game_state, pick, gametick, npc
+from modules.player_data.ensure_correct_attack_style import ensure_correct_combat_style
 from modules.utils.click_minimap_tile import click_minimap_tile
 from modules.player_data.tile_change import wait_for_tile_change, wait_until_at_tile
 from modules.utils.wait_for_tick import wait_for_tick, wait_for_next_tick
@@ -44,7 +45,7 @@ def go_to_bank():
     }
 
     bank_castlewars(target_gear=target_gear, target_inventory=target_inventory)
-
+    ensure_correct_combat_style()
 
 def walk_to_kalphites():
     """Walk to the kalphites location."""

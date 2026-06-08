@@ -179,7 +179,8 @@ class PluginClient:
         return self.send_request('chat', {})
 
     def npc(self, id: str = "", name: str = "", tile: bool = True, middle_point: bool = True,
-            animation: bool = True, size: bool = True, in_combat: Optional[bool] = None) -> Optional[Dict[str, Any]]:
+            animation: bool = True, size: bool = True, health: bool = True,
+            in_combat: Optional[bool] = None) -> Optional[Dict[str, Any]]:
         """
         Retrieve NPC data from the plugin server.
 
@@ -190,6 +191,7 @@ class PluginClient:
             middle_point (bool): Include NPC screen middle point.
             animation (bool): Include NPC animation.
             size (bool): Include NPC size.
+            health (bool): Include healthRatio and healthScale for the NPC.
             in_combat (Optional[bool]): Filter by combat status.
 
         Returns:
@@ -202,6 +204,7 @@ class PluginClient:
             'middle_point': middle_point,
             'animation': animation,
             'size': size,
+            'health': health,
             'in_combat': in_combat
         }
         return self.send_request('npc', params)
@@ -262,20 +265,14 @@ class PluginClient:
 
         return {'data': modified_data}
 
-    def game_object(self, object: str = "", tile: bool = True, tile_radius: int = 6,
-                    middle_point: bool = True) -> Optional[Dict[str, Any]]:
+    def game_object(self, object: str = "", tile: bool = True, tile_radius: int = 20,
+                    radius: int = None, middle_point: bool = True) -> Optional[Dict[str, Any]]:
         """
-        Retrieve game object data from the plugin server.
-
-        Args:
-            object (str): Filter by object name or ID.
-            tile (bool): Include object tile location.
-            tile_radius (int): Radius to search for objects.
-            middle_point (bool): Include object screen middle point.
-
-        Returns:
-            Optional[Dict[str, Any]]: Game object data or None if request fails.
+        Retrieve game object data. Now supports 'radius' parameter (alias for tile_radius).
+        Default radius = 20 to match new config.
         """
+        if radius is not None:
+            tile_radius = radius
         params = {
             'object': object,
             'tile': tile,
@@ -283,6 +280,49 @@ class PluginClient:
             'middle_point': middle_point
         }
         return self.send_request('gameObject', params)
+
+    def projectiles(self, id: str = "", radius: int = 35, middle_point: bool = True) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve active projectiles within a radius around the player.
+        Prints tile + useful info.
+        """
+        params = {
+            'id': id,
+            'radius': radius,
+            'middle_point': middle_point
+        }
+        data = self.send_request('projectiles', params)
+        # if data and isinstance(data, dict) and 'data' in data and data['data']:
+        #     for p in data['data']:
+        #         tile = p.get('tile', {})
+        #         print(f"   • ID: {p.get('id')} | Tile: ({tile.get('x')}, {tile.get('y')}, plane {tile.get('plane')}) "
+        #               f"| Remaining: {p.get('remainingCycles')} cycles | Height: {p.get('height')}")
+        #         if p.get('targetName'):
+        #             print(f"     → Target: {p.get('targetName')} ({p.get('targetType')})")
+        return data
+
+    def graphics_objects(self, id: str = "", radius: int = 20, middle_point: bool = True) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve GraphicsObjects (GFX) within a radius around the player.
+        Prints tile + useful info.
+        """
+        params = {
+            'id': id,
+            'radius': radius,
+            'middle_point': middle_point
+        }
+        data = self.send_request('graphics_objects', params)
+        # if data and isinstance(data, dict) and 'data' in data and data['data']:
+        #     print(f"📍 Found {len(data['data'])} graphics objects:")
+        #     for g in data['data']:
+        #         tile = g.get('tile', {})
+        #         print(f"   • ID: {g.get('id')} | Tile: ({tile.get('x')}, {tile.get('y')}, plane {tile.get('plane')})")
+        return data
+
+    def gfx(self, id: str = "", radius: int = 20, middle_point: bool = True) -> Optional[Dict[str, Any]]:
+        """Alias for graphics_objects()"""
+        return self.graphics_objects(id, radius, middle_point)
+    
 
     def tile(self, tile_x: int, tile_y: int, tile_radius: int = 6,
              middle_point: bool = True) -> Optional[Dict[str, Any]]:
@@ -778,9 +818,10 @@ def chat() -> Optional[Dict[str, Any]]:
     return _default_client.chat()
 
 def npc(id: str = "", name: str = "", tile: bool = True, middle_point: bool = True,
-        animation: bool = True, size: bool = True, in_combat: Optional[bool] = None) -> Optional[Dict[str, Any]]:
+        animation: bool = True, size: bool = True, health: bool = True,
+        in_combat: Optional[bool] = None) -> Optional[Dict[str, Any]]:
     """Retrieve NPC data."""
-    return _default_client.npc(id, name, tile, middle_point, animation, size, in_combat)
+    return _default_client.npc(id, name, tile, middle_point, animation, size, health, in_combat)
 
 def inventory(item: str = "", middle_point: bool = True) -> Optional[Dict[str, Any]]:
     """Retrieve inventory item data with a random click point offset."""
@@ -790,10 +831,18 @@ def inventory_random_clickpoint(item: str = "") -> Optional[Dict[str, Any]]:
     """Retrieve inventory item data with a random click point offset from the middle point."""
     return _default_client.inventory_random_clickpoint(item)
 
-def game_object(object: str = "", tile: bool = True, tile_radius: int = 6,
-                middle_point: bool = True) -> Optional[Dict[str, Any]]:
-    """Retrieve game object data."""
-    return _default_client.game_object(object, tile, tile_radius, middle_point)
+def game_object(object: str = "", tile: bool = True, tile_radius: int = 20,
+                radius: int = None, middle_point: bool = True) -> Optional[Dict[str, Any]]:
+    return _default_client.game_object(object, tile, tile_radius, radius, middle_point)
+
+def projectiles(id: str = "", radius: int = 35, middle_point: bool = True) -> Optional[Dict[str, Any]]:
+    return _default_client.projectiles(id, radius, middle_point)
+
+def graphics_objects(id: str = "", radius: int = 20, middle_point: bool = True) -> Optional[Dict[str, Any]]:
+    return _default_client.graphics_objects(id, radius, middle_point)
+
+def gfx(id: str = "", radius: int = 20, middle_point: bool = True) -> Optional[Dict[str, Any]]:
+    return _default_client.gfx(id, radius, middle_point)
 
 def player(location: bool = True, health: bool = True, prayer: bool = True, run: bool = True,
            weight: bool = True, animation: bool = True, camera: bool = True) -> Optional[Dict[str, Any]]:

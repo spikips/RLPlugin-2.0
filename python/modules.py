@@ -959,6 +959,8 @@ click_widget_by_name("Monk's robe top", action="remove", exact_match=True)
 #---#  
 # core/plugin_client.py
 from modules.core.plugin_client import slayer_task_remaining, varbit_changes, cannon_data, target_npc, fetch_object, players, varbit, quest, stats, gear, chat, npc, inventory, combat_style, inventory_random_clickpoint, game_object, player, tile, walkable_tile, gametick, interact_options, pick, main_menu, bank_items, game_state, get_varbits, get_active_prayers, npc_agro, minimap_tile_point
+## npc(name="hueycoatl tail (broken)", tile=True)
+## {'data': [{'size:5, 'healthratio': -1, 'healthscale': -1, 'name': 'hueycoatl tail (broken)'. 'tile': {'plane': 0, 'y': 4549, 'x': 11890}, 'id': 14015, 'middle_point': {'y': 254, 'x': 178}, 'animation': 11720}]}
 
 # print(slayer_task_remaining()) returns: 35yyyyyyyyyyyyyyyy
 # print(varbit_changes()) returns: {'data': [{'new': 0, 'old': 399, 'tick': 1028, 'varbit': 12391}, {'new': 21, 'old': 20, 'tick': 1028, 'varbit': 12392}, {'new': 409124, 'old': 409123, 'tick': 1028, 'varbit': -1}]}

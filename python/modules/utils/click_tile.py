@@ -17,7 +17,7 @@ from modules.utils.select_menu_option import select_menu_option
 import time
 import random
 
-def click_tile(x: int, y: int, plane: int = 0, action: str = "Walk here", tile_radius: int = 20, right_click: bool = False) -> bool:
+def click_tile(x: int, y: int, plane: int = 0, action: str = "Walk here", tile_radius: int = 20, right_click: bool = False, fast: bool = False) -> bool:
     """
     Clicks on the specified tile using main-screen click if possible.
     - tile_radius now strictly controls the search radius around the target for visible/on-screen walkable tiles.
@@ -93,7 +93,7 @@ def click_tile(x: int, y: int, plane: int = 0, action: str = "Walk here", tile_r
 
     # Hover to load options
     print(f"Hovering to x: {screen_x}, y: {screen_y}")
-    move(screen_x, screen_y, fast=True, sleep=True)
+    move(screen_x, screen_y, fast=fast, sleep=fast)
     time.sleep(random.uniform(0.05, 0.12))
 
     options = interact_options().get('data', [])
@@ -121,14 +121,14 @@ def click_tile(x: int, y: int, plane: int = 0, action: str = "Walk here", tile_r
     is_default = (first_opt['option'].lower() == action_normalized or first_combined == action_normalized)
 
     if is_default and not right_click:
-        move(screen_x, screen_y, button='left', fast=True, sleep=True)
+        move(screen_x, screen_y, button='left', fast=fast, sleep=fast)
         print(f"Left-clicked tile ({selected_tile['x']}, {selected_tile['y']}) for default '{action}'")
     else:
-        move(screen_x, screen_y, button='right', fast=True, sleep=True)
+        move(screen_x, screen_y, button='right', fast=fast, sleep=fast)
         time.sleep(random.uniform(0.05, 0.1))
         opt_x = rl_x + matched_option['middle_point']['x']
         opt_y = rl_y + matched_option['middle_point']['y']
-        move(opt_x, opt_y, button='left', fast=True, sleep=True)
+        move(opt_x, opt_y, button='left', fast=fast, sleep=fast)
         print(f"Right-clicked and selected '{action}' on tile ({selected_tile['x']}, {selected_tile['y']})")
 
     return True

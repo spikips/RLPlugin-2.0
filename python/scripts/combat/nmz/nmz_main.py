@@ -1,4 +1,4 @@
-# nmz_main.py – FINAL: ONE FILE, ZERO LAG, PERFECT FLICKS FOREVER
+# nmz_main.py – FINAL: Buys full set when possible, otherwise Prayer Fallback
 import asyncio
 import time
 import gc
@@ -10,6 +10,7 @@ import os
 
 from check_area_start_and_open_bank import open_bank
 from check_gear import check_gear
+from modules.player_data.ensure_correct_attack_style import ensure_correct_combat_style
 from nmz_bank import nmz_bank
 from modules.utils.click_minimap_tile import click_minimap_tile
 from modules.utils.camera import camera
@@ -17,11 +18,11 @@ from nmz_dream import enter_dream
 from check_nmz_chat_options import check_nmz_chat_options
 from modules.player_data.tile_change import wait_for_tile_change
 from modules.utils.wait_for_tick import wait_for_tick
-from modules.object_data.game_object import click_gameobject
+from modules.object_data.game_object import click_gameobject, get_game_objects
 from vial_ui import boss_config
 from modules.widgets.widget import check_widget
 from modules.utils.logout import logout_and_break
-from scripts.combat.nmz.nmz_inside import nmz_inside  # ← Your perfect nmz_inside.py
+from scripts.combat.nmz.nmz_inside import nmz_inside
 from modules.core.window_utils import focus_runelite_window
 from modules.utils.logout import check_login_state_and_login
 from buy_potions import main as buy_potions_main
@@ -31,7 +32,10 @@ from modules.utils.check_if_in_area import check_if_in_area
 from modules.core.plugin_client import player, tile
 from modules.weapon_data.combat_style import combat_style
 from modules.player_data.check_run import click_run
+from potions import get_total_doses
 
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 json_path = os.path.join(script_dir, 'config.json')
@@ -53,25 +57,17 @@ def sleeptimer():
     return sleep_minutes
 
 
-def get_total_doses(potion_base: str) -> int:
-    total = 0
-    for dose in range(1, 5):
-        name = f"{potion_base} ({dose})"
-        exists, count, _ = check_inventory(name)
-        total += count * dose
-    return total
-
-
-def has_required_inventory():
-    gear_message, missing_items, _ = check_gear()
+def has_required_inventory(need_prayer_potions=False):
+    # Pass prayer fallback flag to check_gear so it forces Monk's robes when needed
+    gear_message, missing_items, _ = check_gear(prayer_fallback=need_prayer_potions)
     if missing_items:
         print("Gear check failed, proceeding to bank.")
         return False
 
     try:
         with open(json_path, 'r') as f:
-            config = json.load(f)
-            inventory_items_config = config.get('inventory_items', {}).get(style, [])
+            cfg = json.load(f)
+            inventory_items_config = cfg.get('inventory_items', {}).get(style, [])
     except Exception:
         return False
 
@@ -107,7 +103,7 @@ def main():
     print("=== Starting NMZ Setup Session ===")
     
     focus_runelite_window()
-    time.sleep(1.5)
+    time.sleep(0.5)
     check_login_state_and_login()
 
     data = player(location=True)
@@ -117,32 +113,84 @@ def main():
             print("Already inside NMZ dream — skipping setup")
             return True
 
-    nmz_outside = check_if_in_area([
-        "2600,3119,0", "2600,3083,0", "2629,3083,0", "2629,3119,0",
-        "2611,3127,0", "2600,3120,0"
+    # nmz_inside = check_if_in_area([
+    #     "2600,3119,0", "2600,3083,0", "2629,3083,0", "2629,3119,0",
+    #     "2611,3127,0", "2600,3120,0"
+    # ], click=False)
+    nmz_inside = check_if_in_area(["2592,3139,0", "2624,3139,0", "2642,3128,0", "2635,3109,0", "2630,3086,0", "2606,3087,0", "2586,3115,0", "2592,3138,0"
     ], click=False)
 
-    if not nmz_outside:
+    if not nmz_inside:
         print("Not outside NMZ, aborting.")
         return False
-
+    
     click_run()
+    ensure_correct_combat_style()
 
-    skipped_bank = has_required_inventory()
-    if not skipped_bank:
-        if open_bank():
-            nmz_bank()
-        else:
-            print("Failed to open bank.")
-            return False
-
-    in_position = check_if_in_area(["2600,3119,0", "2600,3112,0", "2612,3112,0", "2612,3124,0", "2604,3120,0", "2601,3119,0"], click=False)
-    if not (skipped_bank and in_position):
+    # Failsafe: If rewards chest not visible, move closer
+    if not get_game_objects('26273'):
+        print("Rewards chest not visible, moving closer...")
         click_minimap_tile(2608, 3114, 2, 2, target_zoom=2)
         while wait_for_tile_change(timeout_ticks=2):
             pass
 
-    camera(pitch=356, yaw=230, zoom=272)
+    # === STORAGE CHECK + BUY + SMART FALLBACK ===
+    print("Checking Rewards Chest (points + stored doses)...")
+    buy_result = buy_potions_main(perform_buy=True)
+
+    stored_abs = buy_result.get('stored_abs', 0)
+    stored_ovl = buy_result.get('stored_ovl', 0)
+    points = buy_result.get('points', 0)
+
+    current_abs = get_total_doses("absorption")
+    current_ovl = get_total_doses("overload")
+
+    # TOTAL AVAILABLE = inventory + chest storage
+    total_abs = current_abs + stored_abs
+    total_ovl = current_ovl + stored_ovl
+
+    needed_abs = max(0, 80 - total_abs)
+    needed_ovl = max(0, 28 - total_ovl)
+    total_cost = needed_abs * 1000 + needed_ovl * 1500
+
+    print(f"Storage -> Abs: {stored_abs} | Ovl: {stored_ovl} | Points: {points}")
+    print(f"Inventory -> Abs: {current_abs} | Ovl: {current_ovl}")
+    print(f"Total available -> Abs: {total_abs} | Ovl: {total_ovl}")
+    print(f"Still needed -> Abs: {needed_abs} | Ovl: {needed_ovl}")
+    print(f"Total cost for full set: {total_cost} points")
+
+    # === FINAL CLEAN FALLBACK LOGIC ===
+    has_full_set = (total_abs >= 80 and total_ovl >= 28)
+    can_afford_remaining = (points >= total_cost) and (needed_abs > 0 or needed_ovl > 0)
+
+    if has_full_set or can_afford_remaining:
+        need_prayer_potions = False
+        if has_full_set:
+            print("FULL POTION MODE → already have full set in storage/inventory")
+        else:
+            print("FULL POTION MODE → can afford to buy remaining potions")
+    else:
+        print("Not enough points + missing potions → Forcing PRAYER FALLBACK MODE")
+        need_prayer_potions = True
+
+    # Bank step (force it if prayer fallback)
+    skipped_bank = has_required_inventory(need_prayer_potions=need_prayer_potions)
+    if not skipped_bank or need_prayer_potions:
+        if open_bank():
+            nmz_bank(withdraw_prayer_potions=need_prayer_potions)
+        else:
+            print("Failed to open bank.")
+            return False
+
+
+    in_position = check_if_in_area(["2600,3119,0", "2600,3112,0", "2612,3112,0", "2612,3124,0", "2604,3120,0", "2601,3119,0"], click=False)
+    # in_position = check_if_in_area(["2592,3139,0", "2624,3139,0", "2642,3128,0", "2635,3109,0", "2630,3086,0", "2606,3087,0", "2586,3115,0", "2592,3138,0"], click=False)
+    if not in_position:
+        click_minimap_tile(2608, 3114, 2, 2, target_zoom=2)
+        while wait_for_tile_change(timeout_ticks=2):
+            pass
+
+    camera(pitch=456, yaw=174, zoom=356)
     if combat_style_mode is not None:
         combat_style(combat_style_mode)
 
@@ -151,17 +199,12 @@ def main():
 
     wait_for_tick(1)
 
-    current_overload = get_total_doses("overload")
-    current_absorption = get_total_doses("absorption")
-    if current_overload < 72 or current_absorption < 28:
-        print(f"Low potions: Ovl={current_overload}, Abs={current_absorption} -> buying more")
-        buy_result = buy_potions_main()
-        current_overload = get_total_doses("overload")
-        current_absorption = get_total_doses("absorption")
-        has_any = (current_overload > 0) or (current_absorption > 0)
-        has_stored = (buy_result.get('stored_abs', 0) > 0) or (buy_result.get('stored_ovl', 0) > 0)
-        if has_any or has_stored:
-            withdraw_potions_main(stored_abs=buy_result.get('stored_abs'), stored_ovl=buy_result.get('stored_ovl'))
+    # === BARREL WITHDRAW ONLY IF WE ARE IN FULL POTION MODE ===
+    if need_prayer_potions:
+        print("Prayer Fallback Mode - skipping barrel withdrawal (using Prayer potions + rock cake)")
+    else:
+        print("Withdrawing potions from barrels...")
+        withdraw_potions_main(stored_abs=stored_abs, stored_ovl=stored_ovl)
 
     click_gameobject('26291', 'Drink', (2605, 3117), 5)
 
@@ -200,11 +243,10 @@ if __name__ == "__main__":
             time.sleep(10)
             continue
 
-        print("Setup complete — starting FRESH nmz_inside (perfect flicks guaranteed)")
+        print("Setup complete — starting FRESH nmz_inside")
 
-        # FULL FRESH RESTART OF nmz_inside — THIS IS THE KEY
         try:
-            asyncio.run(nmz_inside())  # ← Brand new event loop, zero drift
+            asyncio.run(nmz_inside())
         except Exception as e:
             print(f"nmz_inside crashed: {e}")
 
@@ -212,7 +254,6 @@ if __name__ == "__main__":
         print("Session ended — taking break...")
         logout_and_break(sleeptimer())
 
-        # Clean up memory
         gc.collect()
         time.sleep(3)
 

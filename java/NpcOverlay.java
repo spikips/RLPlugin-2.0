@@ -3,6 +3,7 @@ package net.runelite.client.plugins.asd;
 import net.runelite.api.Client;
 import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
+import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
@@ -31,6 +32,11 @@ public class NpcOverlay extends Overlay {
         if (!config.npcHighlightEnabled()) {
             return null;
         }
+
+        Player localPlayer = client.getLocalPlayer();
+        if (localPlayer == null) return null;
+
+        WorldPoint playerLoc = localPlayer.getWorldLocation();
 
         List<NPC> npcs = client.getNpcs();
 
@@ -63,7 +69,14 @@ public class NpcOverlay extends Overlay {
                 }
             }
 
-            if (config.showNPCInfo() && matchesFilter) {
+            if (!matchesFilter) continue;
+
+            // Respect new npcRadius config
+            if (npc.getWorldLocation().distanceTo(playerLoc) > config.npcRadius()) {
+                continue;
+            }
+
+            if (config.showNPCInfo()) {
                 String text = String.format("%s (ID: %d)", composition.getName(), npcId);
 
                 WorldPoint npcWorldPoint = npc.getWorldLocation();

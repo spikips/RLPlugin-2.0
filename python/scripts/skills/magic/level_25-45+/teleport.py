@@ -30,13 +30,13 @@ def magic_spell_widget_for_level(level):
     if level is None:
         return None
     if 25 <= level <= 30:
-        return '14286872'
+        return '14286874'
     if 31 <= level <= 36:
-        return '14286875'
+        return '14286877'
     if 37 <= level <= 44:
-        return '14286878'
+        return '14286880'
     if level >= 45:
-        return '14286883'
+        return '14286885'
     return None
 
 
@@ -222,4 +222,4 @@ def start_teleporting(target_level=None):
 # start_teleporting()  # Run indefinitely
 
 if __name__ == '__main__':
-    start_teleporting(target_level=75)
+    start_teleporting(target_level=55)

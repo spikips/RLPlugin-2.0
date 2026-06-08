@@ -4,7 +4,7 @@ from modules.utils.wait_for_tick import wait_for_tick
 from modules.core.plugin_client import player
 from modules.utils.wait_for_tick import wait_for_tick
 
-def wait_till_character_stopped_moving(max_ticks: int = 100, required_idle_ticks: int = 1):
+def wait_till_character_stopped_moving(max_ticks: int = 100, required_idle_ticks: int = 1, quiet: bool = False):
     """
     Wait until the player's tile has been unchanged for the specified number of consecutive ticks.
     This detects when pathing/movement has stopped (tile stable), ignoring ongoing animations.
@@ -48,20 +48,23 @@ def wait_till_character_stopped_moving(max_ticks: int = 100, required_idle_ticks
         current_tile = (current_loc['x'], current_loc['y'], current_loc['plane'])
         
         tile_unchanged = current_tile == initial_tile
-        print(f"Idle check (attempt {attempt + 1}): Tile unchanged: {tile_unchanged}, "
-              f"Consecutive idle: {consecutive_idle + 1 if tile_unchanged else 0}")
+        if not quiet:
+            print(f"Idle check (attempt {attempt + 1}): Tile unchanged: {tile_unchanged}, "
+                  f"Consecutive idle: {consecutive_idle + 1 if tile_unchanged else 0}")
         
         if tile_unchanged:
             consecutive_idle += 1
             if consecutive_idle >= required_idle_ticks and attempt != 0:
-                print(f"Character stopped moving (tile stable for {required_idle_ticks} ticks)")
+                if not quiet:
+                    print(f"Character stopped moving (tile stable for {required_idle_ticks} ticks)")
                 return True
         else:
             consecutive_idle = 0
         
         attempt += 1
     
-    print(f"Timeout: Character did not stop moving after {max_ticks} ticks")
+    if not quiet:
+        print(f"Timeout: Character did not stop moving after {max_ticks} ticks")
     return False
 
 # wait_till_character_stopped_moving(required_idle_ticks=2)

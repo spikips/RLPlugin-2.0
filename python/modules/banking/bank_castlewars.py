@@ -321,7 +321,7 @@ def equip_gear_item(base_name: str, max_retries: int = 3) -> bool:
         mp = item['middle_point']
         rl_x, rl_y = runelite_window(0, 0)
 
-        move(mp['x'] + rl_x, mp['y'] + rl_y, button='right', fast=True, sleep=True)
+        move(mp['x'] + rl_x, mp['y'] + rl_y, button='right')
         time.sleep(random.uniform(0.05, 0.12))
 
         options = interact_options()
@@ -342,7 +342,7 @@ def equip_gear_item(base_name: str, max_retries: int = 3) -> bool:
             wait_for_tick(1)
             continue
 
-        move(opt_mp['x'] + rl_x, opt_mp['y'] + rl_y, button='left', fast=True, sleep=True)
+        move(opt_mp['x'] + rl_x, opt_mp['y'] + rl_y, button='left')
         print(f"Attempted to equip {base_name} (retry {retry}/{max_retries})")
         wait_for_tick(1)
 

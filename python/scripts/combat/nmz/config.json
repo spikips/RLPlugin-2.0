@@ -1,5 +1,5 @@
 {
-  "style": "magic",
+  "style": "melee",
   "combat_style": null,
   "special_attack_threshold": null,
   "bosses": [
@@ -90,6 +90,36 @@
         "Honourable blessing",
         "Bloodbark legs"
       ]
+    },
+    "melee": {
+      "defence_based": {
+        "0-39": ["holy sandals", "Monk's robe", "Monk's robe top"],
+        "40-49": [
+          "rune full helm",
+          "rune boots",
+          "rune chainbody",
+          "rune platelegs"
+        ],
+        "50-60": ["granite helm", "rune boots", "granite body", "granite legs"],
+        "61-99": [
+          "dragon med helm",
+          "dragon boots",
+          "dragon chainbody",
+          "dragon platelegs"
+        ]
+      },
+      "common": [
+        "Ancient cloak",
+        "amulet of glory(6)",
+        "Combat bracelet(6)",
+        "Honourable blessing",
+        "Ring of wealth (5)"
+      ],
+      "weapons": {
+        "40-54": ["Brine sabre", "Antler guard"],
+        "55-64": ["Glacial temotli"],
+        "65-99": ["Zombie axe", "Antler guard"]
+      }
     }
   },
   "withdraw_all_items": {
@@ -99,40 +129,26 @@
       "Diamond bolts (e)",
       "Amethyst arrow"
     ],
-    "magic": []
+    "magic": [],
+    "melee": []
   },
   "inventory_items": {
     "range": [
-      {
-        "name": "Dwarven rock cake",
-        "quantity": "1"
-      },
-      {
-        "name": "Absorption (4)",
-        "quantity": "all"
-      }
+      { "name": "Dwarven rock cake", "quantity": "1" },
+      { "name": "Absorption (4)", "quantity": "all" }
     ],
     "magic": [
-      {
-        "name": "Dwarven rock cake",
-        "quantity": "1"
-      },
-      {
-        "name": "wrath rune",
-        "quantity": "all"
-      },
-      {
-        "name": "Air rune",
-        "quantity": "all"
-      },
-      {
-        "name": "Absorption (4)",
-        "quantity": "7"
-      },
-      {
-        "name": "Overload (4)",
-        "quantity": "18"
-      }
+      { "name": "Dwarven rock cake", "quantity": "1" },
+      { "name": "wrath rune", "quantity": "all" },
+      { "name": "Air rune", "quantity": "all" },
+      { "name": "Absorption (4)", "quantity": "7" },
+      { "name": "Overload (4)", "quantity": "18" }
+    ],
+    "melee": [
+      { "name": "Dwarven rock cake", "quantity": "1" },
+      { "name": "Prayer potion(4)", "quantity": "20" },
+      { "name": "Absorption (4)", "quantity": "all" },
+      { "name": "Overload (4)", "quantity": "7" }
     ]
   }
 }

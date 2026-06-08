@@ -5,7 +5,7 @@ from modules.player_data.prayer.check_prayer_book import check_prayer_spellbook
 from modules.widgets.widget import click_widget
 from modules.widgets.widget_data import get_all_widget_data 
 from modules.core.mouse_control import move 
-from modules.core.window_utils import runelite_window
+from modules.core.window_utils import focus_runelite_window, runelite_window
 from scripts.combat.moss_giant.ground_items import wait_for_next_tick 
 
 # Dictionary mapping prayer names to widget IDs
@@ -14,10 +14,13 @@ PRAYER_WIDGETS = {
     'PROTECT_FROM_MELEE': 35454999,
     'PROTECT_FROM_RANGE': 35454998,
     'PROTECT_FROM_MAGIC': 35454997,
-    'STEEL_SKIN': 35454994
+    'STEEL_SKIN': 35454994,
+    'PIETY': 35455011
+
 }
 
 def toggle_prayer(prayer_names, activate: bool = True):
+    focus_runelite_window()
     """
     Check if the specified prayer(s) are in the desired state (active or inactive).
     If not, open the prayer book and toggle them by clicking the widgets.
@@ -113,7 +116,7 @@ def toggle_prayer(prayer_names, activate: bool = True):
             canvas_x = bounds['x'] + bounds['width'] // 2
             canvas_y = bounds['y'] + bounds['height'] // 2
             screen_x, screen_y = runelite_window(canvas_x, canvas_y)
-            move(screen_x, screen_y, button='left', fast=True)
+            move(screen_x, screen_y, button='left')
             keyboard.press_and_release("f1")
         
         continue
@@ -155,4 +158,4 @@ def disable_all_prayer():
     return False
 
 
-# toggle_prayer('PROTECT_FROM_MELEE', activate=True)
+# toggle_prayer('PIETY', activate=True)

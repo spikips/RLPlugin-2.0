@@ -5,7 +5,7 @@ xcopy "C:\Users\asd\IdeaProjects\runelite\runelite-client\src\main\java\net\rune
 git add java/
 xcopy "C:\Users\asd\IdeaProjects\runelite\runelite-client\src\main\java\net\runelite\client\plugins\opponentinfo" opponentinfo /s /e /h /i /y
 git add opponentinfo/
-git commit -m "Update: 8.3"
+git commit -m "Update: 17.3"
 git push origin main
 
 
@@ -18,3 +18,13 @@ cd C:\Users\asd\IdeaProjects\runelite
 gradlew.bat :client:shadowJar -x javadoc
 java -Xmx2G -ea -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -jar runelite-client\build\libs\client-1.12.17-SNAPSHOT-shaded.jar --developer-mode --debug
 
+# when installing new python
+# 1. Export your old list of packages (using the old Python)
+py -3.12 -m pip freeze > requirements.txt
+
+# 2. Install everything for the new Python
+python -m pip install -r requirements.txt
+
+# install runelite plugin (if needed):
+cd C:\Users\asd\Desktop\project\python\
+python -m pip install -e .

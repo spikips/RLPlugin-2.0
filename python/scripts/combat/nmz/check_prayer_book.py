@@ -41,7 +41,7 @@ def check_prayer_spellbook():
                 print('opening prayer book')
                 # Convert to screen coordinates
                 screen_x, screen_y = runelite_window(random_x, random_y)
-                mouse_click(screen_x, screen_y, button='left', fast=True, sleep=True)
+                mouse_click(screen_x, screen_y, button='left')
                 
                 # Verify it opened
                 widgets = get_all_widget_data()

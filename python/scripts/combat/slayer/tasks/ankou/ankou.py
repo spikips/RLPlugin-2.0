@@ -59,14 +59,6 @@ def is_aggroed():
         print("agro detected")
         return True
 
-def loot_drops():
-    """Rare-triggered loot (same as original)."""
-    if has_ground_items(LOOT_ITEMS, tile_radius=10):
-        print("Rare drop(s) detected - entering loot phase")
-        for item in LOOT_ITEMS:
-            if loot_all_ground_items(item):
-                pass
-    return False
 
 def swoop_reset():
     """Exact endless swoop on Ankou until aggro back."""
@@ -128,7 +120,10 @@ def main():
             perform_humanlike_interaction(low=1, peak=2, high=10)
             
         if random.randint(0, 100) < 10:
-            loot_drops()
+            for item in LOOT_ITEMS:
+                count = loot_all_ground_items(item, tile_radius=10, delay_range=(0.2, 0.5))
+                if count > 0:
+                    print("Looted {}x {}".format(count, item))
 
         if is_aggroed():
             print("Aggro active - fighting normally.")

@@ -29,7 +29,8 @@ def check_npc_animation(animation_id: int, npc_name: str, tile_radius: int = 10)
 
     npc_data = npc(name=npc_name, tile=True, middle_point=True)
     if not npc_data or 'data' not in npc_data or not npc_data['data']:
-        print(f"No {npc_name} found.")
+        # Avoid spamming "No xxx found." in tight loops (e.g. tail_mon every tick)
+        # Callers that want debug can handle themselves.
         return False
 
     for n in npc_data['data']:
@@ -44,7 +45,7 @@ def check_npc_animation(animation_id: int, npc_name: str, tile_radius: int = 10)
 
     return False
 
-while True:
-    is_dying = check_npc_animation(4659, 'moss giant')
-    print(is_dying)
-    time.sleep(0.6)
+# while True:
+#     is_dying = check_npc_animation(4659, 'moss giant')
+#     print(is_dying)
+#     time.sleep(0.6)

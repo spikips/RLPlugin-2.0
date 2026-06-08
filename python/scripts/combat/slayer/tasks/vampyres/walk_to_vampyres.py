@@ -1,3 +1,4 @@
+from modules.player_data.ensure_correct_attack_style import ensure_correct_combat_style
 from modules.utils.click_minimap_tile import click_minimap_tile
 from modules.player_data.tile_change import wait_for_tile_change
 from modules.utils.wait_for_tick import wait_for_tick, wait_for_next_tick
@@ -32,7 +33,7 @@ def go_to_bank():
     }
 
     bank_castlewars(target_gear=target_gear, target_inventory=target_inventory)
-
+    ensure_correct_combat_style()
 
 def walk_to_vampyres():
     """Walk to the vampyres location."""

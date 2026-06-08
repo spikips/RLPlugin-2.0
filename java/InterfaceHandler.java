@@ -170,222 +170,137 @@ public class InterfaceHandler implements RequestHandler {
         return bankItems;
     }
 
+    private Map<String, Object> buildWidgetInfo(Widget widget, Random random) {
+        Map<String, Object> widgetInfo = new HashMap<>();
+        widgetInfo.put("id", widget.getId());
+        widgetInfo.put("name", widget.getName() != null ? widget.getName() : "");
+        widgetInfo.put("text", widget.getText() != null ? widget.getText() : "");
+        widgetInfo.put("textColor", widget.getTextColor());
+        widgetInfo.put("hasOnOpListener", widget.getOnOpListener() != null);
+        widgetInfo.put("enabled", widget.getOnOpListener() == null);
 
-    // Updated handleClickWidgetRequest in InterfaceHandler.java (separate "name" and "text"; apply to widget and children; add textColor)
+        Object[] onOpListener = widget.getOnOpListener();
+        if (onOpListener != null) {
+            List<Object> onOpListenerList = new ArrayList<>();
+            for (Object obj : onOpListener) {
+                if (obj instanceof Number) {
+                    onOpListenerList.add(((Number) obj).longValue());
+                } else if (obj != null) {
+                    onOpListenerList.add(obj.toString());
+                } else {
+                    onOpListenerList.add(null);
+                }
+            }
+            widgetInfo.put("OnOpListener", onOpListenerList);
+        } else {
+            widgetInfo.put("OnOpListener", null);
+        }
+
+        Rectangle bounds = widget.getBounds();
+        if (bounds != null) {
+            Map<String, Integer> boundInfo = new HashMap<>();
+            boundInfo.put("x", bounds.x);
+            boundInfo.put("y", bounds.y);
+            boundInfo.put("width", bounds.width);
+            boundInfo.put("height", bounds.height);
+            widgetInfo.put("bounds", boundInfo);
+
+            if (bounds.width > 0 && bounds.height > 0) {
+                Map<String, Integer> randomPoint = getRandomPointInRectangle(
+                        bounds.x, bounds.y, bounds.width, bounds.height, random);
+                if (randomPoint != null) {
+                    widgetInfo.put("random_clickpoint", randomPoint);
+                }
+            }
+        }
+        widgetInfo.put("spriteId", widget.getSpriteId());
+
+        if (widget.getDynamicChildren() != null) {
+            List<Map<String, Object>> children = new ArrayList<>();
+            for (Widget child : widget.getDynamicChildren()) {
+                if (child != null && !child.isHidden()) {
+                    children.add(buildWidgetInfo(child, random));
+                }
+            }
+            widgetInfo.put("children", children);
+        } else {
+            widgetInfo.put("children", new ArrayList<>());
+        }
+
+        return widgetInfo;
+    }
+
     private Object handleClickWidgetRequest(Map<String, Object> params) {
+        log.info("=== clickWidget called with params: {} ===", params);
+
+        // === ULTRA RELIABLE FAST PATH FOR SINGLE WIDGET BY ID ===
+        if (params != null) {
+            Object idObj = params.get("id");
+            log.info("  → Looking for 'id' key. Found: {}", idObj);
+
+            if (idObj != null) {
+                int widgetId;
+                try {
+                    widgetId = idObj instanceof Number
+                            ? ((Number) idObj).intValue()
+                            : Integer.parseInt(idObj.toString());
+                } catch (Exception e) {
+                    log.error("  → Invalid widget ID: {}", idObj);
+                    Map<String, Object> error = new HashMap<>();
+                    error.put("error", "Invalid widget ID: " + idObj);
+                    return error;
+                }
+
+                log.info("  → FAST PATH TRIGGERED for widget ID {}", widgetId);
+
+                Widget widget = client.getWidget(widgetId);
+                if (widget != null && !widget.isHidden()) {
+                    Random random = new Random();
+                    Map<String, Object> widgetInfo = buildWidgetInfo(widget, random);
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("widgets", List.of(widgetInfo));
+
+                    log.info("  → ✅ FAST PATH SUCCESS - returning single widget {}", widgetId);
+                    return response;
+                } else {
+                    log.warn("  → Widget {} not found or hidden", widgetId);
+                    Map<String, Object> error = new HashMap<>();
+                    error.put("error", "Widget " + widgetId + " not found or is hidden");
+                    return error;
+                }
+            }
+        }
+
+        log.info("  → No 'id' parameter → falling back to full dump / x,y lookup");
+
+        // === ORIGINAL BEHAVIOUR (full dump or x/y lookup) ===
         Map<String, Object> widgetData = new HashMap<>();
         if (params == null || (!params.containsKey("x") && !params.containsKey("y"))) {
             List<Map<String, Object>> allWidgets = new ArrayList<>();
             Random random = new Random();
-            for (int groupId = 0; groupId < 1000; groupId++) { // Increased to cover spellbook group 548 etc.
-                for (int childId = 0; childId < 2000; childId++) { // Increased for safety
+
+            // Keep reduced bounds to limit lag
+            for (int groupId = 0; groupId < 700; groupId++) {
+                for (int childId = 0; childId < 1200; childId++) {
                     Widget widget = client.getWidget(groupId, childId);
                     if (widget != null && !widget.isHidden()) {
-                        Map<String, Object> widgetInfo = new HashMap<>();
-                        widgetInfo.put("id", widget.getId());
-                        widgetInfo.put("name", widget.getName() != null ? widget.getName() : ""); // New: Separate name
-                        widgetInfo.put("text", widget.getText() != null ? widget.getText() : ""); // Separate text
-                        widgetInfo.put("textColor", widget.getTextColor()); // New: textColor
-                        widgetInfo.put("hasOnOpListener", widget.getOnOpListener() != null);
-                        widgetInfo.put("enabled", widget.getOnOpListener() == null);
-                        Object[] onOpListener = widget.getOnOpListener();
-                        if (onOpListener != null) {
-                            List<Object> onOpListenerList = new ArrayList<>();
-                            for (Object obj : onOpListener) {
-                                if (obj instanceof Number) {
-                                    onOpListenerList.add(((Number) obj).longValue());
-                                } else if (obj != null) {
-                                    onOpListenerList.add(obj.toString());
-                                } else {
-                                    onOpListenerList.add(null);
-                                }
-                            }
-                            widgetInfo.put("OnOpListener", onOpListenerList);
-                        } else {
-                            widgetInfo.put("OnOpListener", null);
-                        }
-                        Rectangle bounds = widget.getBounds();
-                        if (bounds != null) {
-                            Map<String, Integer> boundInfo = new HashMap<>();
-                            boundInfo.put("x", bounds.x);
-                            boundInfo.put("y", bounds.y);
-                            boundInfo.put("width", bounds.width);
-                            boundInfo.put("height", bounds.height);
-                            widgetInfo.put("bounds", boundInfo);
-                            if (bounds.width > 0 && bounds.height > 0) {
-                                Map<String, Integer> randomPoint = getRandomPointInRectangle(
-                                        bounds.x, bounds.y,
-                                        bounds.width, bounds.height, random);
-                                if (randomPoint != null) {
-                                    widgetInfo.put("random_clickpoint", randomPoint);
-                                }
-                            }
-                        }
-                        widgetInfo.put("spriteId", widget.getSpriteId());
-                        if (widget.getDynamicChildren() != null) {
-                            List<Map<String, Object>> children = new ArrayList<>();
-                            for (Widget child : widget.getDynamicChildren()) {
-                                Map<String, Object> childInfo = new HashMap<>();
-                                childInfo.put("id", child.getId());
-                                childInfo.put("name", child.getName() != null ? child.getName() : ""); // New: Separate name for children
-                                childInfo.put("text", child.getText() != null ? child.getText() : ""); // Separate text for children
-                                childInfo.put("textColor", child.getTextColor()); // New: textColor for children
-                                childInfo.put("hasOnOpListener", child.getOnOpListener() != null);
-                                childInfo.put("enabled", child.getOnOpListener() == null);
-                                Object[] childOnOpListener = child.getOnOpListener();
-                                if (childOnOpListener != null) {
-                                    List<Object> childOnOpListenerList = new ArrayList<>();
-                                    for (Object obj : childOnOpListener) {
-                                        if (obj instanceof Number) {
-                                            childOnOpListenerList.add(((Number) obj).longValue());
-                                        } else if (obj != null) {
-                                            childOnOpListenerList.add(obj.toString());
-                                        } else {
-                                            childOnOpListenerList.add(null);
-                                        }
-                                    }
-                                    childInfo.put("OnOpListener", childOnOpListenerList);
-                                } else {
-                                    childInfo.put("OnOpListener", null);
-                                }
-                                if (child.getItemId() > 0) {
-                                    childInfo.put("itemId", child.getItemId());
-                                    childInfo.put("quantity", child.getItemQuantity());
-                                }
-                                childInfo.put("spriteId", child.getSpriteId());
-                                Rectangle childBounds = child.getBounds();
-                                if (childBounds != null) {
-                                    Map<String, Integer> childBoundInfo = new HashMap<>();
-                                    childBoundInfo.put("x", childBounds.x);
-                                    childBoundInfo.put("y", childBounds.y);
-                                    childBoundInfo.put("width", childBounds.width);
-                                    childBoundInfo.put("height", childBounds.height);
-                                    childInfo.put("bounds", childBoundInfo);
-                                    if (childBounds.width > 0 && childBounds.height > 0) {
-                                        Map<String, Integer> childRandomPoint = getRandomPointInRectangle(
-                                                childBounds.x, childBounds.y,
-                                                childBounds.width, childBounds.height, random);
-                                        if (childRandomPoint != null) {
-                                            childInfo.put("random_clickpoint", childRandomPoint);
-                                        }
-                                    }
-                                }
-                                children.add(childInfo);
-                            }
-                            widgetInfo.put("children", children);
-                        } else {
-                            widgetInfo.put("children", new ArrayList<>());
-                        }
-                        allWidgets.add(widgetInfo);
+                        allWidgets.add(buildWidgetInfo(widget, random));
                     }
                 }
             }
             widgetData.put("widgets", allWidgets);
-            log.debug("Returned all visible widgets: {}", allWidgets.size());
+            log.info("  → FULL DUMP completed - returned {} widgets", allWidgets.size());
             return widgetData;
         }
+
+        // x/y point lookup (unchanged)
         int x = ((Number) params.get("x")).intValue();
         int y = ((Number) params.get("y")).intValue();
         java.awt.Point clickPoint = new java.awt.Point(x, y);
         Widget widget = findWidgetAtPoint(clickPoint);
         if (widget != null) {
-            Map<String, Object> widgetInfo = new HashMap<>();
-            widgetInfo.put("id", widget.getId());
-            widgetInfo.put("name", widget.getName() != null ? widget.getName() : ""); // New: Separate name
-            widgetInfo.put("text", widget.getText() != null ? widget.getText() : ""); // Separate text
-            widgetInfo.put("textColor", widget.getTextColor()); // New: textColor
-            widgetInfo.put("hasOnOpListener", widget.getOnOpListener() != null);
-            widgetInfo.put("enabled", widget.getOnOpListener() == null);
-            Object[] onOpListener = widget.getOnOpListener();
-            if (onOpListener != null) {
-                List<Object> onOpListenerList = new ArrayList<>();
-                for (Object obj : onOpListener) {
-                    if (obj instanceof Number) {
-                        onOpListenerList.add(((Number) obj).longValue());
-                    } else if (obj != null) {
-                        onOpListenerList.add(obj.toString());
-                    } else {
-                        onOpListenerList.add(null);
-                    }
-                }
-                widgetInfo.put("OnOpListener", onOpListenerList);
-            } else {
-                widgetInfo.put("OnOpListener", null);
-            }
-            Rectangle bounds = widget.getBounds();
-            if (bounds != null) {
-                Map<String, Integer> boundInfo = new HashMap<>();
-                boundInfo.put("x", bounds.x);
-                boundInfo.put("y", bounds.y);
-                boundInfo.put("width", bounds.width);
-                boundInfo.put("height", bounds.height);
-                widgetInfo.put("bounds", boundInfo);
-                if (bounds.width > 0 && bounds.height > 0) {
-                    Random random = new Random();
-                    Map<String, Integer> randomPoint = getRandomPointInRectangle(
-                            bounds.x, bounds.y,
-                            bounds.width, bounds.height, random);
-                    if (randomPoint != null) {
-                        widgetInfo.put("random_clickpoint", randomPoint);
-                    }
-                }
-            }
-            widgetInfo.put("spriteId", widget.getSpriteId());
-            if (widget.getDynamicChildren() != null) {
-                List<Map<String, Object>> children = new ArrayList<>();
-                Random random = new Random();
-                for (Widget child : widget.getDynamicChildren()) {
-                    Map<String, Object> childInfo = new HashMap<>();
-                    childInfo.put("id", child.getId());
-                    childInfo.put("name", child.getName() != null ? child.getName() : ""); // New: Separate name for children
-                    childInfo.put("text", child.getText() != null ? child.getText() : ""); // Separate text for children
-                    childInfo.put("textColor", child.getTextColor()); // New: textColor for children
-                    childInfo.put("hasOnOpListener", child.getOnOpListener() != null);
-                    childInfo.put("enabled", child.getOnOpListener() == null);
-                    Object[] childOnOpListener = child.getOnOpListener();
-                    if (childOnOpListener != null) {
-                        List<Object> childOnOpListenerList = new ArrayList<>();
-                        for (Object obj : childOnOpListener) {
-                            if (obj instanceof Number) {
-                                childOnOpListenerList.add(((Number) obj).longValue());
-                            } else if (obj != null) {
-                                childOnOpListenerList.add(obj.toString());
-                            } else {
-                                childOnOpListenerList.add(null);
-                            }
-                        }
-                        childInfo.put("OnOpListener", childOnOpListenerList);
-                    } else {
-                        childInfo.put("OnOpListener", null);
-                    }
-                    if (child.getItemId() > 0) {
-                        childInfo.put("itemId", child.getItemId());
-                        childInfo.put("quantity", child.getItemQuantity());
-                    }
-                    childInfo.put("spriteId", child.getSpriteId());
-                    Rectangle childBounds = child.getBounds();
-                    if (childBounds != null) {
-                        Map<String, Integer> childBoundInfo = new HashMap<>();
-                        childBoundInfo.put("x", childBounds.x);
-                        childBoundInfo.put("y", childBounds.y);
-                        childBoundInfo.put("width", childBounds.width);
-                        childBoundInfo.put("height", childBounds.height);
-                        childInfo.put("bounds", childBoundInfo);
-                        if (childBounds.width > 0 && childBounds.height > 0) {
-                            Map<String, Integer> childRandomPoint = getRandomPointInRectangle(
-                                    childBounds.x, childBounds.y,
-                                    childBounds.width, childBounds.height, random);
-                            if (childRandomPoint != null) {
-                                childInfo.put("random_clickpoint", childRandomPoint);
-                            }
-                        }
-                    }
-                    children.add(childInfo);
-                }
-                widgetInfo.put("children", children);
-            } else {
-                widgetInfo.put("children", new ArrayList<>());
-            }
+            Random random = new Random();
+            Map<String, Object> widgetInfo = buildWidgetInfo(widget, random);
             widgetData.put("widget", widgetInfo);
             log.debug("Found widget at ({}, {}): {}", x, y, widgetInfo);
         } else {

@@ -9,8 +9,15 @@ from modules.core.plugin_client import player, pick, interact_options, gametick,
 from modules.core.mouse_control import move, get_cursor_pos
 
 def normalize_item_name(name: str) -> str:
-    """Remove dose indicators and normalize for comparison."""
-    return name.lower().replace('(4)', '').replace('(3)', '').replace('(2)', '').replace('(1)', '').strip()
+    """Remove dose indicators, quantity suffixes like (19), and normalize for comparison."""
+    name = name.lower()
+    # Remove dose indicators
+    for dose in ['(4)', '(3)', '(2)', '(1)']:
+        name = name.replace(dose, '')
+    # Remove trailing quantity like " (19)" or "(19)"
+    import re
+    name = re.sub(r'\s*\(\d+\)\s*$', '', name)
+    return name.strip()
 
 def clean_target_name(target: str) -> str:
     """Remove color tags and quantity suffixes (e.g., ' x 5') from menu target names."""
@@ -45,64 +52,135 @@ def pickup_closest_ground_item(item_name: str, tile_radius: int = 10) -> bool:
     normalized = normalize_item_name(item_name)
     p_data = player(location=True)
     if not p_data or 'data' not in p_data:
+        print("[DEBUG] No player data")
         return False
+
     loc = p_data['data'].get('location', {})
     px, py = loc.get('x'), loc.get('y')
     if px is None or py is None:
+        print("[DEBUG] No player location")
         return False
 
     ground_data = pick(px, py, size=tile_radius, item=item_name)
     items = ground_data.get('data', {}).get('items', []) if ground_data else []
     if not items:
+        print(f"[DEBUG] No ground items found for '{item_name}'")
         return False
 
-    # sort by Manhattan distance
     items.sort(key=lambda i: abs(i['tile']['x'] - px) + abs(i['tile']['y'] - py))
     target = items[0]
 
     if not can_pick_item(item_name):
+        print("[DEBUG] Inventory full / cannot pick")
         return False
 
-    print(f"Attempting to pick up closest {item_name}")
+    print(f"\n[DEBUG] === pickup_closest_ground_item START: '{item_name}' ===")
+    print(f"[DEBUG] normalized = '{normalized}'")
 
-    # === mouse move + click logic (with safety) ===
-    mp = target.get('middle_point')
-    if not mp:
-        return False
-    sx, sy = runelite_window(mp['x'], mp['y'])
-    move(sx, sy, fast=True, sleep=True)
-    time.sleep(random.uniform(0.15, 0.35))
+    MAX_TRIES = 3
 
-    # hover check
-    hover = interact_options().get('data', [])
-    can_left = False
-    if hover:
-        top = hover[0]
-        opt = top.get('option', '').lower()
-        tgt = clean_target_name(top.get('target', ''))
-        if opt.startswith('take') and normalize_item_name(tgt) == normalized:
-            can_left = True
+    for attempt in range(1, MAX_TRIES + 1):
+        print(f"\n[DEBUG] === Attempt {attempt}/{MAX_TRIES} for '{item_name}' ===")
 
-    if can_left:
-        move(button='left', fast=True, sleep=True)
-    else:
-        move(button='right', fast=True, sleep=False)
-        time.sleep(random.uniform(0.1, 0.25))
-        menu = interact_options().get('data', [])
-        for entry in menu:
-            if (entry.get('option', '').lower().startswith('take') and
-                normalize_item_name(clean_target_name(entry.get('target', ''))) == normalized):
-                mx, my = runelite_window(entry['middle_point']['x'], entry['middle_point']['y'])
-                move(mx + random.randint(-12, 12), my + random.randint(-4, 4),
-                     fast=True, button='left', sleep=True)
-                break
+        # Re-scan every attempt in case position changed slightly
+        ground_data = pick(px, py, size=tile_radius, item=item_name)
+        items = ground_data.get('data', {}).get('items', []) if ground_data else []
+        if not items:
+            print(f"[DEBUG] Item '{item_name}' no longer visible on attempt {attempt}")
+            return False
+
+        items.sort(key=lambda i: abs(i['tile']['x'] - px) + abs(i['tile']['y'] - py))
+        target = items[0]
+
+        mp = target.get('middle_point')
+        if not mp:
+            print("[DEBUG] No middle_point on this attempt")
+            continue
+
+        print(f"[DEBUG] middle_point: x={mp['x']}, y={mp['y']}")
+        sx, sy = runelite_window(mp['x'], mp['y'])
+
+        # small jitter
+        sx += random.randint(-1, 1)
+        sy += random.randint(-1, 1)
+        print(f"[DEBUG] target with jitter: ({sx}, {sy})")
+
+        print("[DEBUG] Moving mouse + hovering...")
+        move(sx, sy)
+        time.sleep(random.uniform(0.075, 0.12))
+
+        # Read top hover
+        print("[DEBUG] Reading hover...")
+        hover = interact_options().get('data', []) or []
+
+        top_opt = ""
+        top_norm = ""
+
+        if hover:
+            t = hover[0]
+            top_opt = t.get('option', '').lower().strip()
+            tgt = clean_target_name(t.get('target', ''))
+            top_norm = normalize_item_name(tgt)
+            print(f"[DEBUG] HOVER → option='{top_opt}' | target_norm='{top_norm}'")
         else:
-            return False  # no take option found
+            print("[DEBUG] HOVER → no data")
 
-    wait_for_next_tick(3)
+        # Decision
+        do_left = (top_opt == 'take' and top_norm == normalized) or (top_norm == normalized)
+        print(f"[DEBUG] do_left = {do_left}")
 
-    # === NEW: verify it actually disappeared ===
-    return not has_ground_items([item_name], tile_radius=3)
+        if do_left:
+            print("[DEBUG] LEFT CLICK")
+            cur = get_cursor_pos()
+            move(cur[0], cur[1], button='left')
+        else:
+            print("[DEBUG] RIGHT CLICK")
+            move(button='right')
+            time.sleep(random.uniform(0.13, 0.18))
+
+            print("[DEBUG] Reading menu...")
+            menu = interact_options().get('data', []) or []
+            print(f"[DEBUG] Menu entries:")
+            for i, e in enumerate(menu):
+                print(f"  [{i}] option='{e.get('option', '')}' | target='{e.get('target', '')}'")
+
+            clicked = False
+            for e in menu:
+                o = e.get('option', '').lower().strip()
+                t = clean_target_name(e.get('target', ''))
+                tn = normalize_item_name(t)
+                if (o.startswith('take') and tn == normalized) or (tn == normalized):
+                    mx, my = runelite_window(e['middle_point']['x'], e['middle_point']['y'])
+                    print(f"[DEBUG] Clicking Take at ({mx}, {my})")
+                    move(mx + random.randint(-1, 1), my + random.randint(-1, 1), button='left', fast=True, sleep=True)
+                    clicked = True
+                    break
+
+            if not clicked:
+                print("[DEBUG] No Take found in menu this attempt")
+                # still fall through to misclick handling below
+
+        print("[DEBUG] Waiting 1 ticks...")
+        wait_for_next_tick(1)
+
+        still_there = has_ground_items([item_name], tile_radius=3)
+        print(f"[DEBUG] Item still on ground after attempt {attempt}? {still_there}")
+
+        if not still_there:
+            print(f"[DEBUG] === SUCCESS on attempt {attempt} ===\n")
+            return True
+
+        # === Misclick handling ===
+        if attempt < MAX_TRIES:
+            cur = get_cursor_pos()
+            print(f"[DEBUG] Misclick detected. Moving mouse -50 Y to clear interface (from {cur})")
+            move(cur[0], cur[1] - 50)          # move mouse up 50 pixels to clear hover/menu
+            time.sleep(0.08)
+        else:
+            print(f"[DEBUG] === FAILED after {MAX_TRIES} attempts ===\n")
+            return False
+
+    return False
 
 def loot_all_ground_items(item_name: str, tile_radius: int = 10, delay_range: tuple = (0.2, 0.5)) -> int:
     """

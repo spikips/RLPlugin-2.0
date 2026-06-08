@@ -353,6 +353,17 @@ public interface AsdConfig extends Config
         return false;
     }
 
+    @ConfigItem(
+            keyName = "npcRadius",
+            name = "NPC Highlight Radius",
+            description = "Default radius for NPC highlights",
+            position = 11,
+            section = npcSection
+    )
+    default int npcRadius() {
+        return 15;
+    }
+
     // Inventory Item IDs Section
     @ConfigSection(
             name = "Inventory Item IDs",
@@ -555,6 +566,17 @@ public interface AsdConfig extends Config
         return 12;
     }
 
+    @ConfigItem(
+            keyName = "gameObjectRadius",
+            name = "Game Object Radius",
+            description = "Default search radius for game_object() and highlights",
+            position = 6,
+            section = gameObjectSection
+    )
+    default int gameObjectRadius() {
+        return 20;
+    }
+
     // Under Attack Indicator Section
     @ConfigSection(
             name = "Under Attack Indicator",
@@ -717,11 +739,64 @@ public interface AsdConfig extends Config
         return new Color(0, 0, 0, 255); // Black shadow
     }
 
+    // === NEW: Projectiles & Graphics Objects ===
+    @ConfigSection(
+            name = "Projectiles & GFX",
+            description = "Settings for Projectiles and Graphics Objects",
+            position = 13,
+            closedByDefault = false
+    )
+    String projectilesGfxSection = "projectilesGfxSection";
+
+    @ConfigItem(
+            keyName = "projectilesEnabled",
+            name = "Enable Projectiles",
+            description = "Enable support for projectile requests (via socket)",
+            position = 1,
+            section = projectilesGfxSection
+    )
+    default boolean projectilesEnabled() {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "projectilesRadius",
+            name = "Projectiles Radius",
+            description = "Default search radius for projectiles()",
+            position = 2,
+            section = projectilesGfxSection
+    )
+    default int projectilesRadius() {
+        return 35;
+    }
+
+    @ConfigItem(
+            keyName = "graphicsObjectsEnabled",
+            name = "Enable Graphics Objects (GFX)",
+            description = "Enable support for graphics_objects / gfx requests",
+            position = 3,
+            section = projectilesGfxSection
+    )
+    default boolean graphicsObjectsEnabled() {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "graphicsObjectsRadius",
+            name = "GFX Radius",
+            description = "Default search radius for graphics_objects() / gfx()",
+            position = 4,
+            section = projectilesGfxSection
+    )
+    default int graphicsObjectsRadius() {
+        return 20;
+    }
+
     // Varbit Monitoring Section
     @ConfigSection(
             name = "Varbit Monitoring",
             description = "Settings for monitoring varbit changes",
-            position = 13,
+            position = 14,
             closedByDefault = true
     )
     String varbitMonitoringSection = "varbitMonitoringSection";

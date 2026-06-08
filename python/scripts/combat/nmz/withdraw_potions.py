@@ -5,45 +5,27 @@ from modules.object_data.game_object import click_gameobject
 from modules.widgets.widget import check_widget, check_widget_text
 from modules.utils.wait_for_tick import wait_for_tick
 from modules.core.plugin_client import player
-from modules.utils.inventory import check_inventory
+from potions import get_total_doses
+from modules.utils.drop_item import open_inventory_tab
 
 # Configurable parameters
 INITIAL_SLEEP = 0  # seconds
-MAX_ATTEMPTS = 3  # 3 tries for both barrel click and widget check
-MAX_TICKS = 10  # Max 10 ticks per attempt (~6 seconds)
-MIN_TYPING_DELAY = 0.039  # seconds (lower bound for random delay)
-MAX_TYPING_DELAY = 0.081  # seconds (upper bound for random delay)
+MAX_ATTEMPTS = 5
+MAX_TICKS = 10
+MIN_TYPING_DELAY = 0.039
+MAX_TYPING_DELAY = 0.081
 OVERLOAD_BARREL_ID = "26279"
 OVERLOAD_ACTION = "Take overload potion"
 OVERLOAD_TILE = (2600, 3116)
-OVERLOAD_DESIRED_DOSES = 72
+OVERLOAD_DESIRED_DOSES = 28
 ABSORPTION_BARREL_ID = "26280"
 ABSORPTION_ACTION = "Take absorption potion"
 ABSORPTION_TILE = (2600, 3117)
-ABSORPTION_DESIRED_DOSES = 28
-CHAT_WIDGET_ID = "10616874"
-
-def get_total_doses(potion_base: str) -> int:
-    """
-    Calculates total doses from all variants (1-4) of the potion in inventory.
-    - Loops over doses 1-4, sums count * dose for each.
-    - Helps in understanding: Aggregates partial potions into total effective doses.
-    - Bigger picture: Ensures accurate top-up to desired dose levels without over-withdrawing.
-    """
-    total = 0
-    for dose in range(1, 5):
-        name = f"{potion_base} ({dose})"
-        exists, count, _ = check_inventory(name)
-        total += count * dose
-    return total
+ABSORPTION_DESIRED_DOSES = 80
+CHAT_WIDGET_ID = "10616875"
 
 
 def get_stored_counts():
-    """Try to read stored overload/absorption counts from the rewards widget.
-
-    Returns (stored_abs, stored_ovl) where each is an int if readable,
-    or (None, None) if the widget/text could not be read.
-    """
     try:
         abs_text = check_widget_text("13500422", child_index=11)
         ovl_text = check_widget_text("13500422", child_index=8)
@@ -56,15 +38,6 @@ def get_stored_counts():
         return (None, None)
 
 def wait_for_success(condition_func, max_attempts=MAX_ATTEMPTS, max_ticks=MAX_TICKS, attempt_msg="Attempting action"):
-    """
-    Generic waiter: Retries a condition function until success or max attempts reached, with a tick-based timeout.
-    - condition_func: A callable that returns True on success.
-    - max_attempts: Maximum number of retry attempts (default: 3).
-    - max_ticks: Maximum ticks to wait per attempt (default: 10, ~6 seconds).
-    - attempt_msg: Message to log for each attempt.
-    - Helps in understanding: Abstracts retry logic with tick-based timing for game synchronization.
-    - Bigger picture: Ensures robust retry behavior while respecting game tick mechanics.
-    """
     for attempt in range(max_attempts):
         print(f"{attempt_msg}, attempt {attempt + 1}/{max_attempts}")
         tick_count = 0
@@ -80,12 +53,6 @@ def wait_for_success(condition_func, max_attempts=MAX_ATTEMPTS, max_ticks=MAX_TI
     return False
 
 def check_player_proximity(tile, max_distance=20):
-    """
-    Check if the player is within max_distance tiles of the target tile.
-    Returns True if in range, False otherwise.
-    - Helps in understanding: Uses Manhattan distance for simple proximity check.
-    - Bigger picture: Prevents actions when player is out of range, avoiding failures.
-    """
     player_data = player(location=True)
     if not player_data or 'data' not in player_data or 'location' not in player_data['data']:
         print("Failed to retrieve player location.")
@@ -93,7 +60,7 @@ def check_player_proximity(tile, max_distance=20):
     player_x = player_data['data']['location']['x']
     player_y = player_data['data']['location']['y']
     target_x, target_y = tile
-    distance = abs(player_x - target_x) + abs(player_y - target_y)  # Manhattan distance
+    distance = abs(player_x - target_x) + abs(player_y - target_y)
     if distance <= max_distance:
         print(f"Player is within {distance} tiles of target {tile}")
         return True
@@ -101,17 +68,11 @@ def check_player_proximity(tile, max_distance=20):
     return False
 
 def type_quantity(quantity: int):
-    """
-    Types the given quantity with random delays between keys, then presses Enter.
-    - Converts quantity to string to iterate over characters.
-    - Helps in understanding: Simulates human-like typing for stealth.
-    - Bigger picture: Reduces risk of detection in automated environments.
-    """
     try:
-        quantity_str = str(quantity)  # Convert int to string for iteration
+        quantity_str = str(quantity)
         for char in quantity_str:
             keyboard.press_and_release(char)
-            time.sleep(random.uniform(MIN_TYPING_DELAY, MAX_TYPING_DELAY))  # Random delay per key
+            time.sleep(random.uniform(MIN_TYPING_DELAY, MAX_TYPING_DELAY))
         keyboard.press_and_release('enter')
         print(f"Successfully typed '{quantity_str}' and pressed Enter.")
         time.sleep(random.uniform(MIN_TYPING_DELAY, MAX_TYPING_DELAY))
@@ -123,88 +84,68 @@ def type_quantity(quantity: int):
         exit('Unexpected keyboard error')
 
 def withdraw_potion(barrel_id, action, tile, quantity, potion_name, desired_doses):
-    """
-    Withdraws a potion from the specified barrel, handling retries and chat widget.
-    Returns True if successful and total doses meet desired after withdrawal, False otherwise.
-    - Helps in understanding: Integrates proximity check and typing for full withdrawal flow, with post-check for sufficiency.
-    - Bigger picture: Ensures potion levels are sufficient before proceeding, preventing under-prepared entry into NMZ.
-    """
     if quantity <= 0:
         print(f"No need to withdraw {potion_name}: Already at or above desired doses.")
         return True
 
-    # Record starting total to detect partial gains
     initial_total = get_total_doses(potion_name.lower())
 
-    # Check player proximity to barrel
     if not check_player_proximity(tile, max_distance=20):
         print(f"Cannot withdraw {potion_name}: Player too far from barrel.")
         return False
 
     for attempt in range(MAX_ATTEMPTS):
         print(f"Attempting to withdraw {potion_name} ({quantity} doses), attempt {attempt + 1}/{MAX_ATTEMPTS}")
-        # Step 1: Click the barrel
         if not click_gameobject(barrel_id, action, tile):
             print(f"Failed to click {potion_name} barrel on attempt {attempt + 1}")
-            wait_for_tick(1)  # Wait to reset game state
+            open_inventory_tab()
+            wait_for_tick(1)
             continue
 
         print(f"Clicked {potion_name} barrel successfully")
         
-        # Step 2: Wait for chat widget
         if wait_for_success(lambda: check_widget(CHAT_WIDGET_ID),
-                           max_attempts=1,  # Single attempt for widget check per barrel click
+                           max_attempts=1,
                            max_ticks=MAX_TICKS,
                            attempt_msg=f"Waiting for chat widget ({potion_name})"):
-            print(f"Found chat widget for {potion_name}")
-            # Read chat widget text to detect empty/placeholder messages from the barrel
             try:
                 chat_text = check_widget_text(CHAT_WIDGET_ID) or ""
             except Exception:
                 chat_text = ""
 
-            # If the chat indicates the barrel is empty or out of doses, skip withdrawing
             empty_indicators = ['no doses', 'no potion', 'no potions', 'nothing left', 'out of', 'not enough', 'there are no']
             if any(ind in chat_text.lower() for ind in empty_indicators):
-                print(f"Barrel appears empty or out of potions for {potion_name}: '{chat_text}'. Skipping withdraw.")
+                print(f"Barrel appears empty for {potion_name}: '{chat_text}'. Skipping.")
                 return True
 
             print(f"Withdrawing {potion_name}")
             type_quantity(quantity)
-            # Wait for inventory update
             wait_for_tick(2)
-            # Check total doses after withdrawal
+            
             new_total = get_total_doses(potion_name.lower())
             if new_total >= desired_doses:
                 print(f"Withdrew {potion_name} successfully, total doses: {new_total}")
                 return True
             if new_total > initial_total:
                 gained = new_total - initial_total
-                print(f"Partially withdrew {potion_name}: gained {gained} doses (total {new_total}), desired was {desired_doses}. Accepting partial withdraw.")
+                print(f"Partially withdrew {potion_name}: gained {gained} doses (total {new_total})")
                 return True
-            # No increase; continue to next attempt
-            print(f"No doses gained from this withdraw attempt for {potion_name} (total still {new_total}). Retrying if attempts remain.")
-        
-        print(f"Chat widget not found for {potion_name} after attempt {attempt + 1}")
-        wait_for_tick(1)  # Wait to reset game state before retrying
 
-    # After all attempts, check if we managed to gain any doses at all
+        print(f"Chat widget not found for {potion_name} after attempt {attempt + 1}")
+        wait_for_tick(1)
+
     final_total = get_total_doses(potion_name.lower())
     if final_total > initial_total:
         gained = final_total - initial_total
-        print(f"After attempts, partially withdrew {potion_name}: gained {gained} doses (total {final_total}).")
+        print(f"Partially withdrew {potion_name}: gained {gained} doses (total {final_total}).")
         return True
 
-    print(f"Failed to withdraw {potion_name} after {MAX_ATTEMPTS} attempts and no doses gained.")
+    print(f"Failed to withdraw {potion_name} after {MAX_ATTEMPTS} attempts.")
     return False
 
 def main(stored_abs=None, stored_ovl=None):
-    """Main withdraw entry. If stored_abs/stored_ovl are provided they will be
-    used instead of attempting to read the rewards widget (which may be closed).
-    """
     time.sleep(INITIAL_SLEEP)
 
-    # Use provided stored counts if available; otherwise try to read them
     if stored_abs is None or stored_ovl is None:
         stored_abs_read, stored_ovl_read = get_stored_counts()
         if stored_abs is None:
@@ -213,105 +154,34 @@ def main(stored_abs=None, stored_ovl=None):
             stored_ovl = stored_ovl_read
 
     if stored_abs is not None and stored_ovl is not None:
-        print(f"Stored counts from rewards UI (or caller): Absorption={stored_abs}, Overload={stored_ovl}")
-    else:
-        print("Stored counts unknown; proceeding with inventory-based withdrawals")
+        print(f"Stored counts from rewards UI: Absorption={stored_abs}, Overload={stored_ovl}")
 
-    # Calculate and withdraw Overload if needed and if stored_ovl isn't explicitly 0
+    # Overload withdrawal
     current_overload = get_total_doses("overload")
     overload_needed = max(0, OVERLOAD_DESIRED_DOSES - current_overload)
     if stored_ovl == 0:
-        print("Stored overload count is 0; skipping overload barrel withdraw.")
         overload_needed = 0
 
     if overload_needed > 0:
-        # Use stored_ovl as available doses to withdraw if provided; otherwise attempt a single withdraw sequence
-        available_stored = stored_ovl if isinstance(stored_ovl, int) else None
-        print(f"Attempting to withdraw overload: need {overload_needed} doses, stored available: {available_stored}")
+        print(f"Withdrawing overload: need {overload_needed} doses")
+        withdraw_potion(OVERLOAD_BARREL_ID, OVERLOAD_ACTION, OVERLOAD_TILE, overload_needed, "Overload", OVERLOAD_DESIRED_DOSES)
 
-        # Loop until we've reached desired doses or stored is exhausted or no progress
-        while current_overload < OVERLOAD_DESIRED_DOSES:
-            if available_stored is not None and available_stored <= 0:
-                print("No stored overload doses remaining; stopping withdraw attempts.")
-                break
-
-            to_withdraw = OVERLOAD_DESIRED_DOSES - current_overload
-            if available_stored is not None:
-                to_withdraw = min(to_withdraw, available_stored)
-
-            print(f"Withdrawing overload, trying to get {to_withdraw} doses now (current total {current_overload})")
-            prev_total = current_overload
-            success = withdraw_potion(OVERLOAD_BARREL_ID, OVERLOAD_ACTION, OVERLOAD_TILE, to_withdraw, "Overload", OVERLOAD_DESIRED_DOSES)
-
-            # Recompute totals and adjust available stored count by actual gained amount
-            current_overload = get_total_doses("overload")
-            gained = current_overload - prev_total
-            if available_stored is not None:
-                # Deduct the actual gained doses from stored estimate
-                available_stored = max(0, available_stored - gained)
-
-            if gained <= 0:
-                print("No doses gained from withdraw attempt; stopping further attempts for overload.")
-                break
-
-            if current_overload >= OVERLOAD_DESIRED_DOSES:
-                print(f"Reached desired overload doses: {current_overload}")
-                break
-
-        if current_overload >= OVERLOAD_DESIRED_DOSES:
-            print("Overload handling complete, proceeding to Absorption")
-        else:
-            print("Overload withdraw finished without reaching full desired doses.")
-    else:
-        print("No overload withdraw necessary.")
-
-    # Wait for inventory to update
     wait_for_tick(1)
 
-    # Calculate and withdraw Absorption if needed and if stored_abs isn't explicitly 0
+    # Absorption withdrawal (now fixed)
     current_absorption = get_total_doses("absorption")
     absorption_needed = max(0, ABSORPTION_DESIRED_DOSES - current_absorption)
     if stored_abs == 0:
-        print("Stored absorption count is 0; skipping absorption barrel withdraw.")
         absorption_needed = 0
 
     if absorption_needed > 0:
-        available_stored_abs = stored_abs if isinstance(stored_abs, int) else None
-        print(f"Attempting to withdraw absorption: need {absorption_needed} doses, stored available: {available_stored_abs}")
-
-        while current_absorption < ABSORPTION_DESIRED_DOSES:
-            if available_stored_abs is not None and available_stored_abs <= 0:
-                print("No stored absorption doses remaining; stopping withdraw attempts.")
-                break
-
-            to_withdraw = ABSORPTION_DESIRED_DOSES - current_absorption
-            if available_stored_abs is not None:
-                to_withdraw = min(to_withdraw, available_stored_abs)
-
-            print(f"Withdrawing absorption, trying to get {to_withdraw} doses now (current total {current_absorption})")
-            prev_total = current_absorption
-            success = withdraw_potion(ABSORPTION_BARREL_ID, ABSORPTION_ACTION, ABSORPTION_TILE, to_withdraw, "Absorption", ABSORPTION_DESIRED_DOSES)
-
-            current_absorption = get_total_doses("absorption")
-            gained = current_absorption - prev_total
-            if available_stored_abs is not None:
-                available_stored_abs = max(0, available_stored_abs - gained)
-
-            if gained <= 0:
-                print("No doses gained from withdraw attempt; stopping further attempts for absorption.")
-                break
-
-            if current_absorption >= ABSORPTION_DESIRED_DOSES:
-                print(f"Reached desired absorption doses: {current_absorption}")
-                break
-
-        if current_absorption >= ABSORPTION_DESIRED_DOSES:
-            print("Absorption handling complete, script finished")
-        else:
-            print("Absorption withdraw finished without reaching full desired doses.")
+        print(f"Withdrawing absorption: need {absorption_needed} doses")
+        withdraw_potion(ABSORPTION_BARREL_ID, ABSORPTION_ACTION, ABSORPTION_TILE, absorption_needed, "Absorption", ABSORPTION_DESIRED_DOSES)
     else:
-        print("No absorption withdraw necessary, script finished.")
+        print("No absorption withdrawal necessary.")
 
-# time.sleep(3)
+    print("Barrel withdrawal complete.")
+    return True
+
 if __name__ == "__main__":
     main()

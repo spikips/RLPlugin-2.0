@@ -52,6 +52,9 @@ public class EntityHandler implements RequestHandler {
         boolean includeAnimation = Boolean.TRUE.equals(params.get("animation"));
         boolean includeSize = Boolean.TRUE.equals(params.get("size"));
         Boolean inCombatFilter = (Boolean) params.get("in_combat");
+        boolean includeHealth = params.getOrDefault("health", Boolean.TRUE) instanceof Boolean
+                ? (Boolean) params.getOrDefault("health", Boolean.TRUE)
+                : true;
 
         List<Map<String, Object>> npcList = new ArrayList<>();
         Random random = new Random();
@@ -102,6 +105,10 @@ public class EntityHandler implements RequestHandler {
                 }
                 if (includeSize) {
                     npcData.put("size", composition.getSize());
+                }
+                if (includeHealth) {
+                    npcData.put("healthRatio", npc.getHealthRatio());
+                    npcData.put("healthScale", npc.getHealthScale());
                 }
                 npcList.add(npcData);
             }

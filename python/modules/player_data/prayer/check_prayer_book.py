@@ -1,58 +1,38 @@
 import random
 import time
-from modules.widgets.widget_data import get_all_widget_data
+import keyboard
+from modules.widgets.widget_data import get_widget_by_id
 from modules.core.mouse_control import move as mouse_click
 from modules.core.window_utils import runelite_window
 
 def check_prayer_spellbook():
     """
-    Check if the prayer spellbook is open (Id: 35913796, SpriteId: 1030 when open, -1 when closed).
-    Opens the spellbook if it's not open by clicking a random point inside its bounds.
-    
-    Returns:
-        bool: True if spellbook is open or successfully opened, False otherwise.
+    Check if the prayer spellbook is open using fast single-widget lookup.
+    Opens it with F2 if needed.
     """
-    # Get all widget data
-    widgets = get_all_widget_data()
-    if not widgets:
-        print("Failed to retrieve widget data.")
-        return False
+    SPELLBOOK_WIDGET_ID = 35913797   # This is the prayer tab/button
 
-    # Check if prayer spellbook widget is open
-    spellbook_open = any(widget.get("id") == 35913797 and widget.get("spriteId") == 1030 for widget in widgets)
-    if spellbook_open:
+    # Fast check - only 1 widget
+    widget = get_widget_by_id(SPELLBOOK_WIDGET_ID)
+    if widget and widget.get("spriteId") == 1030:
         print("Prayer spellbook is already open.")
         return True
 
-    # If not open, find the widget and click a random point inside its bounds
+    # Not open → press F2
     print("Prayer spellbook is closed, attempting to open...")
-    for widget in widgets:
-        if widget.get("id") == 35913797 and widget.get("spriteId") == -1:
-            if 'bounds' in widget:
-                bounds = widget['bounds']
-                canvas_x = bounds['x']
-                canvas_y = bounds['y']
-                width = bounds['width']
-                height = bounds['height']
-                
-                # Generate random coordinates within the widget bounds
-                random_x = canvas_x + random.randint(5, width - 5)
-                random_y = canvas_y + random.randint(5, height - 5)
-                
-                print('opening prayer book')
-                # Convert to screen coordinates
-                screen_x, screen_y = runelite_window(random_x, random_y)
-                mouse_click(screen_x, screen_y, button='left', fast=True, sleep=True)
-                time.sleep(0.1)
-                # Verify it opened
-                widgets = get_all_widget_data()
-                if any(w.get("id") == 35913797 and w.get("spriteId") == 1030 for w in widgets):
-                    print(f"Successfully opened prayer spellbook by clicking at ({random_x}, {random_y}).")
-                    return True
-                else:
-                    print("Failed to open prayer spellbook.")
-                    return False
-    print("Prayer spellbook widget not found.")
-    return False
+    print('opening prayer book')
+    keyboard.press_and_release('f2')
+    time.sleep(0.2)  # Small delay for interface to update
 
+    # Fast verification after pressing F2
+    widget = get_widget_by_id(SPELLBOOK_WIDGET_ID)
+    if widget and widget.get("spriteId") == 1030:
+        print("Successfully opened prayer spellbook.")
+        return True
+    else:
+        print("Failed to open prayer spellbook (or widget not found).")
+        return False
+
+
+# For testing
 # check_prayer_spellbook()

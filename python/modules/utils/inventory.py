@@ -11,7 +11,7 @@ from modules.utils.select_menu_option import select_menu_option
 from modules.utils.wait_for_tick import wait_for_tick
 
 
-def click_inventory(item: str, action: Optional[str] = None, hover_only: bool = False) -> bool:
+def click_inventory(item: str, action: Optional[str] = None, hover_only: bool = False, fast: bool = False) -> bool:
     """
     Check if the inventory is open and contains the specified item.
     Opens the inventory with F1 if closed, counts the item, and prints its quantity.
@@ -34,9 +34,10 @@ def click_inventory(item: str, action: Optional[str] = None, hover_only: bool = 
     
     inv_data = check_widget('35913795', sprite_id=-1)
     if inv_data:
-        print("Inventory not open, attempting to open it.")
         for _ in range(3):
-            click_widget('35913795', sprite_id=1030, rand_x=10, rand_y=10)
+            print("Inventory not open, attempting to open it.")
+            # click_widget('35913795', sprite_id=1030, rand_x=10, rand_y=10)
+            keyboard.press_and_release('f1')
 
             for _ in range(60):
                 inv_data = inventory()
@@ -89,7 +90,7 @@ def click_inventory(item: str, action: Optional[str] = None, hover_only: bool = 
             width = 18
             height = 16
             x, y = canvas_x + random.randint(-width + 2, width - 2), canvas_y + random.randint(-height + 2, height - 2)
-            move(x, y, button='left', fast=True, sleep=True)
+            move(x, y, button='left', fast=fast, sleep=fast)
             return True
 
     return False
@@ -176,7 +177,7 @@ def get_inventory_count(item: str) -> int:
     inv = inventory().get('data', [])
     return sum(1 for slot in inv if slot.get('name', '').lower() == item.lower())
 
-def drop_inventory(item: str, amount: Union[int, str] = 1) -> bool:
+def drop_inventory(item: str, amount: Union[int, str] = 1, fast: bool = False) -> bool:
     """
     Drops instances of the specified item in the inventory by holding shift and left-clicking each one in a zigzag order.
     Can drop a specific number or all. Drops in batches, waits for a tick, checks if dropped, and retries if necessary.
@@ -231,7 +232,7 @@ def drop_inventory(item: str, amount: Union[int, str] = 1) -> bool:
             if point:
                 screen_x = point['x'] + rl_x
                 screen_y = point['y'] + rl_y
-                move(screen_x, screen_y, button='left', fast=True, sleep=True)
+                move(screen_x, screen_y, button='left', fast=fast, sleep=fast)
 
         keyboard.release('shift')
         
@@ -249,7 +250,7 @@ def drop_inventory(item: str, amount: Union[int, str] = 1) -> bool:
     
     return dropped_count >= target_drop
 
-def click_inventory_sequence(items: List[str], action: Optional[str] = None, delay: float = random.uniform(0.04, 0.08)) -> bool:
+def click_inventory_sequence(items: List[str], action: Optional[str] = None, delay: float = random.uniform(0.04, 0.08), fast: bool = False) -> bool:
     """
     Clicks items in the inventory in the specified sequence. For sequences with multiple identical
     items (e.g., ['short vine', 'short vine']), it fetches all instances once, then clicks each
@@ -334,7 +335,7 @@ def click_inventory_sequence(items: List[str], action: Optional[str] = None, del
                 height = 16
                 x, y = (canvas_x + random.randint(-width + 2, width - 2), 
                         canvas_y + random.randint(-height + 2, height - 2))
-                move(x, y, button='left', fast=True, sleep=True)
+                move(x, y, button='left', fast=fast, sleep=fast)
                 print(f"Clicked {current_item} instance {j+1} (left-click).")
             
             if delay > 0:

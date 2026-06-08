@@ -28,7 +28,7 @@ def select_menu_option(x: int, y: int, action: str, hover_only: bool = False, fa
     screen_y = rl_y + y
     
     # Hover to load interaction options
-    move(screen_x, screen_y, fast=fast, sleep=True)
+    move(screen_x, screen_y, fast=fast, sleep=fast)
     time.sleep(random.uniform(0.03, 0.05))
     
     # Get available interaction options
@@ -54,14 +54,14 @@ def select_menu_option(x: int, y: int, action: str, hover_only: bool = False, fa
         if not hover_only:
             click_x = screen_x
             click_y = screen_y
-            move(click_x, click_y, fast=True, sleep=True)
+            move(click_x, click_y, fast=fast, sleep=fast)
             time.sleep(random.uniform(0.03, 0.05))
             left_click()
         return first_option
     
     # If not top option, right-click to open full context menu and refresh options
     print("Top option mismatch -> right-clicking to open full context menu...")
-    move(screen_x + random.randint(-6, 6), screen_y + random.randint(-6, 6), fast=True, sleep=True, button='right')
+    move(screen_x, screen_y, fast=fast, sleep=fast, button='right')
     time.sleep(random.uniform(0.03, 0.05))
     
     # Refresh options now that menu is open
@@ -84,7 +84,7 @@ def select_menu_option(x: int, y: int, action: str, hover_only: bool = False, fa
     if not matched_option:
         clean_opts = [f"{opt['option']} {clean_target(opt['target'])}" for opt in options]
         print(f"No '{action}' option found. Available options: {clean_opts}")
-        move(screen_x + random.randint(-6, 6), screen_y + random.randint(50, 120), fast=True, sleep=True)
+        move(screen_x + random.randint(-6, 6), screen_y + random.randint(50, 120), fast=fast, sleep=fast)
         return None
     
     print(f"Matched context menu option: {matched_option}")
@@ -97,7 +97,7 @@ def select_menu_option(x: int, y: int, action: str, hover_only: bool = False, fa
     click_x = rl_x + mid['x'] + random.randint(-6, 6)
     click_y = rl_y + mid['y']  # Exact vertical (no offset to avoid crossing 15px boundaries)
     
-    move(click_x, click_y, fast=True, sleep=True)
+    move(click_x, click_y, fast=fast, sleep=fast)
     time.sleep(random.uniform(0.03, 0.05))
     left_click()
     

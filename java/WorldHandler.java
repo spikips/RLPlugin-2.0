@@ -7,12 +7,14 @@ import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.game.ItemManager;
-
+import net.runelite.api.Projectile;
+import net.runelite.api.GraphicsObject;
 import javax.inject.Inject;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Slf4j
 public class WorldHandler implements RequestHandler {
@@ -25,6 +27,9 @@ public class WorldHandler implements RequestHandler {
     @Inject
     private Gson gson;
 
+    @Inject
+    private AsdConfig config;
+
     @Override
     public Object handle(String function, Map<String, Object> params) {
         switch (function) {
@@ -36,6 +41,11 @@ public class WorldHandler implements RequestHandler {
                 return handleWalkableTileRequest(params);
             case "minimapTiles":
                 return handleMinimapTilesRequest(params);
+            case "projectiles":
+                return handleProjectilesRequest(params);
+            case "graphics_objects":
+            case "gfx":
+                return handleGraphicsObjectsRequest(params);
             default:
                 return new ResponseData().setError("Unknown world-related function: " + function);
         }
@@ -51,7 +61,8 @@ public class WorldHandler implements RequestHandler {
 
         boolean includeTile = Boolean.TRUE.equals(params.get("tile"));
         boolean includeMiddlePoint = params.containsKey("middle_point");
-        int tileRadius = ((Double) params.getOrDefault("tile_radius", 6.0)).intValue();
+        int tileRadius = ((Number) params.getOrDefault("tile_radius",
+                params.getOrDefault("radius", config.gameObjectRadius()))).intValue();
 
         List<Map<String, Object>> objectList = new ArrayList<>();
         Player player = client.getLocalPlayer();
@@ -413,5 +424,99 @@ public class WorldHandler implements RequestHandler {
         }
 
         return visibleTiles;
+    }
+
+    private List<Map<String, Object>> handleProjectilesRequest(Map<String, Object> params) {
+        String idFilter = (String) params.getOrDefault("id", "");
+        int radius = params.containsKey("radius")
+                ? ((Number) params.get("radius")).intValue()
+                : 35;
+
+        boolean includeMiddlePoint = Boolean.TRUE.equals(params.getOrDefault("middle_point", true));
+
+        List<Map<String, Object>> projList = new ArrayList<>();
+        Player localPlayer = client.getLocalPlayer();
+        if (localPlayer == null) return projList;
+
+        WorldPoint playerLoc = localPlayer.getWorldLocation();
+
+        for (Projectile p : client.getProjectiles()) {
+            if (p == null) continue;
+
+            LocalPoint lp = new LocalPoint((int) p.getX(), (int) p.getY());
+            WorldPoint projWorld = WorldPoint.fromLocal(client, lp);
+            if (projWorld == null || projWorld.distanceTo(playerLoc) > radius) continue;
+
+            if (!idFilter.isEmpty() && !String.valueOf(p.getId()).equals(idFilter)) continue;
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("id", p.getId());
+            data.put("remainingCycles", p.getRemainingCycles());
+            data.put("height", p.getHeight());
+
+            if (p.getInteracting() != null) {
+                Actor target = p.getInteracting();
+                data.put("targetName", target.getName());
+
+                if (target instanceof NPC) {
+                    data.put("targetIndex", ((NPC) target).getIndex());
+                    data.put("targetType", "npc");
+                } else if (target instanceof Player) {
+                    data.put("targetId", ((Player) target).getId());
+                    data.put("targetType", "player");
+                } else {
+                    data.put("targetType", "other");
+                }
+            }
+
+            data.put("tile", Map.of("x", projWorld.getX(), "y", projWorld.getY(), "plane", projWorld.getPlane()));
+
+            if (includeMiddlePoint) {
+                Point screenPoint = Perspective.localToCanvas(client, lp, client.getPlane(), (int) (p.getHeight() / 2));
+                if (screenPoint != null) {
+                    data.put("middle_point", Map.of("x", screenPoint.getX(), "y", screenPoint.getY()));
+                }
+            }
+            projList.add(data);
+        }
+        return projList;
+    }
+
+    private List<Map<String, Object>> handleGraphicsObjectsRequest(Map<String, Object> params) {
+        String idFilter = (String) params.getOrDefault("id", "");
+        int radius = params.containsKey("radius")
+                ? ((Number) params.get("radius")).intValue()
+                : 20;
+
+        boolean includeMiddlePoint = Boolean.TRUE.equals(params.getOrDefault("middle_point", true));
+
+        List<Map<String, Object>> gfxList = new ArrayList<>();
+        Player localPlayer = client.getLocalPlayer();
+        if (localPlayer == null) return gfxList;
+
+        WorldPoint playerLoc = localPlayer.getWorldLocation();
+
+        for (GraphicsObject gfx : client.getGraphicsObjects()) {
+            if (gfx == null) continue;
+
+            LocalPoint lp = gfx.getLocation();
+            WorldPoint gfxWorld = WorldPoint.fromLocal(client, lp);
+            if (gfxWorld == null || gfxWorld.distanceTo(playerLoc) > radius) continue;
+
+            if (!idFilter.isEmpty() && !String.valueOf(gfx.getId()).equals(idFilter)) continue;
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("id", gfx.getId());
+            data.put("tile", Map.of("x", gfxWorld.getX(), "y", gfxWorld.getY(), "plane", gfxWorld.getPlane()));
+
+            if (includeMiddlePoint) {
+                Point screenPoint = Perspective.localToCanvas(client, lp, client.getPlane());
+                if (screenPoint != null) {
+                    data.put("middle_point", Map.of("x", screenPoint.getX(), "y", screenPoint.getY()));
+                }
+            }
+            gfxList.add(data);
+        }
+        return gfxList;
     }
 }

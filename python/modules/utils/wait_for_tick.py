@@ -1,3 +1,4 @@
+from asyncio import wait_for
 import time
 from modules.core.plugin_client import gametick
 
@@ -13,3 +14,5 @@ def wait_for_next_tick(num_ticks: int = 1) -> None:
     target_tick = current_tick + num_ticks
     while gametick().get('data', 0) < target_tick:
         time.sleep(0.05)
+
+

@@ -1,7 +1,7 @@
 import time, re, random, math
 
 import keyboard
-from modules.core.plugin_client import inventory, bank_items, cannon_data, minimap_tile_point, npc_agro, player, minimap_tiles, walkable_tile, gear, players, game_state, pick, gametick, npc
+from modules.core.plugin_client import chat, get_active_prayers, get_varbits, inventory, bank_items, cannon_data, minimap_tile_point, npc_agro, player, minimap_tiles, target_npc, varbit, walkable_tile, gear, players, game_state, pick, gametick, npc
 from modules.player_data.cannon import click_cannon
 from modules.utils.check_if_in_area import check_if_in_area
 from modules.utils.check_players import check_for_players
@@ -9,6 +9,7 @@ from modules.utils.click_minimap_tile import click_minimap_tile
 from modules.player_data.tile_change import wait_for_tile_change, wait_until_at_tile
 from modules.utils.hop import hop_to_random_world
 from modules.utils.loot import has_ground_items, loot_all_ground_items
+from modules.utils.projectile import get_all_gfx_objects
 from modules.utils.wait_for_tick import wait_for_tick, wait_for_next_tick
 from modules.utils.check_if_in_tile import check_if_in_tile
 from modules.utils.inventory import check_inventory, get_inventory_count, click_inventory_sequence
@@ -19,13 +20,13 @@ from modules.utils.camera import camera
 from modules.utils.select_menu_option import select_menu_option
 from modules.player_data.click_equipment import click_equipment_item
 from modules.utils.inventory import click_inventory, is_inventory_full
-from modules.object_data.game_object import click_gameobject, get_closest_game_object
+from modules.object_data.game_object import click_gameobject, get_closest_game_object, get_game_object_tile, get_game_objects
 from modules.core.plugin_client import fetch_object
-from modules.object_data.object import click_object, get_closest_object
+from modules.object_data.object import check_object, click_object, get_closest_object
 from modules.core.mouse_control import move, right_click
 from modules.widgets.widget_data import get_all_widget_data
 from modules.core.window_utils import runelite_window, focus_runelite_window
-from modules.player_data.prayer.toggle_prayer import toggle_prayer
+# from modules.player_data.prayer.toggle_prayer import toggle_prayer
 from modules.core.plugin_client import slayer_task_remaining
 from modules.utils.check_if_in_tile import is_player_idle, check_if_in_tile
 from modules.widgets.widget import get_widget, check_widget, check_widget_text, check_widget_name, click_widget, click_widget_child, click_widget_by_name
@@ -36,8 +37,61 @@ from modules.player_data.prayer.toggle_prayer import toggle_prayer
 from modules.utils.click_tile import click_tile
 from modules.player_data.check_run import click_run
 from modules.banking.bank_castlewars import bank_castlewars, clean_item_name, get_inventory_data
+from scripts.combat.nmz.toggle_prayer import check_prayer
+from modules.core.plugin_client import npc
+from modules.banking.banking_function import banking_function
 
-print(check_widget_text(15138822))
+
+
+print(chat())
+
+# while True:
+#     print(varbit(varbit_id=13663))
+
+
+
+# print(loot_all_ground_items("huasca seed"))
+
+
+# def is_head_alive():
+#     print(gametick())
+#     print(npc())
+#     print('----')
+#     wait_for_next_tick()
+
+# while True:
+#     is_head_alive()
+
+# npc_data = npc(name="hueycoatl tail", tile=True, middle_point=True)
+# print(npc_data)
+
+# if npc_data and 'data' in npc_data and npc_data['data']:
+#     for n in npc_data['data']:
+#         tile = n.get('tile', {})
+#         if tile.get('x') == 13067 and tile.get('y') == 11468:
+#             print(f"Found Seer at ({13067}, {11468})")
+            
+            # Do something with n
+# print(get_active_prayers())
+# player_hp = player()
+# if player_hp and 'data' in player_hp and 'health' in player_hp['data']:
+#     if player_hp['data']['health'] < 45:
+#         for _ in range(3):
+#             click_inventory('potato with cheese', action='eat', hover_only=False)
+#             wait_for_tick(3)
+
+
+# click_tile(13448, 4165, action="Walk here", tile_radius=20, right_click=False)
+# print(npc(name="hueycoatl body"))
+# exit()
+
+# click_gameobject("55401", 'Quick-climb')
+
+
+# print(player(health=True).get('data', {}).get('health', 0))
+
+
+# click_widget('35913792', sprite_id=1026, hidden=False, right_click=False, action=None, rand_x=0, rand_y=0, clicks=1, sleep_interval=(0, 0))
 
 
 
@@ -368,7 +422,6 @@ print(check_widget_text(15138822))
 
 # # 11
 # for i in range(3):
-#     if click_tile(2479, 9819, action="Walk here", tile_radius=20, right_click=False):
 #        if wait_till_character_stopped_moving():
 #             break
 #     if i == 2:

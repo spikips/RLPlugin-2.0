@@ -123,3 +123,46 @@ def click_gameobject(object_identifier: str, action: str, tile: Optional[Tuple[i
     mp = obj['middle_point']
     result = select_menu_option(mp['x'], mp['y'], action)
     return result is not None
+
+
+def get_game_object_tile(object_identifier: str, tile: Optional[Tuple[int, int]] = None, radius: int = 10) -> Optional[Tuple[int, int]]:
+    """
+    Get the world tile (x, y) of a game object by ID or name.
+    - Returns a tuple (x, y) of the world tile coordinates, or None if not found.
+    - Searches around player if no tile specified, otherwise around given tile.
+    - Note: This returns the world tile, not the screen middle_point.
+    """
+    # Fetch without middle_point to get world tile
+    if tile is None:
+        player_data = player(location=True)
+        if player_data is None or 'data' not in player_data or 'location' not in player_data['data']:
+            print("Failed to retrieve player location data.")
+            return None
+        center_tile = (player_data['data']['location']['x'], player_data['data']['location']['y'])
+    else:
+        center_tile = tile
+
+    fetch_radius = radius if tile is None else 10
+    obj_data = fetch_game_object(object=object_identifier, tile_radius=fetch_radius, middle_point=False)
+    if obj_data is None or 'data' not in obj_data or not obj_data['data']:
+        return None
+
+    all_objs = obj_data['data']
+
+    # Filter by radius if tile was specified
+    if tile is not None:
+        filtered_objs = []
+        for o in all_objs:
+            if 'tile' not in o or 'x' not in o['tile'] or 'y' not in o['tile']:
+                continue
+            obj_tile = (o['tile']['x'], o['tile']['y'])
+            if tile_distance(obj_tile, center_tile) <= radius:
+                filtered_objs.append(o)
+        all_objs = filtered_objs
+
+    if not all_objs:
+        return None
+
+    # Find closest to center
+    closest = min(all_objs, key=lambda o: tile_distance((o['tile']['x'], o['tile']['y']), center_tile))
+    return (closest['tile']['x'], closest['tile']['y'])

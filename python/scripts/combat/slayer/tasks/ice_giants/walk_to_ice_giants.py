@@ -1,5 +1,6 @@
 import time
 from modules.banking.bank_castlewars import bank_castlewars
+from modules.player_data.ensure_correct_attack_style import ensure_correct_combat_style
 from modules.player_data.prayer.toggle_prayer import toggle_prayer
 from modules.utils.check_players import check_for_players
 from modules.utils.click_minimap_tile import click_minimap_tile
@@ -32,7 +33,7 @@ def go_to_bank():
     }
 
     bank_castlewars(target_gear=target_gear, target_inventory=target_inventory)
-
+    ensure_correct_combat_style()
 
 def walk_to_ice_giants():
     """Walk to the ice_giants location."""
